@@ -211,19 +211,21 @@ private class PEUserDetailServiceTest {
     @IsTest
     static void unauthorisedUserIsRejectedBeforeAnyQuery() {
         Id userId = subject().Id;
+        User plain = [SELECT Id FROM User WHERE Email = :SUBJECT_EMAIL LIMIT 1];
 
-        // The test-running user holds no custom permission, so this is the
-        // unauthorised path without needing a second runAs.
-        Test.startTest();
         Boolean threw = false;
         String message;
-        try {
-            PermissionExplorerController.getAssignedPermissionSets(userId);
-        } catch (Exception e) {
-            threw = true;
-            message = e.getMessage();
+
+        System.runAs(plain) {
+                Test.startTest();
+            try {
+                PermissionExplorerController.getAssignedPermissionSets(userId);
+            } catch (Exception e) {
+                threw = true;
+                message = e.getMessage();
+            }
+            Test.stopTest();
         }
-        Test.stopTest();
 
         Assert.isTrue(threw, 'The gate must reject a user without the custom permission');
         Assert.isTrue(

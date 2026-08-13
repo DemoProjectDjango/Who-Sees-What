@@ -9,8 +9,7 @@
  */
 public with sharing class AccessGate {
 
-    private static Boolean cachedAllowed;
-
+    @TestVisible
     /** Throws unless the running user holds the packaged custom permission. */
     public static void assertAuthorised() {
         if (!isAuthorised()) {
@@ -23,11 +22,14 @@ public with sharing class AccessGate {
         }
     }
 
+    /**
+     * Deliberately uncached. An authorisation decision held in a mutable
+     * static outlives the context it was made in - System.runAs changes the
+     * user but not the static - and checkPermission is cheap enough that the
+     * guarantee is worth more than the microseconds.
+     */
     public static Boolean isAuthorised() {
-        if (cachedAllowed == null) {
-            cachedAllowed = FeatureManagement.checkPermission(PEConstants.CUSTOM_PERMISSION);
-        }
-        return cachedAllowed;
+        return FeatureManagement.checkPermission(PEConstants.CUSTOM_PERMISSION);
     }
 
     /**
