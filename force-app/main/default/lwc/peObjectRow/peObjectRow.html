@@ -1,0 +1,111 @@
+<template>
+    <div class={wrapperClass}>
+        <div class="row" role="row">
+            <button class="twisty" type="button" aria-expanded={expandedStr}
+                    aria-label={toggleLabel} disabled={notExpandable}
+                    onclick={handleToggle}>
+                <template lwc:if={notExpandable}>
+                    <span aria-hidden="true"></span>
+                </template>
+                <template lwc:elseif={expanded}>
+                    <span aria-hidden="true">&#9662;</span>
+                </template>
+                <template lwc:else>
+                    <span aria-hidden="true">&#9656;</span>
+                </template>
+            </button>
+
+            <span class="label" role="cell">
+                <span class="name">{row.label}</span>
+                <span class="api pe-mono">{row.apiName}</span>
+                <template lwc:if={showNoTabBadge}>
+                    <span class="badge" title="Reachable by API and related lists, but not in navigation">no tab</span>
+                </template>
+                <template lwc:if={notExpandable}>
+                    <span class="badge">not an object</span>
+                </template>
+            </span>
+
+            <span class="crud" role="cell">
+                <template lwc:if={notExpandable}>
+                    <span class="dash">&mdash;</span>
+                </template>
+                <template lwc:else>
+                    <c-pe-crud-chips
+                        can-read={row.canRead} can-create={row.canCreate}
+                        can-edit={row.canEdit} can-delete={row.canDelete}
+                        view-all={row.viewAll} modify-all={row.modifyAll}></c-pe-crud-chips>
+                </template>
+            </span>
+
+            <span class="granted" role="cell">
+                <template lwc:if={notExpandable}>
+                    <span class="tabvis">Tab: {tabVisibilityText}</span>
+                </template>
+                <template lwc:elseif={hasTabSources}>
+                    <c-pe-source-chip sources={row.tabSources}></c-pe-source-chip>
+                </template>
+                <template lwc:else>
+                    <span class="tabvis">{tabVisibilityText}</span>
+                </template>
+            </span>
+        </div>
+
+        <template lwc:if={expanded}>
+            <div class="expansion">
+                <div class="tabs" role="tablist" aria-label="Detail sections">
+                    <template for:each={tabs} for:item="t">
+                        <button key={t.key} class={t.class} type="button" role="tab"
+                                aria-selected={t.selectedStr} data-key={t.key}
+                                onclick={handleTab}>{t.label}</button>
+                    </template>
+                </div>
+
+                <c-pe-state-wrapper
+                    state={detailState}
+                    error={detailError}
+                    empty-headline="Nothing to show"
+                    skeleton-rows="6"
+                    onretry={handleRetry}>
+
+                    <template lwc:if={showFields}>
+                        <c-pe-field-table fields={detail.fields}></c-pe-field-table>
+                    </template>
+
+                    <template lwc:if={showRecordTypes}>
+                        <c-pe-not-analysed
+                            headline="Record type access is not analysed"
+                            detail="Per-permission-set record type visibility is only available through Profile and PermissionSet metadata, which needs a callout. The list below is what exists on the object, not what this user can see."
+                            source="Profile / PermissionSet metadata — recordTypeVisibilities"></c-pe-not-analysed>
+                        <template lwc:if={hasRecordTypes}>
+                            <div class="origin" style="margin-top:0.5rem">
+                                <template for:each={recordTypeRows} for:item="rt">
+                                    <div key={rt.developerName} class="rt-row">
+                                        <span class="rt-label" title={rt.label}>{rt.label}</span>
+                                        <span class="rt-api" title={rt.developerName}>{rt.developerName}</span>
+                                        <span class={rt.stateClass}>{rt.stateText}</span>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </template>
+
+
+                    <template lwc:if={showOrigin}>
+                        <div class="origin">
+                            <template for:each={decoratedGrants} for:item="g">
+                                <div key={g.name} class="grant">
+                                    <span class="glabel">{g.label}</span>
+                                    <span class={g.grantedClass}>{g.grantedText}</span>
+                                    <span class="gsrc">
+                                        <c-pe-source-chip sources={g.sources}></c-pe-source-chip>
+                                    </span>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </c-pe-state-wrapper>
+            </div>
+        </template>
+    </div>
+</template>

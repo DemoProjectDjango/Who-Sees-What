@@ -1,0 +1,46 @@
+@import 'c/peBase';
+
+.column {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    background: var(--pe-surface);
+    border-right: 1px solid var(--pe-line);
+}
+
+.head {
+    flex: 0 0 auto;
+    padding: var(--pe-pad);
+    border-bottom: 1px solid var(--pe-line);
+    background: var(--pe-surface-sunken);
+}
+.head h2 { margin: 0 0 0.5rem; }
+
+.toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: var(--pe-fs-sm);
+    color: var(--pe-ink);
+    cursor: pointer;
+}
+.toggle input { margin: 0; }
+
+.tally {
+    margin: 0.375rem 0 0;
+    font-size: var(--pe-fs-xs);
+    color: var(--pe-ink-faint);
+    font-variant-numeric: tabular-nums;
+}
+
+.degraded {
+    margin: 0;
+    padding: 0.5rem var(--pe-pad);
+    font-size: var(--pe-fs-sm);
+    line-height: 1.4;
+    color: var(--pe-ink);
+    background: var(--pe-surface-sunken);
+    border-bottom: 1px solid var(--pe-line);
+    border-left: 2px solid var(--pe-caution);
+}

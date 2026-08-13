@@ -1,0 +1,14 @@
+<template>
+    <div class="pager">
+        <button class="btn" type="button" disabled={backDisabled} onclick={handleBack}>
+            &lsaquo; Back
+        </button>
+        <span class="count" aria-live="polite">{summary}</span>
+        <button class="btn" type="button" disabled={nextDisabled} onclick={handleNext}>
+            Next &rsaquo;
+        </button>
+    </div>
+    <template lwc:if={capReached}>
+        <p class="cap">Showing the first {shown}. Refine your search to narrow these down.</p>
+    </template>
+</template>

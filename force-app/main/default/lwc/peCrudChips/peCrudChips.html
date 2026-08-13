@@ -1,0 +1,10 @@
+<template>
+    <div class="chips" role="img" aria-label={ariaLabel}>
+        <template for:each={chips} for:item="chip">
+            <span key={chip.key} class={chip.class} title={chip.title}>{chip.letter}</span>
+        </template>
+        <template lwc:if={showAllMarker}>
+            <span class="marker" title={allMarkerTitle}>{allMarkerText}</span>
+        </template>
+    </div>
+</template>

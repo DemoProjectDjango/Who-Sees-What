@@ -1,0 +1,52 @@
+<template>
+    <div class="panel">
+        <template lwc:if={isUnavailable}>
+            <!-- Not an error and not an empty state. The tool could not look,
+                 and that is a different fact from "this user never signed in". -->
+            <div class="unavailable" role="status">
+                <p class="headline">Login history not analysed</p>
+                <p class="detail">{result.notAvailableReason}</p>
+            </div>
+        </template>
+
+        <template lwc:else>
+            <c-pe-state-wrapper
+                state={state}
+                error={error}
+                empty-headline="No sign-ins recorded"
+                empty-detail={emptyDetail}
+                skeleton-rows="8"
+                onretry={handleRetry}>
+
+                <div class="scroll">
+                    <table class="grid">
+                        <thead>
+                            <tr>
+                                <th scope="col">When</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Type</th>
+                                <th scope="col">Source IP</th>
+                                <th scope="col">Application</th>
+                                <th scope="col">Client</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={rows} for:item="r">
+                                <tr key={r.key} class={r.rowClass}>
+                                    <td class="when">{r.when}</td>
+                                    <td><span class={r.statusClass}>{r.status}</span></td>
+                                    <td>{r.loginType}</td>
+                                    <td class="pe-mono">{r.sourceIp}</td>
+                                    <td>{r.application}</td>
+                                    <td>{r.client}</td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="foot" role="note">{footnote}</p>
+            </c-pe-state-wrapper>
+        </template>
+    </div>
+</template>

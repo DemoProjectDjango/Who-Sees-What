@@ -1,0 +1,85 @@
+@import 'c/peBase';
+
+.panel { padding: var(--pe-pad); }
+
+/* Distinct from .pe-state_error on purpose: nothing failed, the tool simply
+   was not permitted to look. Caution rail, not error rail. */
+.unavailable {
+    padding: var(--pe-pad);
+    border: 1px solid var(--pe-line);
+    border-left: 2px solid var(--pe-caution);
+    border-radius: var(--pe-radius);
+    background: var(--pe-surface-sunken);
+}
+.unavailable .headline {
+    margin: 0;
+    font-size: var(--pe-fs-md);
+    font-weight: 700;
+    color: var(--pe-ink);
+}
+.unavailable .detail {
+    margin: 0.25rem 0 0;
+    font-size: var(--pe-fs-sm);
+    line-height: 1.45;
+    color: var(--pe-ink-muted);
+}
+
+.scroll {
+    max-height: 26rem;
+    overflow: auto;
+    border: 1px solid var(--pe-line);
+    border-radius: var(--pe-radius);
+}
+
+.grid {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--pe-fs-md);
+}
+
+.grid th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    text-align: left;
+    font-size: var(--pe-fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--pe-ink-faint);
+    background: var(--pe-surface-sunken);
+    border-bottom: 1px solid var(--pe-line-strong);
+    padding: 0.3125rem var(--pe-gap);
+    white-space: nowrap;
+}
+
+.grid td {
+    padding: 0.3125rem var(--pe-gap);
+    border-bottom: 1px solid var(--pe-line);
+    color: var(--pe-ink);
+    vertical-align: baseline;
+}
+.grid tbody tr:last-child td { border-bottom: none; }
+.grid tbody tr:hover { background: var(--pe-surface-hover); }
+
+.when { white-space: nowrap; }
+
+/* A failed sign-in is marked twice — a rail and a word — because colour alone
+   is not a signal. */
+.row_failed { box-shadow: inset 2px 0 0 0 var(--pe-error); }
+
+.status { color: var(--pe-ink-muted); }
+.status_failed {
+    color: var(--pe-error);
+    font-weight: 600;
+}
+
+.foot {
+    margin: var(--pe-gap) 0 0;
+    padding: 0.375rem 0.5rem;
+    font-size: var(--pe-fs-sm);
+    line-height: 1.4;
+    border-left: 2px solid var(--pe-line-strong);
+    background: var(--pe-surface-sunken);
+    color: var(--pe-ink);
+}

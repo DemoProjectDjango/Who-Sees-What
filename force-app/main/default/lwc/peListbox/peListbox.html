@@ -1,0 +1,48 @@
+<template>
+    <ul class="listbox"
+        role="listbox"
+        tabindex="0"
+        aria-label={ariaLabel}
+        aria-activedescendant={activeDescendantId}
+        onkeydown={handleKeyDown}>
+        <template for:each={decorated} for:item="row">
+            <li key={row.id}
+                id={row.domId}
+                class={row.rowClass}
+                role="option"
+                aria-selected={row.selectedStr}
+                data-id={row.id}
+                onclick={handleClick}>
+
+                <div class="line1">
+                    <span class="primary">{row.label}</span>
+                    <template lwc:if={row.badge}>
+                        <span class="badge">{row.badge}</span>
+                    </template>
+                </div>
+
+                <template lwc:if={row.secondary}>
+                    <div class="line2 pe-mono">{row.secondary}</div>
+                </template>
+
+                <div class="line3">
+                    <template lwc:if={row.showCrud}>
+                        <c-pe-crud-chips
+                            can-read={row.canRead}
+                            can-create={row.canCreate}
+                            can-edit={row.canEdit}
+                            can-delete={row.canDelete}
+                            view-all={row.viewAll}
+                            modify-all={row.modifyAll}></c-pe-crud-chips>
+                    </template>
+                    <template lwc:if={row.sources}>
+                        <c-pe-source-chip sources={row.sources}></c-pe-source-chip>
+                    </template>
+                    <template lwc:if={row.meta}>
+                        <span class="meta">{row.meta}</span>
+                    </template>
+                </div>
+            </li>
+        </template>
+    </ul>
+</template>

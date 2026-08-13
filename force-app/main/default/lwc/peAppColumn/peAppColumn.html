@@ -1,0 +1,34 @@
+<template>
+    <section class="column" aria-labelledby="col2-heading">
+        <header class="head">
+            <h2 id="col2-heading" class="pe-eyebrow">App</h2>
+            <label class="toggle">
+                <input type="checkbox" checked={showHidden} onchange={handleToggle} />
+                <span>Show all apps, including hidden</span>
+            </label>
+            <p class="tally" aria-live="polite">{tally}</p>
+        </header>
+
+        <template lwc:if={showDegradedNotice}>
+            <p class="degraded" role="status">{appList.setupMessage}</p>
+        </template>
+
+        <c-pe-state-wrapper
+            state={state}
+            error={error}
+            empty-headline={emptyHeadline}
+            empty-detail={emptyDetail}
+            skeleton-rows="8"
+            stale-since={staleSince}
+            onretry={handleRetry}>
+
+            <c-pe-listbox
+                items={listItems}
+                selected-id={selectedAppId}
+                aria-label="Apps"
+                id-prefix="app"
+                onrowselect={handleSelect}>
+            </c-pe-listbox>
+        </c-pe-state-wrapper>
+    </section>
+</template>

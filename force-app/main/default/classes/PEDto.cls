@@ -1,0 +1,285 @@
+/**
+ * Data transfer objects for the Permission Explorer UI.
+ *
+ * Every field is `@AuraEnabled public` so LWC receives plain objects.
+ * Deliberately `public`, never `global` — global members in a managed package
+ * are a permanent API commitment that can never be removed.
+ */
+public with sharing class PEDto {
+
+    /* ---------------------------------------------------------------
+     * Shared
+     * --------------------------------------------------------------- */
+
+    /** Where a permission came from. Renders as one chip. */
+    public class Source {
+        @AuraEnabled public Id parentId;              // PermissionSet Id
+        @AuraEnabled public String label;             // 'Sales User', 'Sales_Power_User'
+        @AuraEnabled public String kind;              // profile | permset | group | muting
+        @AuraEnabled public String groupLabel;        // set when kind = group
+        @AuraEnabled public Boolean isOutdatedGroup;  // PermissionSetGroup.Status != Updated
+
+        /**
+         * The Id a Setup deep link actually needs, which is NOT always parentId.
+         *
+         * For a profile source, parentId is the profile-owned PermissionSet
+         * (0PS…) because that is what ObjectPermissions.ParentId joins on — but
+         * Setup addresses a profile by its ProfileId (00e…). Keeping the two
+         * apart is the whole reason this field exists; deriving one from the
+         * other on the client is not possible.
+         */
+        @AuraEnabled public Id linkId;
+
+        /** The owning group, when one is known. Set for kind = group | muting. */
+        @AuraEnabled public Id groupId;
+
+        /**
+         * False when the source has no page an admin can open: protected
+         * permission sets from managed packages, and muting sets with no known
+         * group. A link that 404s is worse than no link, so the server decides
+         * this rather than letting the client guess.
+         */
+        @AuraEnabled public Boolean linkable;
+
+        public Source(Id parentId, String label, String kind) {
+            this.parentId = parentId;
+            this.label = label;
+            this.kind = kind;
+            this.isOutdatedGroup = false;
+            this.linkId = parentId;   // correct for permset/group; overridden for profile
+            this.linkable = true;
+        }
+    }
+
+    /** A single resolved permission: granted or not, and why. */
+    public class Grant {
+        @AuraEnabled public String name;      // 'PermissionsViewAllData'
+        @AuraEnabled public String label;     // 'View All Data'
+        @AuraEnabled public Boolean granted;
+        @AuraEnabled public Boolean muted;    // granted somewhere, then muted
+        @AuraEnabled public List<Source> sources = new List<Source>();
+
+        public Grant(String name, String label) {
+            this.name = name;
+            this.label = label;
+            this.granted = false;
+            this.muted = false;
+        }
+    }
+
+    /**
+     * Wrapper for keyset-paginated results. No totalCount, by design.
+     *
+     * Concrete row type, not List<Object>: @AuraEnabled cannot serialise a
+     * generic Object list, and it fails at runtime rather than compile time.
+     */
+    public class PagedResult {
+        @AuraEnabled public List<UserRow> records = new List<UserRow>();
+        @AuraEnabled public Boolean hasMore = false;
+        @AuraEnabled public String nextCursor;
+        @AuraEnabled public Integer pageSize;
+        @AuraEnabled public Boolean capReached = false;  // drives "refine your search"
+    }
+
+    /** Structured error so the UI can distinguish causes, not just show a string. */
+    public class ErrorInfo {
+        @AuraEnabled public String cause;
+        @AuraEnabled public String message;
+        @AuraEnabled public Boolean retryable;
+
+        public ErrorInfo(String cause, String message, Boolean retryable) {
+            this.cause = cause;
+            this.message = message;
+            this.retryable = retryable;
+        }
+    }
+
+    /* ---------------------------------------------------------------
+     * Column 1 — users
+     * --------------------------------------------------------------- */
+
+    /** One row in the user column. Thin, because the column is paginated. */
+    public class UserRow {
+        @AuraEnabled public Id userId;
+        @AuraEnabled public String name;
+        @AuraEnabled public String username;
+        @AuraEnabled public String profileName;
+        @AuraEnabled public String roleName;
+        @AuraEnabled public Datetime lastLogin;
+        @AuraEnabled public Boolean isFrozen = false;
+    }
+
+    /** Header shown once a user is selected. */
+    public class UserSummary {
+        @AuraEnabled public Id userId;
+        @AuraEnabled public String name;
+        @AuraEnabled public String username;
+        @AuraEnabled public String email;
+        @AuraEnabled public String profileName;
+        @AuraEnabled public Id profileId;
+        @AuraEnabled public String roleName;
+        @AuraEnabled public String licenseName;
+        @AuraEnabled public String userType;
+        @AuraEnabled public Datetime lastLogin;
+        @AuraEnabled public Boolean isFrozen = false;
+        @AuraEnabled public Integer permSetCount = 0;
+        @AuraEnabled public Integer permSetGroupCount = 0;
+        @AuraEnabled public Integer mutingSetCount = 0;
+        @AuraEnabled public Integer unreadableCount = 0;
+        @AuraEnabled public List<String> outdatedGroups = new List<String>();
+        @AuraEnabled public Datetime resolvedAt;   // feeds the "as of HH:MM" stale marker
+    }
+
+    /* ---------------------------------------------------------------
+     * Header drill-downs — login history, permission sets, groups
+     *
+     * These three payloads exist so the counts in the summary header stop
+     * being dead ends. Each one is sourced from the same resolver pass that
+     * produced the count, so the list can never disagree with the number
+     * printed above it.
+     * --------------------------------------------------------------- */
+
+    public class LoginEvent {
+        @AuraEnabled public Datetime loginTime;
+        @AuraEnabled public String status;
+        @AuraEnabled public String loginType;
+        @AuraEnabled public String sourceIp;
+        @AuraEnabled public String application;
+        @AuraEnabled public String browser;
+        @AuraEnabled public String platform;
+    }
+
+    /**
+     * Login history is the one panel in this tool that can be structurally
+     * unavailable rather than empty. Reading LoginHistory requires a
+     * high-privilege permission the packaged permission set deliberately does
+     * not grant, so "cannot read" and "never signed in" must never render the
+     * same way.
+     */
+    public class LoginHistoryResult {
+        @AuraEnabled public List<LoginEvent> events = new List<LoginEvent>();
+        @AuraEnabled public Integer appliedLimit = 0;
+        /** True when the result filled the limit — there is probably more. */
+        @AuraEnabled public Boolean truncated = false;
+        /** Non-null when the running user cannot read LoginHistory at all. */
+        @AuraEnabled public String notAvailableReason;
+        @AuraEnabled public String retentionNote =
+            'Salesforce retains roughly six months of login history. Older sign-ins are not available here.';
+    }
+
+    public class PermSetRow {
+        @AuraEnabled public Id permSetId;
+        @AuraEnabled public String label;
+        @AuraEnabled public String apiName;
+        @AuraEnabled public String setType;      // Regular | Session | Standard | ...
+        /** False for managed-package sets whose label the running user cannot read. */
+        @AuraEnabled public Boolean isReadable = true;
+    }
+
+    /**
+     * Direct assignments only, matching UserSummary.permSetCount exactly.
+     * `viaGroupCount` names the sets that apply through an assigned group so
+     * the gap between this list and effective access is stated, not hidden.
+     */
+    public class PermSetList {
+        @AuraEnabled public List<PermSetRow> directSets = new List<PermSetRow>();
+        @AuraEnabled public Integer viaGroupCount = 0;
+        @AuraEnabled public Integer unreadableCount = 0;
+    }
+
+    public class PermSetGroupRow {
+        @AuraEnabled public Id groupId;
+        @AuraEnabled public String developerName;
+        @AuraEnabled public String masterLabel;
+        @AuraEnabled public String status;
+        @AuraEnabled public Boolean isOutdated = false;
+    }
+
+    /* ---------------------------------------------------------------
+     * Column 2 — apps
+     * --------------------------------------------------------------- */
+
+    public class AppRow {
+        @AuraEnabled public String developerName;
+        @AuraEnabled public String label;
+        @AuraEnabled public String appType;      // Lightning | Classic | Connected
+        @AuraEnabled public Boolean visible;
+        @AuraEnabled public Boolean isDefault;
+        @AuraEnabled public List<Source> sources = new List<Source>();
+        /** True when visibility came from the degraded AppMenuItem fallback. */
+        @AuraEnabled public Boolean visibilityEstimated = false;
+    }
+
+    /** Column 2 payload. Carries the degradation flag for the whole column. */
+    public class AppList {
+        @AuraEnabled public List<AppRow> apps = new List<AppRow>();
+        @AuraEnabled public String resolutionMode;   // APP_MENU_ITEM (only mode)
+        @AuraEnabled public Boolean setupRequired = false;
+        @AuraEnabled public String setupMessage;
+    }
+
+    /** Returned by resolveUser — one round trip for header + apps. */
+    public class UserContext {
+        @AuraEnabled public UserSummary summary;
+        @AuraEnabled public AppList apps;
+    }
+
+    /* ---------------------------------------------------------------
+     * Modal rail — objects and tabs
+     * --------------------------------------------------------------- */
+
+    public class ObjectRow {
+        @AuraEnabled public String apiName;
+        @AuraEnabled public String label;
+        @AuraEnabled public Boolean isObjectTab;     // false for VF / web / Reports tabs
+        @AuraEnabled public String tabVisibility;    // DefaultOn | DefaultOff | Hidden | NoTab
+        @AuraEnabled public List<Source> tabSources = new List<Source>();
+        @AuraEnabled public Boolean canRead = false;
+        @AuraEnabled public Boolean canCreate = false;
+        @AuraEnabled public Boolean canEdit = false;
+        @AuraEnabled public Boolean canDelete = false;
+        @AuraEnabled public Boolean viewAll = false;
+        @AuraEnabled public Boolean modifyAll = false;
+        /** True for the "reachable by API but not in navigation" group. */
+        @AuraEnabled public Boolean accessWithoutTab = false;
+    }
+
+    /* ---------------------------------------------------------------
+     * Modal detail
+     * --------------------------------------------------------------- */
+
+    public class FieldPerm {
+        @AuraEnabled public String apiName;
+        @AuraEnabled public String label;
+        @AuraEnabled public String dataType;
+        @AuraEnabled public Boolean readable = false;
+        @AuraEnabled public Boolean editable = false;
+        @AuraEnabled public List<Source> readSources = new List<Source>();
+        @AuraEnabled public List<Source> editSources = new List<Source>();
+        /** When true, absence of FLS is structural, not a permission gap. */
+        @AuraEnabled public Boolean flsNotApplicable = false;
+        @AuraEnabled public String flsNotApplicableReason;
+    }
+
+    public class ObjectDetail {
+        @AuraEnabled public String apiName;
+        @AuraEnabled public String label;
+        @AuraEnabled public List<Grant> objectPermissions = new List<Grant>();
+        @AuraEnabled public List<FieldPerm> fields = new List<FieldPerm>();
+        @AuraEnabled public String internalSharingModel;
+        @AuraEnabled public String externalSharingModel;
+        @AuraEnabled public Datetime resolvedAt;
+        /** Populated per section so one failure does not blank the modal. */
+        @AuraEnabled public ErrorInfo fieldsError;
+        @AuraEnabled public List<RecordTypeRow> recordTypes = new List<RecordTypeRow>();
+    }
+
+    public class RecordTypeRow {
+        @AuraEnabled public String developerName;
+        @AuraEnabled public String label;
+        @AuraEnabled public Boolean isActive = false;
+        @AuraEnabled public Boolean isMaster = false;
+        /** Running user's access, NOT the target user's. Label it as such. */
+        @AuraEnabled public Boolean availableToRunningUser = false;
+    }
+}

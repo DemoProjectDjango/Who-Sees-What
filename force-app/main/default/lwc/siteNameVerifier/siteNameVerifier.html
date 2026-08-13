@@ -1,0 +1,54 @@
+<template>
+    <lightning-card title="Site Name Availability Checker" icon-name="utility:world">
+        <div class="slds-p-around_medium">
+
+            <lightning-input
+                label="Site Name (UrlPathPrefix)"
+                value={inputValue}
+                onchange={handleInputChange}
+                placeholder="e.g. PublicForm">
+            </lightning-input>
+
+            <div class="slds-m-top_medium slds-grid slds-wrap slds-gutters_small slds-align_absolute-center">
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                    <lightning-button
+                        variant="brand"
+                        label="Verify"
+                        onclick={handleVerify}
+                        disabled={isLoading}>
+                    </lightning-button>
+                </div>
+
+                <!-- ✅ NEW: Open Instructions -->
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                    <lightning-button
+                        variant="neutral"
+                        label="Instructions"
+                        onclick={handleShowInstructions}>
+                    </lightning-button>
+                </div>
+
+                <template if:true={isLoading}>
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                        <lightning-spinner alternative-text="Checking..." size="small"></lightning-spinner>
+                    </div>
+                </template>
+            </div>
+
+            <template if:true={verdictText}>
+                <div class="slds-m-top_medium">
+                    <p class={verdictClass} style="font-size: 1.2rem; font-weight: bold;">
+                        {verdictText}
+                    </p>
+                </div>
+            </template>
+
+            <template if:true={error}>
+                <div class="slds-m-top_medium slds-text-color_error">
+                    {error}
+                </div>
+            </template>
+
+        </div>
+    </lightning-card>
+</template>

@@ -1,0 +1,72 @@
+<template>
+    <section class="column" aria-labelledby="col1-heading">
+        <header class="head">
+            <h2 id="col1-heading" class="pe-eyebrow">User</h2>
+            <c-pe-search-input
+                placeholder="Name, username, alias or email"
+                aria-label="Search active users"
+                onsearch={handleSearch}></c-pe-search-input>
+
+            <div class="controls">
+                <select class="select" aria-label="Sort users" onchange={handleSort}>
+                    <option value="LastLoginDate">Recently active</option>
+                    <option value="Name">Name</option>
+                </select>
+                <button class="filter-btn" type="button" aria-expanded={filtersOpenStr}
+                        onclick={toggleFilters}>
+                    Filters<template lwc:if={activeFilterCount}> ({activeFilterCount})</template>
+                </button>
+            </div>
+
+            <template lwc:if={filtersOpen}>
+                <div class="filters">
+                    <label class="flabel">Profile
+                        <select class="select" data-key="profileId" onchange={handleFilter}>
+                            <option value="">Any profile</option>
+                            <template for:each={profileOptions} for:item="o">
+                                <option key={o.value} value={o.value}>{o.label}</option>
+                            </template>
+                        </select>
+                    </label>
+                    <label class="flabel">Role
+                        <select class="select" data-key="roleId" onchange={handleFilter}>
+                            <option value="">Any role</option>
+                            <template for:each={roleOptions} for:item="o">
+                                <option key={o.value} value={o.value}>{o.label}</option>
+                            </template>
+                        </select>
+                    </label>
+                    <p class="note">Only active users can be inspected.</p>
+                </div>
+            </template>
+        </header>
+
+        <c-pe-state-wrapper
+            state={state}
+            error={error}
+            empty-headline={emptyHeadline}
+            empty-detail={emptyDetail}
+            skeleton-rows="10"
+            onretry={handleRetry}>
+
+            <c-pe-listbox
+                items={listItems}
+                selected-id={selectedUserId}
+                aria-label="Active users"
+                id-prefix="user"
+                onrowselect={handleSelect}>
+            </c-pe-listbox>
+        </c-pe-state-wrapper>
+
+        <c-pe-paginator
+            shown={shownCount}
+            page-number={pageNumber}
+            has-more={hasMore}
+            can-go-back={canGoBack}
+            loading={isLoading}
+            cap-reached={capReached}
+            onback={handleBack}
+            onnext={handleNext}>
+        </c-pe-paginator>
+    </section>
+</template>

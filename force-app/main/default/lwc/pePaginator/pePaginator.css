@@ -1,0 +1,41 @@
+@import 'c/peBase';
+
+.pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--pe-gap);
+    padding: 0.375rem var(--pe-pad);
+    border-top: 1px solid var(--pe-line);
+    background: var(--pe-surface-sunken);
+}
+
+.btn {
+    font-size: var(--pe-fs-sm);
+    font-weight: 600;
+    color: var(--pe-accent);
+    background: var(--pe-surface);
+    border: 1px solid var(--pe-line-strong);
+    border-radius: var(--pe-radius);
+    padding: 0.1875rem 0.5rem;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.btn:hover:not(:disabled) { background: var(--pe-surface-hover); }
+.btn:disabled { color: var(--pe-ink-faint); cursor: default; opacity: 0.6; }
+.btn:focus-visible { outline: 2px solid var(--pe-accent); outline-offset: 1px; }
+
+.count {
+    font-size: var(--pe-fs-xs);
+    color: var(--pe-ink-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.cap {
+    margin: 0;
+    padding: 0.375rem var(--pe-pad);
+    font-size: var(--pe-fs-xs);
+    color: var(--pe-caution);
+    background: var(--pe-surface-sunken);
+    border-top: 1px dashed var(--pe-line);
+}

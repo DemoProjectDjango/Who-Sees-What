@@ -1,0 +1,46 @@
+@import 'c/peBase';
+
+.pe-state {
+    padding: calc(var(--pe-pad) * 2) var(--pe-pad);
+    text-align: left;
+    border-left: 2px solid var(--pe-line);
+    margin: var(--pe-gap);
+}
+
+.pe-state_error { border-left-color: var(--pe-error); }
+
+.headline {
+    font-size: var(--pe-fs-md);
+    font-weight: 600;
+    color: var(--pe-ink);
+    margin: 0 0 0.25rem;
+}
+
+.detail {
+    font-size: var(--pe-fs-sm);
+    color: var(--pe-ink-muted);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.retry {
+    margin-top: 0.75rem;
+    font-size: var(--pe-fs-sm);
+    font-weight: 600;
+    color: var(--pe-accent);
+    background: none;
+    border: 1px solid var(--pe-line-strong);
+    border-radius: var(--pe-radius);
+    padding: 0.25rem 0.625rem;
+    cursor: pointer;
+}
+.retry:hover { background: var(--pe-surface-hover); }
+.retry:focus-visible { outline: 2px solid var(--pe-accent); outline-offset: 1px; }
+
+.stale {
+    font-size: var(--pe-fs-xs);
+    color: var(--pe-ink-faint);
+    padding: 0.25rem var(--pe-pad);
+    margin: 0;
+    border-top: 1px solid var(--pe-line);
+}

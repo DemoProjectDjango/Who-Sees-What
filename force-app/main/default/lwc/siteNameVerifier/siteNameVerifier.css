@@ -1,0 +1,12 @@
+/* siteNameVerifier.css (updated to satisfy Code Analyzer) */
+
+/* ✅ Do NOT override SLDS utility classes.
+   Create your own namespaced classes instead. */
+
+.tf-text-success {
+  color: var(--slds-g-color-palette-green-50);
+}
+
+.tf-text-error {
+  color: var(--slds-g-color-palette-red-40);
+}

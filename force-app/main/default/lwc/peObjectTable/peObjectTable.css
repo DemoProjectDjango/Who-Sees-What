@@ -1,0 +1,77 @@
+@import 'c/peBase';
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--pe-pad);
+    flex-wrap: wrap;
+    padding: 0.5rem var(--pe-pad);
+    border-bottom: 1px solid var(--pe-line);
+}
+.filter {
+    width: 11rem;
+    height: 1.75rem;
+    padding: 0 0.5rem;
+    font-size: var(--pe-fs-sm);
+    color: var(--pe-ink);
+    background: var(--pe-surface);
+    border: 1px solid var(--pe-line-strong);
+    border-radius: var(--pe-radius);
+    box-sizing: border-box;
+}
+.filter:focus { outline: 2px solid var(--pe-accent); outline-offset: -1px; }
+
+.chips { display: flex; gap: 2px; flex-wrap: wrap; }
+.chip {
+    font-size: var(--pe-fs-sm);
+    color: var(--pe-ink-muted);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--pe-radius);
+    padding: 0.1875rem 0.625rem;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.chip:hover { background: var(--pe-surface-hover); }
+.chip_on {
+    color: var(--pe-accent);
+    font-weight: 600;
+    background: var(--pe-surface-select);
+    border-color: var(--pe-accent);
+}
+.chip:focus-visible { outline: 2px solid var(--pe-accent); outline-offset: 1px; }
+
+.head {
+    display: grid;
+    grid-template-columns: 1.5rem minmax(0, 1fr) 9.5rem minmax(0, 11rem);
+    gap: var(--pe-gap);
+    padding: 0.25rem var(--pe-pad);
+    border-bottom: 1px solid var(--pe-line);
+    background: var(--pe-surface-sunken);
+    font-size: var(--pe-fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--pe-ink-faint);
+}
+
+.rows { display: block; }
+
+.footer {
+    display: flex;
+    align-items: center;
+    gap: var(--pe-pad);
+    padding: 0.5rem var(--pe-pad);
+}
+.tally { font-size: var(--pe-fs-xs); color: var(--pe-ink-faint); font-variant-numeric: tabular-nums; }
+.more {
+    font-size: var(--pe-fs-xs);
+    font-weight: 600;
+    color: var(--pe-accent);
+    background: none;
+    border: 1px solid var(--pe-line-strong);
+    border-radius: var(--pe-radius);
+    padding: 0.125rem 0.5rem;
+    cursor: pointer;
+}
+.more:hover { background: var(--pe-surface-hover); }

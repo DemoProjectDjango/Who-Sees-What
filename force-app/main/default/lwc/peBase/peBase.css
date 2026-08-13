@@ -1,0 +1,71 @@
+/**
+ * Permission Explorer design tokens.
+ *
+ * Every colour routes through an SLDS styling hook with a fallback. Subscriber
+ * orgs run their own themes, and a hand-styled tool that ignores them looks
+ * broken in a way a base component never does. That is the actual tax on going
+ * custom, and it is paid here, once.
+ */
+:host {
+    /* Surfaces */
+    --pe-surface:        var(--slds-g-color-surface-1, #ffffff);
+    --pe-surface-sunken: var(--slds-g-color-surface-container-1, #f3f3f3);
+    --pe-surface-raised: var(--slds-g-color-surface-2, #ffffff);
+    --pe-surface-hover:  var(--slds-g-color-surface-container-2, #f3f3f3);
+    --pe-surface-select: var(--slds-g-color-surface-container-3, #eef4ff);
+
+    /* Ink */
+    --pe-ink:        var(--slds-g-color-on-surface-1, #181818);
+    --pe-ink-muted:  var(--slds-g-color-on-surface-2, #5c5c5c);
+    --pe-ink-faint:  var(--slds-g-color-on-surface-3, #939393);
+
+    /* Lines */
+    --pe-line:        var(--slds-g-color-border-base-1, #e5e5e5);
+    --pe-line-strong: var(--slds-g-color-border-base-4, #c9c9c9);
+
+    /* Signal — grant, absence, caution. Never colour alone. */
+    --pe-grant:   var(--slds-g-color-success-base-50, #2e844a);
+    --pe-deny:    var(--slds-g-color-neutral-base-50, #747474);
+    --pe-caution: var(--slds-g-color-warning-base-40, #a86403);
+    --pe-error:   var(--slds-g-color-error-base-40, #ba0517);
+    --pe-accent:  var(--slds-g-color-accent-base-50, #0176d3);
+
+    /* Density. Admin tools are read, not admired — rows stay tight. */
+    --pe-row-h: 2rem;
+    --pe-row-h-lg: 2.75rem;
+    --pe-gap: 0.5rem;
+    --pe-pad: 0.75rem;
+    --pe-radius: 0.25rem;
+
+    /* Type. One characterful move: API names are always monospaced, so the
+       eye separates "what Salesforce calls it" from "what the admin calls it". */
+    --pe-font: var(--slds-g-font-family, inherit);
+    --pe-mono: 'SFMono-Regular', 'Roboto Mono', Menlo, Consolas, monospace;
+    --pe-fs-xs: 0.6875rem;
+    --pe-fs-sm: 0.75rem;
+    --pe-fs-md: 0.8125rem;
+    --pe-fs-lg: 0.9375rem;
+}
+
+.pe-mono {
+    font-family: var(--pe-mono);
+    font-size: var(--pe-fs-sm);
+    letter-spacing: -0.01em;
+}
+
+.pe-eyebrow {
+    font-size: var(--pe-fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--pe-ink-faint);
+}
+
+/* The lineage spine: a 2px rail on the selected row, echoing the drill-down. */
+.pe-spine {
+    box-shadow: inset 2px 0 0 0 var(--pe-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+}

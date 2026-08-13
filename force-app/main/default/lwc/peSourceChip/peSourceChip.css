@@ -1,0 +1,113 @@
+@import 'c/peBase';
+
+.wrap { display: inline-flex; align-items: center; gap: 0.25rem; min-width: 0; }
+
+.chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.3125rem;
+    max-width: 15rem;
+    padding: 0.0625rem 0.375rem;
+    border-radius: var(--pe-radius);
+    border: 1px solid var(--pe-line);
+    background: var(--pe-surface-sunken);
+    font-size: var(--pe-fs-sm);
+    min-width: 0;
+}
+
+.kind {
+    font-size: var(--pe-fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--pe-ink-faint);
+    white-space: nowrap;
+}
+
+.label {
+    font-family: var(--pe-mono);
+    color: var(--pe-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* The action, as its own control.
+   Text plus an arrow, in the accent colour, so it reads as a link at a glance
+   rather than on hover. Sized down and unbordered so twelve of them down a
+   column stay quiet — the row's job is still to be read, not clicked. */
+.open {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.1875rem;
+    padding: 0.0625rem 0.25rem;
+    border-radius: var(--pe-radius);
+    font-size: var(--pe-fs-xs);
+    font-weight: 600;
+    color: var(--pe-accent);
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.open:hover { background: var(--pe-surface-sunken); }
+.open:hover .open_text { text-decoration: underline; }
+.open:focus-visible { outline: 2px solid var(--pe-accent); outline-offset: 1px; }
+.open_icon { font-size: 0.875em; line-height: 1; }
+
+/* Holds the action column's width so rows do not jitter as they expand. */
+.action { margin-left: auto; padding-left: 0.75rem; flex: 0 0 auto; }
+
+.open_none {
+    font-size: var(--pe-fs-xs);
+    color: var(--pe-ink-faint);
+    font-style: italic;
+    white-space: nowrap;
+}
+
+/* If the GRANTED BY column gets crowded on the 245-row object table, uncomment
+   this to reduce the *inline* action to its arrow only. The expanded list keeps
+   its full label, and the aria-label already names the record, so nothing is
+   lost for screen readers.
+
+.wrap .open_text { position: absolute; width: 1px; height: 1px; overflow: hidden;
+                   clip: rect(0 0 0 0); white-space: nowrap; }
+*/
+
+.chip_profile { border-left: 2px solid var(--pe-accent); }
+.chip_group   { border-left: 2px solid var(--pe-ink-muted); }
+.chip_muting  { border-left: 2px solid var(--pe-error); }
+.chip_muting .label { text-decoration: line-through; }
+.chip_stale   { border-left: 2px solid var(--pe-caution); }
+
+.overflow {
+    font-size: var(--pe-fs-xs);
+    font-weight: 700;
+    color: var(--pe-ink-muted);
+    background: none;
+    border: 1px solid var(--pe-line);
+    border-radius: var(--pe-radius);
+    padding: 0 0.25rem;
+    cursor: pointer;
+}
+.overflow:focus-visible { outline: 2px solid var(--pe-accent); outline-offset: 1px; }
+
+.list {
+    margin: 0.25rem 0 0;
+    padding: 0.25rem 0 0;
+    list-style: none;
+    border-top: 1px dashed var(--pe-line);
+}
+.item {
+    display: flex;
+    gap: 0.375rem;
+    align-items: baseline;
+    padding: 0.125rem 0;
+    font-size: var(--pe-fs-sm);
+}
+.via { font-size: var(--pe-fs-xs); color: var(--pe-ink-faint); }
+
+.none {
+    font-size: var(--pe-fs-sm);
+    color: var(--pe-ink-faint);
+    font-style: italic;
+}

@@ -1,0 +1,30 @@
+<template>
+    <template lwc:if={showLoading}>
+        <c-pe-skeleton count={skeletonRows}></c-pe-skeleton>
+    </template>
+
+    <template lwc:elseif={showError}>
+        <div class="pe-state pe-state_error" role="alert">
+            <p class="headline">{errorHeadline}</p>
+            <p class="detail">{error.message}</p>
+            <template lwc:if={error.retryable}>
+                <button class="retry" type="button" onclick={handleRetry}>Try again</button>
+            </template>
+        </div>
+    </template>
+
+    <template lwc:elseif={showEmpty}>
+        <div class="pe-state">
+            <p class="headline">{emptyHeadline}</p>
+            <p class="detail">{emptyDetail}</p>
+        </div>
+    </template>
+
+    <template lwc:else>
+        <slot></slot>
+    </template>
+
+    <template lwc:if={showStale}>
+        <p class="stale" aria-live="polite">Data as of {staleAt}</p>
+    </template>
+</template>

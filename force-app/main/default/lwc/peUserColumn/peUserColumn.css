@@ -1,0 +1,69 @@
+@import 'c/peBase';
+
+.column {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    background: var(--pe-surface);
+    border-right: 1px solid var(--pe-line);
+}
+
+.head {
+    flex: 0 0 auto;
+    padding: var(--pe-pad);
+    border-bottom: 1px solid var(--pe-line);
+    background: var(--pe-surface-sunken);
+}
+.head h2 { margin: 0 0 0.5rem; }
+
+.controls {
+    display: flex;
+    gap: var(--pe-gap);
+    margin-top: var(--pe-gap);
+}
+
+.select {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 1.75rem;
+    font-size: var(--pe-fs-sm);
+    color: var(--pe-ink);
+    background: var(--pe-surface);
+    border: 1px solid var(--pe-line-strong);
+    border-radius: var(--pe-radius);
+}
+.select:focus-visible { outline: 2px solid var(--pe-accent); outline-offset: -1px; }
+
+.filter-btn {
+    flex: 0 0 auto;
+    font-size: var(--pe-fs-sm);
+    font-weight: 600;
+    color: var(--pe-ink-muted);
+    background: var(--pe-surface);
+    border: 1px solid var(--pe-line-strong);
+    border-radius: var(--pe-radius);
+    padding: 0 0.5rem;
+    cursor: pointer;
+}
+.filter-btn:hover { background: var(--pe-surface-hover); }
+
+.filters {
+    display: grid;
+    gap: var(--pe-gap);
+    margin-top: var(--pe-gap);
+    padding-top: var(--pe-gap);
+    border-top: 1px dashed var(--pe-line);
+}
+.flabel {
+    display: grid;
+    gap: 0.125rem;
+    font-size: var(--pe-fs-xs);
+    font-weight: 600;
+    color: var(--pe-ink-muted);
+}
+.note {
+    margin: 0;
+    font-size: var(--pe-fs-xs);
+    color: var(--pe-ink-faint);
+}

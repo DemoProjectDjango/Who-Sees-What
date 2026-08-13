@@ -1,0 +1,21 @@
+@import 'c/peBase';
+
+.skeleton { padding: var(--pe-gap) 0; }
+
+.line {
+    background: linear-gradient(
+        90deg,
+        var(--pe-surface-sunken) 25%,
+        var(--pe-surface-hover) 37%,
+        var(--pe-surface-sunken) 63%
+    );
+    background-size: 400% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+    border-radius: var(--pe-radius);
+    margin-bottom: 2px;
+}
+
+@keyframes shimmer {
+    0%   { background-position: 100% 0; }
+    100% { background-position: 0 0; }
+}

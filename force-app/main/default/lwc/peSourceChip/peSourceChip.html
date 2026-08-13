@@ -1,0 +1,60 @@
+<template>
+    <template lwc:if={hasSources}>
+        <span class="wrap">
+            <!-- The name stays plain text. The action is a separate, labelled
+                 control, so what is clickable is visible without hovering. -->
+            <span class={primaryClass} title={primaryTitle}>
+                <span class="kind">{primaryKind}</span>
+                <span class="label">{primary.label}</span>
+            </span>
+
+            <template lwc:if={primaryLinked}>
+                <a class="open" href={primaryUrl} target="_blank"
+                   rel="noopener noreferrer" aria-label={primaryOpenAria}
+                   onclick={stopRowClick}>
+                    <span class="open_text">{primaryOpenLabel}</span>
+                    <span class="open_icon" aria-hidden="true">&#8599;</span>
+                </a>
+            </template>
+
+            <template lwc:if={hasOverflow}>
+                <button class="overflow" type="button" aria-expanded={expandedStr}
+                        onclick={toggle} title="Show all sources">+{overflowCount}</button>
+            </template>
+        </span>
+
+        <template lwc:if={expanded}>
+            <ul class="list">
+                <template for:each={rest} for:item="s">
+                    <li key={s.key} class="item">
+                        <span class="kind">{s.kindLabel}</span>
+                        <span class="label" title={s.title}>{s.label}</span>
+                        <template lwc:if={s.groupLabel}>
+                            <span class="via">via {s.groupLabel}</span>
+                        </template>
+
+                        <!-- Right-aligned action column. Never empty: a source
+                             with no page says so, so the column does not go
+                             ragged and the admin is not left guessing. -->
+                        <span class="action">
+                            <template lwc:if={s.linked}>
+                                <a class="open" href={s.url} target="_blank"
+                                   rel="noopener noreferrer" aria-label={s.openAria}
+                                   onclick={stopRowClick}>
+                                    <span class="open_text">{s.openLabel}</span>
+                                    <span class="open_icon" aria-hidden="true">&#8599;</span>
+                                </a>
+                            </template>
+                            <template lwc:else>
+                                <span class="open_none" title={s.title}>{s.noLinkNote}</span>
+                            </template>
+                        </span>
+                    </li>
+                </template>
+            </ul>
+        </template>
+    </template>
+    <template lwc:else>
+        <span class="none">no access</span>
+    </template>
+</template>

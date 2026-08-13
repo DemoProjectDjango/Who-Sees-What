@@ -1,0 +1,33 @@
+<template>
+    <div class="backdrop" onclick={handleBackdrop}>
+        <section class="modal" role="dialog" aria-modal="true" aria-labelledby="pe-modal-heading"
+                 onclick={stopPropagation} onkeydown={handleKeyDown}>
+            <header class="head">
+                <div class="crumbs">
+                    <p class="pe-eyebrow">{eyebrow}</p>
+                    <h2 id="pe-modal-heading" class="heading" tabindex="-1">
+                        <template lwc:if={hasCustomHeading}>
+                            <span class="user">{userName}</span>
+                            <span class="sep" aria-hidden="true">&rsaquo;</span>
+                            <span class="app">{heading}</span>
+                        </template>
+                        <template lwc:else>
+                            <span class="user">{userName}</span>
+                            <span class="sep" aria-hidden="true">&rsaquo;</span>
+                            <span class="app">{appName}</span>
+                        </template>
+                    </h2>
+                </div>
+                <div class="tools">
+                    <slot name="tools"></slot>
+                    <button class="close" type="button" onclick={handleClose} aria-label="Close">
+                        Close
+                    </button>
+                </div>
+            </header>
+            <div class="body">
+                <slot></slot>
+            </div>
+        </section>
+    </div>
+</template>

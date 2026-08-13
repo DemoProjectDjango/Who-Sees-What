@@ -1,0 +1,44 @@
+<template>
+    <div class="panel">
+        <c-pe-state-wrapper
+            state={state}
+            error={error}
+            empty-headline={emptyHeadline}
+            empty-detail={emptyDetail}
+            skeleton-rows="6"
+            onretry={handleRetry}>
+
+            <ul class="list">
+                <template for:each={items} for:item="it">
+                    <li key={it.key} class="row">
+                        <div class="main">
+                            <template lwc:if={it.linkable}>
+                                <a class="label" href={it.url}
+                                   target="_blank" rel="noopener noreferrer">{it.label}</a>
+                            </template>
+                            <template lwc:else>
+                                <span class="label label_dim">{it.label}</span>
+                            </template>
+
+                            <template lwc:if={it.badge}>
+                                <span class={it.badgeClass}>{it.badge}</span>
+                            </template>
+                        </div>
+
+                        <template lwc:if={it.sublabel}>
+                            <p class="sub pe-mono">{it.sublabel}</p>
+                        </template>
+
+                        <template lwc:if={it.note}>
+                            <p class="note">{it.note}</p>
+                        </template>
+                    </li>
+                </template>
+            </ul>
+
+            <template lwc:if={footnote}>
+                <p class="foot" role="note">{footnote}</p>
+            </template>
+        </c-pe-state-wrapper>
+    </div>
+</template>

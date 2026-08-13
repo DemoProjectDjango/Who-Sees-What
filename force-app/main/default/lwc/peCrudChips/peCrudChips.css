@@ -1,0 +1,44 @@
+@import 'c/peBase';
+
+.chips {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.125rem;
+    height: 1.125rem;
+    font-family: var(--pe-mono);
+    font-size: var(--pe-fs-xs);
+    font-weight: 700;
+    border-radius: 2px;
+    border: 1px solid;
+}
+
+.chip_on {
+    color: var(--pe-surface);
+    background: var(--pe-grant);
+    border-color: var(--pe-grant);
+}
+
+.chip_off {
+    color: var(--pe-ink-faint);
+    background: transparent;
+    border-color: var(--pe-line);
+}
+
+.marker {
+    margin-left: 0.375rem;
+    padding: 0 0.25rem;
+    font-size: var(--pe-fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--pe-caution);
+    border: 1px solid var(--pe-caution);
+    border-radius: 2px;
+    white-space: nowrap;
+}

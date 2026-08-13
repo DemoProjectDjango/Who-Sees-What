@@ -1,0 +1,17 @@
+<template>
+    <div class="field">
+        <input class="input"
+               type="search"
+               role="searchbox"
+               value={value}
+               placeholder={placeholder}
+               aria-label={ariaLabel}
+               oninput={handleInput} />
+        <template lwc:if={hasValue}>
+            <button class="clear" type="button" title="Clear search" onclick={handleClear}>&times;</button>
+        </template>
+    </div>
+    <template lwc:if={showMinHint}>
+        <p class="hint">Keep typing — {remaining} more character to search.</p>
+    </template>
+</template>

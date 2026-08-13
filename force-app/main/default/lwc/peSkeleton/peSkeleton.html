@@ -1,0 +1,7 @@
+<template>
+    <div class="skeleton" aria-hidden="true">
+        <template for:each={rows} for:item="row">
+            <div key={row} class="line" style={lineStyle}></div>
+        </template>
+    </div>
+</template>

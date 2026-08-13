@@ -1,0 +1,49 @@
+<template>
+    <div class="toolbar">
+        <input class="filter" type="search" placeholder="Filter objects"
+               aria-label="Filter objects" oninput={handleFilter} />
+        <div class="chips" role="group" aria-label="Access filter">
+            <template for:each={chips} for:item="c">
+                <button key={c.key} class={c.class} type="button"
+                        data-key={c.key} onclick={handleChip}>{c.label}</button>
+            </template>
+        </div>
+    </div>
+
+    <c-pe-state-wrapper
+        state={state}
+        error={error}
+        empty-headline="No objects in this app"
+        empty-detail="The app has no tabs this user can reach, and no objects with data access."
+        skeleton-rows="10"
+        onretry={handleRetry}>
+
+        <div class="head" role="row">
+            <span></span>
+            <span role="columnheader">Object</span>
+            <span role="columnheader">C R U D</span>
+            <span role="columnheader">Granted by</span>
+        </div>
+
+        <div class="rows" role="table" aria-label="Objects and tabs">
+            <template for:each={visibleRows} for:item="r">
+                <c-pe-object-row
+                    key={r.apiName}
+                    row={r}
+                    expanded={r.isExpanded}
+                    detail={r.detail}
+                    detail-state={r.detailState}
+                    detail-error={r.detailError}
+                    ontoggle={handleToggle}
+                    onretry={handleRowRetry}></c-pe-object-row>
+            </template>
+        </div>
+
+        <div class="footer">
+            <span class="tally">{tally}</span>
+            <template lwc:if={hasMore}>
+                <button class="more" type="button" onclick={showMore}>Show more</button>
+            </template>
+        </div>
+    </c-pe-state-wrapper>
+</template>

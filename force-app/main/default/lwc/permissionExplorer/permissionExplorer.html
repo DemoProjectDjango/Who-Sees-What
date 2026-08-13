@@ -1,0 +1,116 @@
+<template>
+    <div class="explorer">
+        <header class="topbar">
+            <div class="title">
+                <span class="pe-eyebrow">Permission Explorer</span>
+                <nav class="crumbs" aria-label="Current selection">
+                    <template lwc:if={crumbs.length}>
+                        <template for:each={crumbs} for:item="c">
+                            <span key={c.key} class="crumb">
+                                <template lwc:if={c.separator}><span class="sep" aria-hidden="true">›</span></template>
+                                {c.label}
+                            </span>
+                        </template>
+                    </template>
+                    <template lwc:else>
+                        <span class="crumb crumb_placeholder">Select a user to begin</span>
+                    </template>
+                </nav>
+            </div>
+
+            <div class="actions">
+                <template lwc:if={selectedUserId}>
+                    <button class="link" type="button" onclick={handleCopyLink}>Copy link</button>
+                </template>
+                <button class="link" type="button" onclick={handleRefresh}>Refresh data</button>
+            </div>
+        </header>
+
+        <template lwc:if={userSummary}>
+            <c-pe-user-summary-header
+                summary={userSummary}
+                onopenloginhistory={handleOpenLoginHistory}
+                onopenpermsets={handleOpenPermSets}
+                onopengroups={handleOpenGroups}></c-pe-user-summary-header>
+        </template>
+
+        <div class="columns">
+            <div class="col col_user">
+                <c-pe-user-column
+                    selected-user-id={selectedUserId}
+                    onuserselect={handleUserSelect}></c-pe-user-column>
+            </div>
+            <div class="col col_app">
+                <c-pe-app-column
+                    app-list={appList}
+                    selected-app-id={selectedAppId}
+                    state={appState}
+                    error={appError}
+                    stale-since={resolvedAt}
+                    onappselect={handleAppSelect}
+                    onretry={handleAppRetry}></c-pe-app-column>
+            </div>
+        </div>
+
+        <!-- One discriminator, not four booleans: two modals open at once is a
+             state this component should not be able to represent. -->
+        <template lwc:if={isAppModal}>
+            <c-pe-modal
+                user-name={userSummary.name}
+                app-name={selectedAppLabel}
+                onclose={handleModalClose}>
+                <c-pe-object-table
+                    rows={objectRows}
+                    state={railState}
+                    error={railError}
+                    onloaddetail={handleLoadDetail}
+                    onretry={handleRailRetry}></c-pe-object-table>
+            </c-pe-modal>
+        </template>
+
+        <template lwc:elseif={isLoginModal}>
+            <c-pe-modal
+                user-name={userSummary.name}
+                heading="Login history"
+                onclose={handleModalClose}>
+                <c-pe-login-history-modal
+                    result={loginHistory}
+                    state={loginState}
+                    error={loginError}
+                    onretry={handleLoginRetry}></c-pe-login-history-modal>
+            </c-pe-modal>
+        </template>
+
+        <template lwc:elseif={isPermSetModal}>
+            <c-pe-modal
+                user-name={userSummary.name}
+                heading="Permission sets"
+                onclose={handleModalClose}>
+                <c-pe-user-list-modal
+                    items={permSetItems}
+                    state={permSetState}
+                    error={permSetError}
+                    empty-headline="No permission sets assigned directly"
+                    empty-detail="This user's access comes from their profile, or from permission set groups."
+                    footnote={permSetFootnote}
+                    onretry={handlePermSetRetry}></c-pe-user-list-modal>
+            </c-pe-modal>
+        </template>
+
+        <template lwc:elseif={isGroupModal}>
+            <c-pe-modal
+                user-name={userSummary.name}
+                heading="Permission set groups"
+                onclose={handleModalClose}>
+                <c-pe-user-list-modal
+                    items={groupItems}
+                    state={groupState}
+                    error={groupError}
+                    empty-headline="No permission set groups assigned"
+                    empty-detail="Permission sets may still be assigned to this user directly."
+                    footnote={groupFootnote}
+                    onretry={handleGroupRetry}></c-pe-user-list-modal>
+            </c-pe-modal>
+        </template>
+    </div>
+</template>

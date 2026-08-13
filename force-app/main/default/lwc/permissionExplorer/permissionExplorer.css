@@ -1,0 +1,81 @@
+@import 'c/peBase';
+
+.explorer {
+    /* peModal overlays with position:absolute, so this is its containing block.
+       position:fixed would be simpler but breaks inside App Builder regions. */
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 30rem;
+    background: var(--pe-surface);
+    border: 1px solid var(--pe-line);
+    border-radius: var(--pe-radius);
+    overflow: hidden;
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--pe-pad);
+    padding: 0.5rem var(--pe-pad);
+    border-bottom: 1px solid var(--pe-line-strong);
+    background: var(--pe-surface-sunken);
+}
+
+.title { min-width: 0; }
+
+.crumbs {
+    display: flex;
+    align-items: baseline;
+    gap: 0.375rem;
+    flex-wrap: wrap;
+    margin-top: 0.125rem;
+}
+.crumb {
+    font-size: var(--pe-fs-md);
+    font-weight: 600;
+    color: var(--pe-ink);
+}
+.crumb_placeholder { font-weight: 400; color: var(--pe-ink-faint); }
+.sep { margin-right: 0.375rem; color: var(--pe-ink-faint); font-weight: 400; }
+
+.actions { display: flex; gap: var(--pe-gap); flex: 0 0 auto; }
+
+.link {
+    font-size: var(--pe-fs-sm);
+    font-weight: 600;
+    color: var(--pe-accent);
+    background: none;
+    border: none;
+    padding: 0.25rem;
+    cursor: pointer;
+}
+.link:hover { text-decoration: underline; }
+.link:focus-visible { outline: 2px solid var(--pe-accent); outline-offset: 1px; }
+
+/* Two columns now that objects live in the modal, which leaves the modal more
+   room and gets the field table close to full width at 1280px. */
+.columns {
+    display: grid;
+    grid-template-columns: minmax(17rem, 22rem) minmax(17rem, 1fr);
+    flex: 1 1 auto;
+    min-height: 0;
+}
+.col { min-width: 0; min-height: 0; display: flex; }
+.col > * { flex: 1 1 auto; min-width: 0; }
+
+/* 768–1279px: columns still fit side by side but tighten. */
+@media (max-width: 1279px) {
+    .columns { grid-template-columns: minmax(14rem, 18rem) 1fr; }
+}
+
+/* <768px: single-column wizard. The app column takes over once a user is
+   chosen, matching the breadcrumb stack the narrow layout already uses. */
+@media (max-width: 767px) {
+    .columns { grid-template-columns: 1fr; }
+    .col_app { display: none; }
+    .explorer[data-step='app'] .col_user { display: none; }
+    .explorer[data-step='app'] .col_app { display: flex; }
+}
