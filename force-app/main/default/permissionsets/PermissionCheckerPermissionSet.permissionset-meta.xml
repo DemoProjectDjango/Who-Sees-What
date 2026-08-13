@@ -21,18 +21,32 @@
         <modifyAllRecords>false</modifyAllRecords>
     </objectPermissions>
     <fieldPermissions>
+        <field>Inspection_Log__c.Action__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
         <field>Inspection_Log__c.Detail__c</field>
         <readable>true</readable>
-        <editable>false</editable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Inspection_Log__c.Inspected_At__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Inspection_Log__c.Inspector_User__c</field>
         <readable>true</readable>
-        <editable>false</editable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Inspection_Log__c.Subject_User__c</field>
         <readable>true</readable>
-        <editable>false</editable>
+        <editable>true</editable>
     </fieldPermissions>
+    <tabSettings>
+        <tab>Permission_Explorer</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
 </PermissionSet>

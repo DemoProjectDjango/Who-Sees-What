@@ -2,11 +2,16 @@
   "packageDirectories": [
     {
       "path": "force-app",
-      "default": true
+      "default": true,
+      "package": "WhoSeesWhat",
+      "versionName": "Beta 1",
+      "versionNumber": "0.1.0.NEXT",
+      "versionDescription": "Who Sees What - User Access, Field Security & Record Visibility Explorer. Inspect what a user can see and do across apps, objects, and fields, and what granted it."
     }
   ],
-  "name": "PermissionChecker",
-  "namespace": "",
+  "name": "WhoSeesWhat",
+  "namespace": "REPLACE_ME",
   "sfdcLoginUrl": "https://login.salesforce.com",
-  "sourceApiVersion": "67.0"
+  "sourceApiVersion": "67.0",
+  "packageAliases": {}
 }
