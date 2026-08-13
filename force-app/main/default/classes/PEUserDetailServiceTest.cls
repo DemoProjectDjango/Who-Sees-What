@@ -255,4 +255,33 @@ private class PEUserDetailServiceTest {
         }
         Test.stopTest();
     }
+
+    @IsTest
+    static void loginHistoryDisclosesWhenItCannotRead() {
+        Profile std = [SELECT Id FROM Profile WHERE Name = 'Standard User' LIMIT 1];
+        String stamp = String.valueOf(Datetime.now().getTime());
+
+        User weak = new User(
+            FirstName = 'No', LastName = 'ManageUsers', Alias = 'nomgu',
+            Email = 'no.manage@example.invalid',
+            Username = 'nomgu.' + stamp + '@example.invalid',
+            ProfileId = std.Id,
+            TimeZoneSidKey = 'GMT', LocaleSidKey = 'en_US',
+            EmailEncodingKey = 'UTF-8', LanguageLocaleKey = 'en_US'
+        );
+        insert weak;
+
+        Id target = subject().Id;
+
+        System.runAs(weak) {
+            Test.startTest();
+            PEDto.LoginHistoryResult res = PEUserDetailService.loginHistory(target, 50);
+            Test.stopTest();
+
+            Assert.isNotNull(res.notAvailableReason,
+                'A user without Manage Users must be told why login history is empty, not shown a blank list');
+            Assert.areEqual(50, res.appliedLimit,
+                'The limit is still echoed even when the query cannot run');
+        }
+    }
 }
