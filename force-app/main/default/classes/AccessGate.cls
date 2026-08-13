@@ -9,7 +9,6 @@
  */
 public with sharing class AccessGate {
 
-    @TestVisible
     /** Throws unless the running user holds the packaged custom permission. */
     public static void assertAuthorised() {
         if (!isAuthorised()) {
