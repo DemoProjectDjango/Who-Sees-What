@@ -1,4 +1,9 @@
 /**
+ * * Two regions of loginHistory() are permanently uncoverable, by design of the
+ * platform rather than by omission: the not-readable branch, because
+ * Schema.isAccessible() cannot be made false from a test (System.runAs
+ * enforces sharing, not CRUD), and the query loop, because LoginHistory rows
+ * cannot be inserted. This caps the class near 57% and that is expected.
  * Backs the three drill-downs hanging off the user summary header: login
  * history, directly assigned permission sets, and assigned permission set
  * groups.
