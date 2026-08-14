@@ -16,7 +16,7 @@
  * That method is deliberately the only place that knowledge lives, so the
  * spike outcome changes one method rather than the class.
  */
-public with sharing class PermissionResolver {
+public with sharing class PEPermissionResolver {
 
     /* ---------------------------------------------------------------
      * Result type
@@ -91,7 +91,7 @@ public with sharing class PermissionResolver {
         Resolved r = new Resolved();
         r.resolvedAt = System.now();
 
-        User u = AccessGate.assertInspectable(userId);
+        User u = PEAccessGate.assertInspectable(userId);
 
         loadProfileAsPermissionSet(r, u);
         Set<Id> assignedGroupIds = loadAssignments(r, userId);

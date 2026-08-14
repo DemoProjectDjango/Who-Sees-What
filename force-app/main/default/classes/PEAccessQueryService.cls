@@ -6,21 +6,21 @@
  * FieldPermissions row means *no access*, not unknown. Treating absence as
  * unknown produces a tool that shrugs, which is worse than one that answers.
  */
-public with sharing class AccessQueryService {
+public with sharing class PEAccessQueryService {
 
     /* ---------------------------------------------------------------
      * Modal table — objects and tabs for the selected app
      * --------------------------------------------------------------- */
 
     public static List<PEDto.ObjectRow> getAppObjects(
-        PermissionResolver.Resolved r, String appDeveloperName
+        PEPermissionResolver.Resolved r, String appDeveloperName
     ) {
         Map<String, PEDto.ObjectRow> byApiName = new Map<String, PEDto.ObjectRow>();
 
         // 1. App's tabs, in the app's own tab order.
-        List<MetadataCatalog.TabInfo> tabs = MetadataCatalog.getAppTabs(appDeveloperName);
+        List<PEMetadataCatalog.TabInfo> tabs = PEMetadataCatalog.getAppTabs(appDeveloperName);
 
-        for (MetadataCatalog.TabInfo t : tabs) {
+        for (PEMetadataCatalog.TabInfo t : tabs) {
             PEDto.ObjectRow row = new PEDto.ObjectRow();
             row.apiName       = t.objectApiName != null ? t.objectApiName : t.tabName;
             row.label         = t.label;
@@ -44,13 +44,13 @@ public with sharing class AccessQueryService {
     }
 
     private static void applyTabVisibility(
-        PermissionResolver.Resolved r,
+        PEPermissionResolver.Resolved r,
         Map<String, PEDto.ObjectRow> rows,
-        List<MetadataCatalog.TabInfo> tabs
+        List<PEMetadataCatalog.TabInfo> tabs
     ) {
         Set<String> tabNames = new Set<String>();
         Map<String, String> apiNameByTabName = new Map<String, String>();
-        for (MetadataCatalog.TabInfo t : tabs) {
+        for (PEMetadataCatalog.TabInfo t : tabs) {
             tabNames.add(t.tabName);
             apiNameByTabName.put(t.tabName, t.objectApiName != null ? t.objectApiName : t.tabName);
         }
@@ -81,7 +81,7 @@ public with sharing class AccessQueryService {
     }
 
     private static void applyObjectPermissions(
-        PermissionResolver.Resolved r, Map<String, PEDto.ObjectRow> rows
+        PEPermissionResolver.Resolved r, Map<String, PEDto.ObjectRow> rows
     ) {
         Set<String> objectNames = new Set<String>();
         for (PEDto.ObjectRow row : rows.values()) {
@@ -111,7 +111,7 @@ public with sharing class AccessQueryService {
     }
 
     private static void appendAccessWithoutTab(
-        PermissionResolver.Resolved r, Map<String, PEDto.ObjectRow> rows
+        PEPermissionResolver.Resolved r, Map<String, PEDto.ObjectRow> rows
     ) {
         Map<String, PEDto.ObjectRow> extra = new Map<String, PEDto.ObjectRow>();
 
@@ -129,7 +129,7 @@ public with sharing class AccessQueryService {
                 if (row == null) {
                     row = new PEDto.ObjectRow();
                     row.apiName          = op.SobjectType;
-                    row.label            = MetadataCatalog.labelFor(op.SobjectType);
+                    row.label            = PEMetadataCatalog.labelFor(op.SobjectType);
                     row.isObjectTab      = true;
                     row.tabVisibility    = 'NoTab';
                     row.accessWithoutTab = true;
@@ -159,11 +159,11 @@ public with sharing class AccessQueryService {
      * callout.
      */
     public static PEDto.ObjectDetail getObjectDetail(
-        PermissionResolver.Resolved r, String objectApiName
+        PEPermissionResolver.Resolved r, String objectApiName
     ) {
         PEDto.ObjectDetail d = new PEDto.ObjectDetail();
         d.apiName    = objectApiName;
-        d.label      = MetadataCatalog.labelFor(objectApiName);
+        d.label      = PEMetadataCatalog.labelFor(objectApiName);
         d.resolvedAt = System.now();
 
         d.objectPermissions = buildObjectGrants(r, objectApiName);
@@ -185,7 +185,7 @@ public with sharing class AccessQueryService {
         // labels it as such, and the panel keeps its "not analysed" notice.
         d.recordTypes = buildRecordTypes(objectApiName);
 
-        Map<String, String> owd = MetadataCatalog.sharingModel(objectApiName);
+        Map<String, String> owd = PEMetadataCatalog.sharingModel(objectApiName);
         d.internalSharingModel = owd.get('internal');
         d.externalSharingModel = owd.get('external');
 
@@ -193,7 +193,7 @@ public with sharing class AccessQueryService {
     }
 
     private static List<PEDto.Grant> buildObjectGrants(
-        PermissionResolver.Resolved r, String objectApiName
+        PEPermissionResolver.Resolved r, String objectApiName
     ) {
         Map<String, Map<Id, Boolean>> grantedByPerm = new Map<String, Map<Id, Boolean>>();
         Map<String, Map<Id, Boolean>> mutedByPerm   = new Map<String, Map<Id, Boolean>>();
@@ -233,7 +233,7 @@ public with sharing class AccessQueryService {
 
         List<PEDto.Grant> out = new List<PEDto.Grant>();
         for (String perm : PEConstants.OBJECT_PERM_ORDER) {
-            out.add(PermissionResolver.applyGrant(
+            out.add(PEPermissionResolver.applyGrant(
                 perm,
                 PEConstants.OBJECT_PERM_LABELS.get(perm),
                 r,
@@ -245,9 +245,9 @@ public with sharing class AccessQueryService {
     }
 
     private static List<PEDto.FieldPerm> buildFieldPerms(
-        PermissionResolver.Resolved r, String objectApiName
+        PEPermissionResolver.Resolved r, String objectApiName
     ) {
-        Map<String, Schema.SObjectField> fieldMap = MetadataCatalog.fieldMap(objectApiName);
+        Map<String, Schema.SObjectField> fieldMap = PEMetadataCatalog.fieldMap(objectApiName);
 
         Map<String, PEDto.FieldPerm> byApiName = new Map<String, PEDto.FieldPerm>();
         for (String fieldName : fieldMap.keySet()) {
@@ -258,7 +258,7 @@ public with sharing class AccessQueryService {
             fp.label    = dfr.getLabel();
             fp.dataType = String.valueOf(dfr.getType()).toLowerCase().capitalize();
 
-            FlsClassifier.Verdict v = FlsClassifier.classify(dfr);
+            PEFlsClassifier.Verdict v = PEFlsClassifier.classify(dfr);
             fp.flsNotApplicable       = v.notApplicable;
             fp.flsNotApplicableReason = v.reason;
 

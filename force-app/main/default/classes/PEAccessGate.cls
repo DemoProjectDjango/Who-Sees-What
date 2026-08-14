@@ -7,7 +7,7 @@
  * position is: gated by an explicit custom permission, and every inspection
  * logged. Both live here.
  */
-public with sharing class AccessGate {
+public with sharing class PEAccessGate {
 
     /** Throws unless the running user holds the packaged custom permission. */
     public static void assertAuthorised() {
@@ -37,7 +37,7 @@ public with sharing class AccessGate {
      */
     public static void assertAuthorisedAndLog(String action, Id subjectUserId, String detail) {
         assertAuthorised();
-        InspectionAuditLogger.log(action, subjectUserId, detail);
+        PEInspectionAuditLogger.log(action, subjectUserId, detail);
     }
 
     /** Target-user guard. Inactive users are out of scope; frozen users are not. */

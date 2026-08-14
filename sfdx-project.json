@@ -10,7 +10,7 @@
     }
   ],
   "name": "WhoSeesWhat",
-  "namespace": "REPLACE_ME",
+  "namespace": "twinforce",
   "sfdcLoginUrl": "https://login.salesforce.com",
   "sourceApiVersion": "67.0",
   "packageAliases": {}

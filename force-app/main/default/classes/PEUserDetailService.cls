@@ -8,7 +8,7 @@
  * history, directly assigned permission sets, and assigned permission set
  * groups.
  *
- * Two of the three are free. `PermissionResolver.resolve()` already computed
+ * Two of the three are free. `PEPermissionResolver.resolve()` already computed
  * the assignments and cached them, so the permission set and group lists cost
  * nothing beyond a cache read and are guaranteed to agree with the counts
  * printed in the header — the same pass produced both.
@@ -104,7 +104,7 @@ public with sharing class PEUserDetailService {
      * omitting them entirely would imply they do not apply.
      */
     public static PEDto.PermSetList permissionSets(Id userId) {
-        PermissionResolver.Resolved r = PermissionResolver.resolve(userId);
+        PEPermissionResolver.Resolved r = PEPermissionResolver.resolve(userId);
 
         PEDto.PermSetList out = new PEDto.PermSetList();
         out.directSets      = r.directPermSets;
@@ -114,6 +114,6 @@ public with sharing class PEUserDetailService {
     }
 
     public static List<PEDto.PermSetGroupRow> permissionSetGroups(Id userId) {
-        return PermissionResolver.resolve(userId).assignedGroups;
+        return PEPermissionResolver.resolve(userId).assignedGroups;
     }
 }

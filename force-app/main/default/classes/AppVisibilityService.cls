@@ -11,7 +11,7 @@
  */
 public with sharing class AppVisibilityService {
 
-    public static PEDto.AppList getVisibleApps(Id userId, PermissionResolver.Resolved r) {
+    public static PEDto.AppList getVisibleApps(Id userId, PEPermissionResolver.Resolved r) {
         return fromAppMenuItem(r);
     }
 
@@ -21,7 +21,7 @@ public with sharing class AppVisibilityService {
      * target user's visibility. Every row is therefore marked estimated, and
      * the column shows a persistent notice.
      */
-    private static PEDto.AppList fromAppMenuItem(PermissionResolver.Resolved r) {
+    private static PEDto.AppList fromAppMenuItem(PEPermissionResolver.Resolved r) {
         PEDto.AppList out = new PEDto.AppList();
         out.resolutionMode = 'APP_MENU_ITEM';
         out.setupRequired = true;

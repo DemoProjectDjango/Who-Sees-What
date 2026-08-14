@@ -6,7 +6,7 @@
  *
  * Pure logic, no queries — cheap to test, and easy to get subtly wrong.
  */
-public with sharing class FlsClassifier {
+public with sharing class PEFlsClassifier {
 
     public class Verdict {
         public Boolean notApplicable = false;

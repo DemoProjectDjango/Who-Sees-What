@@ -7,7 +7,7 @@
  * *running* user's access, not the target user's. Safe as org structure,
  * unsafe as the source of truth for the target user's visibility.
  */
-public with sharing class MetadataCatalog {
+public with sharing class PEMetadataCatalog {
 
     public class TabInfo {
         public String tabName;        // PermissionSetTabSetting.Name

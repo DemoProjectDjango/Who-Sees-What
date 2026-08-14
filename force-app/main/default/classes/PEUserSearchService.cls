@@ -7,7 +7,7 @@
  *
  * Pagination is keyset, not OFFSET. See PEKeysetCursor for why.
  */
-public with sharing class UserSearchService {
+public with sharing class PEUserSearchService {
 
     public class Filters {
         public String term;

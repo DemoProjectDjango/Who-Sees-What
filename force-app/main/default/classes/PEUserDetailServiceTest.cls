@@ -45,7 +45,7 @@ private class PEUserDetailServiceTest {
             psas.add(new PermissionSetAssignment(AssigneeId = subject.Id, PermissionSetId = ps.Id));
         }
 
-        // Grants Use_Permission_Explorer plus Inspection_Log__c create access.
+        // Grants Use_Permission_Explorer plus PE_Inspection_Log__c create access.
         List<PermissionSet> gate = [
             SELECT Id FROM PermissionSet
             WHERE Name = 'PermissionCheckerPermissionSet'
@@ -93,7 +93,7 @@ private class PEUserDetailServiceTest {
         Id userId = subject().Id;
 
         Test.startTest();
-        PermissionResolver.Resolved r = PermissionResolver.resolve(userId, true);
+        PEPermissionResolver.Resolved r = PEPermissionResolver.resolve(userId, true);
         PEDto.PermSetList result = PEUserDetailService.permissionSets(userId);
         Test.stopTest();
 
