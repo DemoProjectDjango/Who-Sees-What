@@ -7,11 +7,21 @@
       "versionName": "Beta 1",
       "versionNumber": "0.1.0.NEXT",
       "versionDescription": "Who Sees What - User Access, Field Security & Record Visibility Explorer. Inspect what a user can see and do across apps, objects, and fields, and what granted it."
+    },
+    {
+      "versionName": "ver 0.1",
+      "versionNumber": "0.1.0.NEXT",
+      "path": "force-app",
+      "default": false,
+      "package": "Who Sees What",
+      "versionDescription": ""
     }
   ],
   "name": "WhoSeesWhat",
   "namespace": "twinforce",
   "sfdcLoginUrl": "https://login.salesforce.com",
   "sourceApiVersion": "67.0",
-  "packageAliases": {}
+  "packageAliases": {
+    "Who Sees What": "0HoOW00000000ZV0AY"
+  }
 }
