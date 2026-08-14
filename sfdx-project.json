@@ -22,6 +22,7 @@
   "sfdcLoginUrl": "https://login.salesforce.com",
   "sourceApiVersion": "67.0",
   "packageAliases": {
-    "Who Sees What": "0HoOW00000000ZV0AY"
+    "Who Sees What": "0HoOW00000000ZV0AY",
+    "Who Sees What@0.1.0-1": "04tOW00000GeUz5YAF"
   }
 }

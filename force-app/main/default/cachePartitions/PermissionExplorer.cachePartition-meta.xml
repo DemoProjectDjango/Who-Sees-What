@@ -3,14 +3,14 @@
     <isDefaultPartition>false</isDefaultPartition>
     <masterLabel>PermissionExplorer</masterLabel>
     <platformCachePartitionTypes>
-        <allocatedCapacity>5</allocatedCapacity>
+        <allocatedCapacity>2</allocatedCapacity>
         <allocatedPartnerCapacity>0</allocatedPartnerCapacity>
         <allocatedPurchasedCapacity>0</allocatedPurchasedCapacity>
         <allocatedTrialCapacity>0</allocatedTrialCapacity>
         <cacheType>Organization</cacheType>
     </platformCachePartitionTypes>
     <platformCachePartitionTypes>
-        <allocatedCapacity>5</allocatedCapacity>
+        <allocatedCapacity>1</allocatedCapacity>
         <allocatedPartnerCapacity>0</allocatedPartnerCapacity>
         <allocatedPurchasedCapacity>0</allocatedPurchasedCapacity>
         <allocatedTrialCapacity>0</allocatedTrialCapacity>
