@@ -21,17 +21,7 @@
         <modifyAllRecords>false</modifyAllRecords>
     </objectPermissions>
     <fieldPermissions>
-        <field>PE_Inspection_Log__c.Action__c</field>
-        <readable>true</readable>
-        <editable>true</editable>
-    </fieldPermissions>
-    <fieldPermissions>
         <field>PE_Inspection_Log__c.Detail__c</field>
-        <readable>true</readable>
-        <editable>true</editable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <field>PE_Inspection_Log__c.Inspected_At__c</field>
         <readable>true</readable>
         <editable>true</editable>
     </fieldPermissions>

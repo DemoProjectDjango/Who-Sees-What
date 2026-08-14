@@ -4,7 +4,7 @@
     <deleteConstraint>SetNull</deleteConstraint>
     <label>Subject</label>
     <referenceTo>User</referenceTo>
-    <relationshipName>Inspections_Received</relationshipName>
+    <relationshipName>PE_Inspections_Received</relationshipName>
     <required>false</required>
     <trackTrending>false</trackTrending>
     <type>Lookup</type>
