@@ -41,14 +41,22 @@
                     onuserselect={handleUserSelect}></c-pe-user-column>
             </div>
             <div class="col col_app">
-                <c-pe-app-column
-                    app-list={appList}
-                    selected-app-id={selectedAppId}
-                    state={appState}
-                    error={appError}
-                    stale-since={resolvedAt}
-                    onappselect={handleAppSelect}
-                    onretry={handleAppRetry}></c-pe-app-column>
+                <!-- Until a user is picked there is nothing to show here, so the
+                     space goes to setup steps and the tool's stated limits rather
+                     than an empty panel. -->
+                <template lwc:if={selectedUserId}>
+                    <c-pe-app-column
+                        app-list={appList}
+                        selected-app-id={selectedAppId}
+                        state={appState}
+                        error={appError}
+                        stale-since={resolvedAt}
+                        onappselect={handleAppSelect}
+                        onretry={handleAppRetry}></c-pe-app-column>
+                </template>
+                <template lwc:else>
+                    <c-pe-getting-started></c-pe-getting-started>
+                </template>
             </div>
         </div>
 
