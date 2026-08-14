@@ -1,7 +1,7 @@
 /**
  * Walks the full stack the way the LWC does: search, resolve, then drill into
  * one object. The reason this exists as one test rather than four unit tests is
- * that PEAccessQueryService, PEMetadataCatalog and AppVisibilityService are only
+ * that PEAccessQueryService, PEMetadataCatalog and PEAppVisibilityService are only
  * ever reached through the controller, and testing them in isolation would
  * assert against a call shape no caller actually uses.
  *

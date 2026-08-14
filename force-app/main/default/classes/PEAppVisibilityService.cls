@@ -9,7 +9,7 @@
  *
  * Resolution mode: APP_MENU_ITEM (the only mode).
  */
-public with sharing class AppVisibilityService {
+public with sharing class PEAppVisibilityService {
 
     public static PEDto.AppList getVisibleApps(Id userId, PEPermissionResolver.Resolved r) {
         return fromAppMenuItem(r);

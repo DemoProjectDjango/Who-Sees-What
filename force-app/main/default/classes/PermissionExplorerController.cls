@@ -69,7 +69,7 @@ public with sharing class PermissionExplorerController {
 
             PEDto.UserContext ctx = new PEDto.UserContext();
             ctx.summary = buildSummary(u, r);
-            ctx.apps = AppVisibilityService.getVisibleApps(userId, r);
+            ctx.apps = PEAppVisibilityService.getVisibleApps(userId, r);
             return ctx;
         } catch (Exception e) {
             throw toAura(e);
