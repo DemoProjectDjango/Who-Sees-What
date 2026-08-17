@@ -51,39 +51,31 @@ public with sharing class PEUserSearchService {
      * means the admin stares at everyone whose surname starts with A, while the
      * users they actually need skew heavily toward recently active ones.
      *
+     * Injection safety, stated here because the query is assembled rather than
+     * literal — no suppression is needed and none should be added:
+     *
+     *  - The string is built exclusively from the private static final constants
+     *    above. Filters are applied by CHOOSING which constant to append; no
+     *    user-supplied value is ever concatenated into it.
+     *  - Every value reaches the database through the named bind map passed to
+     *    Database.queryWithBinds, never through the string.
+     *  - The one identifier that varies is the sort column, and it is not taken
+     *    from input either: sortField is validated by
+     *    PEKeysetCursor.isAllowedSort, falls back to 'Name', and the sort is
+     *    then applied by selecting between two constant fragments rather than
+     *    by interpolation. PermissionExplorerTest.disallowedSortFieldIsRejected
+     *    asserts the allowlist.
+     *  - The query runs in AccessLevel.USER_MODE, so object and field
+     *    permissions are enforced for the running user.
+     *
+     * If this ever moves back to Database.query(String), the analyser will flag
+     * it and it should be treated as a real finding, not suppressed.
+     *
      * @param f Filter selections from the column header
      * @param encodedCursor Opaque keyset cursor from the previous page, or null for the first page
      * @param pageSize Requested page size, or null for the default
      * @return PEDto.PagedResult one page of matching users plus the cursor for the next
      */
-    /*
-     * PMD.ApexSOQLInjection is suppressed here, not worked around.
-     *
-     * The query string is assembled exclusively from the private static final
-     * constants declared above. Filters are applied by selecting which constant
-     * to append; no user-supplied value is ever concatenated into the string.
-     * Every value reaches the database through the named bind map passed to
-     * Database.queryWithBinds.
-     *
-     * The one field name that varies (the sort column) is not taken from input
-     * either: sortField is validated against PEKeysetCursor.isAllowedSort and
-     * falls back to 'Name', and the sort is then applied by choosing between
-     * two constant ORDER BY fragments rather than by interpolation. That
-     * allowlist is asserted by PermissionExplorerTest.disallowedSortFieldIsRejected.
-     *
-     * PMD flags any Database.query call taking a variable and cannot trace
-     * safety through the List<String> join. Eliminating the finding outright
-     * would require a separate static query for every filter combination
-     * (2 sort orders x 2 cursor states x 8 optional-filter combinations), or
-     * forcing optional filters into IN clauses populated with every profile
-     * and role id. The latter silently drops users in orgs with more than
-     * 1,000 roles, which trades a false-positive lint finding for a real
-     * correctness bug at scale. Neither is an improvement.
-     *
-     * The query runs in AccessLevel.USER_MODE, so object and field permissions
-     * are enforced for the running user.
-     */
-    @SuppressWarnings('PMD.ApexSOQLInjection')
     public static PEDto.PagedResult search(Filters f, String encodedCursor, Integer pageSize) {
         PEDto.PagedResult result = new PEDto.PagedResult();
         result.pageSize = pageSize == null ? PEConstants.USER_PAGE_SIZE : pageSize;
