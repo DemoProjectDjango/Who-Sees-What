@@ -23,7 +23,7 @@ private class PEUserDetailServiceTest {
 
     @TestSetup
     static void makeData() {
-        Profile admin = [SELECT Id FROM Profile WHERE Name = 'System Administrator' LIMIT 1];
+        Profile admin = [SELECT Id FROM Profile WHERE Name = 'System Administrator' WITH USER_MODE LIMIT 1];
         String stamp = String.valueOf(Datetime.now().getTime());
 
         User subject = buildUser(admin.Id, 'Drill', 'Subject', 'drlsub', SUBJECT_EMAIL, stamp + 'a');
@@ -49,6 +49,7 @@ private class PEUserDetailServiceTest {
         List<PermissionSet> gate = [
             SELECT Id FROM PermissionSet
             WHERE Name = 'PermissionCheckerPermissionSet'
+            WITH USER_MODE
             LIMIT 1
         ];
         if (!gate.isEmpty()) {
@@ -77,11 +78,11 @@ private class PEUserDetailServiceTest {
     }
 
     private static User subject() {
-        return [SELECT Id FROM User WHERE Email = :SUBJECT_EMAIL LIMIT 1];
+        return [SELECT Id FROM User WHERE Email = :SUBJECT_EMAIL WITH USER_MODE LIMIT 1];
     }
 
     private static User inspector() {
-        return [SELECT Id FROM User WHERE Email = :INSPECTOR_EMAIL LIMIT 1];
+        return [SELECT Id FROM User WHERE Email = :INSPECTOR_EMAIL WITH USER_MODE LIMIT 1];
     }
 
     /* ===============================================================
@@ -211,7 +212,7 @@ private class PEUserDetailServiceTest {
     @IsTest
     static void unauthorisedUserIsRejectedBeforeAnyQuery() {
         Id userId = subject().Id;
-        User plain = [SELECT Id FROM User WHERE Email = :SUBJECT_EMAIL LIMIT 1];
+        User plain = [SELECT Id FROM User WHERE Email = :SUBJECT_EMAIL WITH USER_MODE LIMIT 1];
 
         Boolean threw = false;
         String message;

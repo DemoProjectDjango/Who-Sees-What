@@ -5,13 +5,37 @@
  * Absence rule, applied throughout: a missing ObjectPermissions or
  * FieldPermissions row means *no access*, not unknown. Treating absence as
  * unknown produces a tool that shrugs, which is worse than one that answers.
+ *
+ * Two PMD suppressions below are deliberate and structural, not deferred work:
+ *
+ * OperationWithLimitsInLoop — every query here sits inside a loop over
+ * PESoqlChunker batches. That loop exists precisely to respect limits: a
+ * user with hundreds of effective parents exceeds the SOQL bind-list ceiling
+ * in one query, so the work is split and the count is pre-checked by
+ * assertQueryBudget. Hoisting the queries out of the loop is the bug this
+ * pattern prevents.
+ *
+ * CognitiveComplexity / CyclomaticComplexity at class level — this is the
+ * query surface for the whole product. Its complexity is breadth (six
+ * permission columns, four query shapes) rather than depth, and splitting it
+ * to satisfy a threshold would scatter the absence rule across files, which
+ * is the one invariant that has to hold identically everywhere.
  */
+@SuppressWarnings('PMD.CognitiveComplexity,PMD.CyclomaticComplexity')
 public with sharing class PEAccessQueryService {
 
     /* ---------------------------------------------------------------
      * Modal table — objects and tabs for the selected app
      * --------------------------------------------------------------- */
 
+    /**
+     * Builds the object and tab access rows shown when an admin opens an app's
+     * visibility details, combining app navigation metadata with effective CRUD.
+     *
+     * @param r Effective permission-set resolution for the inspected user.
+     * @param appDeveloperName Developer name of the Lightning app being inspected.
+     * @return Object and tab rows that explain what the selected user can reach from the app.
+     */
     public static List<PEDto.ObjectRow> getAppObjects(
         PEPermissionResolver.Resolved r, String appDeveloperName
     ) {
@@ -43,18 +67,29 @@ public with sharing class PEAccessQueryService {
         return byApiName.values();
     }
 
+    /**
+     * Tab name to row-key mapping, lifted out so applyTabVisibility reads as
+     * two steps rather than one long method.
+     */
+    private static Map<String, String> apiNameByTabName(List<PEMetadataCatalog.TabInfo> tabs) {
+        Map<String, String> out = new Map<String, String>();
+        for (PEMetadataCatalog.TabInfo t : tabs) {
+            out.put(t.tabName, t.objectApiName != null ? t.objectApiName : t.tabName);
+        }
+        return out;
+    }
+
+    @SuppressWarnings('PMD.OperationWithLimitsInLoop')
     private static void applyTabVisibility(
         PEPermissionResolver.Resolved r,
         Map<String, PEDto.ObjectRow> rows,
         List<PEMetadataCatalog.TabInfo> tabs
     ) {
-        Set<String> tabNames = new Set<String>();
-        Map<String, String> apiNameByTabName = new Map<String, String>();
-        for (PEMetadataCatalog.TabInfo t : tabs) {
-            tabNames.add(t.tabName);
-            apiNameByTabName.put(t.tabName, t.objectApiName != null ? t.objectApiName : t.tabName);
+        Map<String, String> apiNameByTabName = apiNameByTabName(tabs);
+        Set<String> tabNames = apiNameByTabName.keySet();
+        if (tabNames.isEmpty()) {
+            return;
         }
-        if (tabNames.isEmpty()) return;
 
         List<List<Id>> batches = PESoqlChunker.chunk(r.effectiveParents);
         PESoqlChunker.assertQueryBudget(batches.size());
@@ -64,10 +99,12 @@ public with sharing class PEAccessQueryService {
                 SELECT Name, Visibility, ParentId
                 FROM PermissionSetTabSetting
                 WHERE ParentId IN :batch AND Name IN :tabNames
+                WITH USER_MODE
             ]) {
-                String apiName = apiNameByTabName.get(s.Name);
-                PEDto.ObjectRow row = rows.get(apiName);
-                if (row == null) continue;
+                PEDto.ObjectRow row = rows.get(apiNameByTabName.get(s.Name));
+                if (row == null) {
+                    continue;
+                }
 
                 // DefaultOn beats DefaultOff beats Hidden — additive, like every
                 // other permission.
@@ -75,19 +112,40 @@ public with sharing class PEAccessQueryService {
                     row.tabVisibility = s.Visibility;
                 }
                 PEDto.Source src = r.sourcesById.get(s.ParentId);
-                if (src != null) row.tabSources.add(src);
+                if (src != null) {
+                    row.tabSources.add(src);
+                }
             }
         }
     }
 
+    /**
+     * The six CRUD columns are OR-merged in two different query paths. Keeping
+     * that in one place means the two can never disagree about what "additive"
+     * means, which is the failure a permission tool cannot afford.
+     */
+    private static void mergeCrud(PEDto.ObjectRow row, ObjectPermissions op) {
+        row.canRead   = row.canRead   || op.PermissionsRead;
+        row.canCreate = row.canCreate || op.PermissionsCreate;
+        row.canEdit   = row.canEdit   || op.PermissionsEdit;
+        row.canDelete = row.canDelete || op.PermissionsDelete;
+        row.viewAll   = row.viewAll   || op.PermissionsViewAllRecords;
+        row.modifyAll = row.modifyAll || op.PermissionsModifyAllRecords;
+    }
+
+    @SuppressWarnings('PMD.OperationWithLimitsInLoop')
     private static void applyObjectPermissions(
         PEPermissionResolver.Resolved r, Map<String, PEDto.ObjectRow> rows
     ) {
         Set<String> objectNames = new Set<String>();
         for (PEDto.ObjectRow row : rows.values()) {
-            if (row.isObjectTab) objectNames.add(row.apiName);
+            if (row.isObjectTab) {
+                objectNames.add(row.apiName);
+            }
         }
-        if (objectNames.isEmpty()) return;
+        if (objectNames.isEmpty()) {
+            return;
+        }
 
         for (List<Id> batch : PESoqlChunker.chunk(r.effectiveParents)) {
             for (ObjectPermissions op : [
@@ -97,19 +155,29 @@ public with sharing class PEAccessQueryService {
                        PermissionsModifyAllRecords
                 FROM ObjectPermissions
                 WHERE ParentId IN :batch AND SobjectType IN :objectNames
+                WITH USER_MODE
             ]) {
                 PEDto.ObjectRow row = rows.get(op.SobjectType);
-                if (row == null) continue;
-                row.canRead   = row.canRead   || op.PermissionsRead;
-                row.canCreate = row.canCreate || op.PermissionsCreate;
-                row.canEdit   = row.canEdit   || op.PermissionsEdit;
-                row.canDelete = row.canDelete || op.PermissionsDelete;
-                row.viewAll   = row.viewAll   || op.PermissionsViewAllRecords;
-                row.modifyAll = row.modifyAll || op.PermissionsModifyAllRecords;
+                if (row == null) {
+                    continue;
+                }
+                mergeCrud(row, op);
             }
         }
     }
 
+    /** A row for an object reachable by data access but absent from this app's tabs. */
+    private static PEDto.ObjectRow newAccessWithoutTabRow(String objectApiName) {
+        PEDto.ObjectRow row = new PEDto.ObjectRow();
+        row.apiName          = objectApiName;
+        row.label            = PEMetadataCatalog.labelFor(objectApiName);
+        row.isObjectTab      = true;
+        row.tabVisibility    = 'NoTab';
+        row.accessWithoutTab = true;
+        return row;
+    }
+
+    @SuppressWarnings('PMD.OperationWithLimitsInLoop')
     private static void appendAccessWithoutTab(
         PEPermissionResolver.Resolved r, Map<String, PEDto.ObjectRow> rows
     ) {
@@ -122,25 +190,18 @@ public with sharing class PEAccessQueryService {
                        PermissionsViewAllRecords, PermissionsModifyAllRecords
                 FROM ObjectPermissions
                 WHERE ParentId IN :batch AND PermissionsRead = true
+                WITH USER_MODE
             ]) {
-                if (rows.containsKey(op.SobjectType)) continue;
+                if (rows.containsKey(op.SobjectType)) {
+                    continue;
+                }
 
                 PEDto.ObjectRow row = extra.get(op.SobjectType);
                 if (row == null) {
-                    row = new PEDto.ObjectRow();
-                    row.apiName          = op.SobjectType;
-                    row.label            = PEMetadataCatalog.labelFor(op.SobjectType);
-                    row.isObjectTab      = true;
-                    row.tabVisibility    = 'NoTab';
-                    row.accessWithoutTab = true;
+                    row = newAccessWithoutTabRow(op.SobjectType);
                     extra.put(op.SobjectType, row);
                 }
-                row.canRead   = row.canRead   || op.PermissionsRead;
-                row.canCreate = row.canCreate || op.PermissionsCreate;
-                row.canEdit   = row.canEdit   || op.PermissionsEdit;
-                row.canDelete = row.canDelete || op.PermissionsDelete;
-                row.viewAll   = row.viewAll   || op.PermissionsViewAllRecords;
-                row.modifyAll = row.modifyAll || op.PermissionsModifyAllRecords;
+                mergeCrud(row, op);
             }
         }
         rows.putAll(extra);
@@ -157,6 +218,10 @@ public with sharing class PEAccessQueryService {
      *
      * The rule: eager for anything SOQL-cheap, lazy for anything that touches a
      * callout.
+     *
+     * @param r Effective permission-set resolution for the inspected user.
+     * @param objectApiName API name of the object whose permissions are being inspected.
+     * @return Composite object detail used by the admin console to render object, field, record type, and sharing context.
      */
     public static PEDto.ObjectDetail getObjectDetail(
         PEPermissionResolver.Resolved r, String objectApiName
@@ -192,6 +257,19 @@ public with sharing class PEAccessQueryService {
         return d;
     }
 
+    /** Permission name to value, so the grant/mute split reads as one loop. */
+    private static Map<String, Boolean> permValues(ObjectPermissions op) {
+        return new Map<String, Boolean>{
+            'PermissionsRead'             => op.PermissionsRead,
+            'PermissionsCreate'           => op.PermissionsCreate,
+            'PermissionsEdit'             => op.PermissionsEdit,
+            'PermissionsDelete'           => op.PermissionsDelete,
+            'PermissionsViewAllRecords'   => op.PermissionsViewAllRecords,
+            'PermissionsModifyAllRecords' => op.PermissionsModifyAllRecords
+        };
+    }
+
+    @SuppressWarnings('PMD.OperationWithLimitsInLoop')
     private static List<PEDto.Grant> buildObjectGrants(
         PEPermissionResolver.Resolved r, String objectApiName
     ) {
@@ -211,22 +289,13 @@ public with sharing class PEAccessQueryService {
                        PermissionsDelete, PermissionsViewAllRecords, PermissionsModifyAllRecords
                 FROM ObjectPermissions
                 WHERE ParentId IN :batch AND SobjectType = :objectApiName
+                WITH USER_MODE
             ]) {
                 Boolean isMuting = r.mutingParents.contains(op.ParentId);
-                Map<String, Boolean> values = new Map<String, Boolean>{
-                    'PermissionsRead'             => op.PermissionsRead,
-                    'PermissionsCreate'           => op.PermissionsCreate,
-                    'PermissionsEdit'             => op.PermissionsEdit,
-                    'PermissionsDelete'           => op.PermissionsDelete,
-                    'PermissionsViewAllRecords'   => op.PermissionsViewAllRecords,
-                    'PermissionsModifyAllRecords' => op.PermissionsModifyAllRecords
-                };
+                Map<String, Boolean> values = permValues(op);
                 for (String perm : values.keySet()) {
-                    if (isMuting) {
-                        mutedByPerm.get(perm).put(op.ParentId, values.get(perm));
-                    } else {
-                        grantedByPerm.get(perm).put(op.ParentId, values.get(perm));
-                    }
+                    Map<String, Map<Id, Boolean>> target = isMuting ? mutedByPerm : grantedByPerm;
+                    target.get(perm).put(op.ParentId, values.get(perm));
                 }
             }
         }
@@ -244,12 +313,15 @@ public with sharing class PEAccessQueryService {
         return out;
     }
 
-    private static List<PEDto.FieldPerm> buildFieldPerms(
-        PEPermissionResolver.Resolved r, String objectApiName
-    ) {
+    /**
+     * Every field on the object, classified before any permission row is read.
+     * Seeding first is what lets absence mean "no access" rather than "not in
+     * the result set".
+     */
+    private static Map<String, PEDto.FieldPerm> seedFieldRows(String objectApiName) {
         Map<String, Schema.SObjectField> fieldMap = PEMetadataCatalog.fieldMap(objectApiName);
-
         Map<String, PEDto.FieldPerm> byApiName = new Map<String, PEDto.FieldPerm>();
+
         for (String fieldName : fieldMap.keySet()) {
             Schema.DescribeFieldResult dfr = fieldMap.get(fieldName).getDescribe();
 
@@ -264,24 +336,39 @@ public with sharing class PEAccessQueryService {
 
             byApiName.put(objectApiName + '.' + dfr.getName(), fp);
         }
+        return byApiName;
+    }
+
+    @SuppressWarnings('PMD.OperationWithLimitsInLoop')
+    private static List<PEDto.FieldPerm> buildFieldPerms(
+        PEPermissionResolver.Resolved r, String objectApiName
+    ) {
+        Map<String, PEDto.FieldPerm> byApiName = seedFieldRows(objectApiName);
 
         for (List<Id> batch : PESoqlChunker.chunk(r.effectiveParents)) {
             for (FieldPermissions f : [
                 SELECT Field, ParentId, PermissionsRead, PermissionsEdit
                 FROM FieldPermissions
                 WHERE ParentId IN :batch AND SobjectType = :objectApiName
+                WITH USER_MODE
             ]) {
                 PEDto.FieldPerm fp = byApiName.get(f.Field);
-                if (fp == null) continue;
+                if (fp == null) {
+                    continue;
+                }
 
                 PEDto.Source src = r.sourcesById.get(f.ParentId);
                 if (f.PermissionsRead) {
                     fp.readable = true;
-                    if (src != null) fp.readSources.add(src);
+                    if (src != null) {
+                        fp.readSources.add(src);
+                    }
                 }
                 if (f.PermissionsEdit) {
                     fp.editable = true;
-                    if (src != null) fp.editSources.add(src);
+                    if (src != null) {
+                        fp.editSources.add(src);
+                    }
                 }
             }
         }
@@ -299,12 +386,17 @@ public with sharing class PEAccessQueryService {
      * *running* user's access, never the target's — describe cannot answer for
      * someone else, and presenting it as though it could is the exact confusion
      * this tool exists to remove.
+     *
+     * @param objectApiName API name of the object whose record type catalog is displayed beside permission findings.
+     * @return Org-level record type rows for the object, annotated with running-user describe availability.
      */
     private static List<PEDto.RecordTypeRow> buildRecordTypes(String objectApiName) {
         List<PEDto.RecordTypeRow> out = new List<PEDto.RecordTypeRow>();
 
         Schema.SObjectType t = Schema.getGlobalDescribe().get(objectApiName);
-        if (t == null) return out;
+        if (t == null) {
+            return out;
+        }
 
         for (Schema.RecordTypeInfo info : t.getDescribe().getRecordTypeInfos()) {
             PEDto.RecordTypeRow row = new PEDto.RecordTypeRow();

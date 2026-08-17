@@ -1,11 +1,13 @@
-const { defineConfig } = require('eslint/config');
 const eslintJs = require('@eslint/js');
 const jestPlugin = require('eslint-plugin-jest');
 const auraConfig = require('@salesforce/eslint-plugin-aura');
 const lwcConfig = require('@salesforce/eslint-config-lwc/recommended');
 const globals = require('globals');
 
-module.exports = defineConfig([
+// Plain flat-config array rather than defineConfig(): the wrapper lives at
+// the 'eslint/config' subpath, which only exists in ESLint 9.23+, and Code
+// Analyzer bundles an older ESLint.
+module.exports = [
     // Aura configuration
     {
         files: ['**/aura/**/*.js'],
@@ -52,4 +54,4 @@ module.exports = defineConfig([
         },
         extends: ['eslintJs/recommended']
     }
-]);
+];

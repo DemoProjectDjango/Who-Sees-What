@@ -13,6 +13,11 @@ public with sharing class PermissionExplorerController {
      * Column 1
      * --------------------------------------------------------------- */
 
+    /**
+     * Provides filter picklists for the user search column after confirming the admin can use the tool.
+     *
+     * @return Profile, role, and user type options used to narrow permission inspections.
+     */
     @AuraEnabled(cacheable=true)
     public static Map<String, Object> getFilterOptions() {
         try {
@@ -27,6 +32,15 @@ public with sharing class PermissionExplorerController {
      * Not cacheable: the cursor makes each page a distinct call anyway, and
      * @AuraEnabled(cacheable=true) would strand pages in the client cache after
      * a refresh-token bump.
+     *
+     * @param term Text entered by the admin to find users by name, username, or email.
+     * @param profileId Optional profile filter selected in the user column.
+     * @param roleId Optional role filter selected in the user column.
+     * @param userType Optional Salesforce user type filter.
+     * @param sortField Requested keyset-supported sort field.
+     * @param cursor Opaque next-page cursor from the previous search response.
+     * @param pageSize Requested number of rows for the user column.
+     * @return Paged active-user search results for choosing a permission inspection subject.
      */
     @AuraEnabled
     public static PEDto.PagedResult searchUsers(
@@ -56,6 +70,10 @@ public with sharing class PermissionExplorerController {
     /**
      * Runs the resolver, caches the effective parent Ids, and returns the
      * summary header plus the visible app list in the same round trip.
+     *
+     * @param userId User selected as the permission inspection subject.
+     * @param forceRefresh True when the admin clicked refresh and wants resolver caches rebuilt.
+     * @return User header and app visibility payload for the selected user.
      */
     @AuraEnabled
     public static PEDto.UserContext resolveUser(Id userId, Boolean forceRefresh) {
@@ -85,6 +103,13 @@ public with sharing class PermissionExplorerController {
      * paying for it on every user selection would be paying for nothing.
      * --------------------------------------------------------------- */
 
+    /**
+     * Returns recent login activity for the selected user when the running admin can read it.
+     *
+     * @param userId User whose login activity is being inspected.
+     * @param maxRows Maximum number of login rows to return to the drill-down.
+     * @return Login history payload with unavailable/truncated state for the UI.
+     */
     @AuraEnabled
     public static PEDto.LoginHistoryResult getLoginHistory(Id userId, Integer maxRows) {
         try {
@@ -96,6 +121,12 @@ public with sharing class PermissionExplorerController {
         }
     }
 
+    /**
+     * Returns directly assigned permission sets for the selected user summary drill-down.
+     *
+     * @param userId User whose direct permission set assignments are being inspected.
+     * @return Permission set list matching the summary count and unreadable-set warnings.
+     */
     @AuraEnabled
     public static PEDto.PermSetList getAssignedPermissionSets(Id userId) {
         try {
@@ -106,6 +137,12 @@ public with sharing class PermissionExplorerController {
         }
     }
 
+    /**
+     * Returns assigned permission set groups so admins can trace group-derived effective access.
+     *
+     * @param userId User whose permission set group assignments are being inspected.
+     * @return Permission set group rows for the selected user's header drill-down.
+     */
     @AuraEnabled
     public static List<PEDto.PermSetGroupRow> getAssignedPermissionSetGroups(Id userId) {
         try {
@@ -120,6 +157,13 @@ public with sharing class PermissionExplorerController {
      * App selection — populates the modal rail
      * --------------------------------------------------------------- */
 
+    /**
+     * Returns object and tab permission rows for the selected app and inspected user.
+     *
+     * @param userId User whose app object access is being inspected.
+     * @param appDeveloperName Developer name of the app selected by the admin.
+     * @return Object rows that combine tab visibility, CRUD, and access-without-tab signals.
+     */
     @AuraEnabled
     public static List<PEDto.ObjectRow> getAppObjects(Id userId, String appDeveloperName) {
         try {
@@ -135,6 +179,13 @@ public with sharing class PermissionExplorerController {
      * Object selection — one composite call, not four
      * --------------------------------------------------------------- */
 
+    /**
+     * Returns composite object detail for the modal opened from an app object row.
+     *
+     * @param userId User whose object and field permissions are being inspected.
+     * @param objectApiName API name of the object selected by the admin.
+     * @return Object detail payload with CRUD, FLS, record type, sharing, and section error data.
+     */
     @AuraEnabled
     public static PEDto.ObjectDetail getObjectDetail(Id userId, String objectApiName) {
         try {
@@ -150,7 +201,11 @@ public with sharing class PermissionExplorerController {
      * Refresh
      * --------------------------------------------------------------- */
 
-    /** Bumps the version token rather than clearing the partition. */
+    /**
+     * Bumps the version token rather than clearing the partition.
+     *
+     * @return Fresh cache version token that makes later permission inspections recompute resolver data.
+     */
     @AuraEnabled
     public static String refreshCache() {
         try {
@@ -191,6 +246,9 @@ public with sharing class PermissionExplorerController {
     /**
      * Serialises the structured cause into the AuraHandledException message as
      * JSON, so the client can branch on cause instead of matching strings.
+     *
+     * @param e Exception raised by the controller or delegated service.
+     * @return AuraHandledException containing a serialized ErrorInfo payload for the LWC.
      */
     private static AuraHandledException toAura(Exception e) {
         PEDto.ErrorInfo info;

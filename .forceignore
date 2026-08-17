@@ -12,3 +12,13 @@ package.xml
 **/__tests__/**
 
 node_modules/
+
+
+# Code Analyzer output
+analyzer-full.*
+CodeAnalyzerReport.html
+appexchange.json
+baseline.*
+p0.json
+p1.*
+wsw-analyzer*.html

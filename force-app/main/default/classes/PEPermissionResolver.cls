@@ -22,6 +22,7 @@ public with sharing class PEPermissionResolver {
      * Result type
      * --------------------------------------------------------------- */
 
+    /** Resolved permission context reused by all columns after an admin selects a user. */
     public class Resolved {
         /** Every non-muting PermissionSet Id that contributes grants. */
         public Set<Id> effectiveParents = new Set<Id>();
@@ -49,6 +50,7 @@ public with sharing class PEPermissionResolver {
         /** Sets that contribute only because a group containing them is assigned. */
         public Integer groupDerivedCount = 0;
 
+        /** Effective parent Ids as a list for SOQL bind contexts that cannot use the backing set directly. */
         public List<Id> parentList { get { return new List<Id>(effectiveParents); } }
     }
 
@@ -63,7 +65,13 @@ public with sharing class PEPermissionResolver {
      */
     private static final String CACHE_PREFIX = 'resolvedV3';
 
-    /** Cached per session. Pass forceRefresh from the refresh button. */
+    /**
+     * Cached per session. Pass forceRefresh from the refresh button.
+     *
+     * @param userId User whose effective permissions are being inspected.
+     * @param forceRefresh True when the admin explicitly refreshes and cached resolver data should be ignored.
+     * @return Effective permission context for the selected user.
+     */
     public static Resolved resolve(Id userId, Boolean forceRefresh) {
         String key = CACHE_PREFIX + String.valueOf(userId).right(15);
 
@@ -79,6 +87,12 @@ public with sharing class PEPermissionResolver {
         return r;
     }
 
+    /**
+     * Resolves the selected user's effective permissions using the cached path used by normal UI navigation.
+     *
+     * @param userId User whose effective permissions are being inspected.
+     * @return Effective permission context for the selected user.
+     */
     public static Resolved resolve(Id userId) {
         return resolve(userId, false);
     }
@@ -104,6 +118,9 @@ public with sharing class PEPermissionResolver {
     /**
      * Since profiles became permission-set-backed, the profile is just another
      * parent Id. This is the key that makes unioning tractable in SOQL.
+     *
+     * @param r Resolver result being populated for the selected user.
+     * @param u Active user record whose profile permission set contributes baseline access.
      */
     private static void loadProfileAsPermissionSet(Resolved r, User u) {
         if (u.ProfileId == null) return;
@@ -112,7 +129,9 @@ public with sharing class PEPermissionResolver {
             SELECT Id, Label, ProfileId, Profile.Name
             FROM PermissionSet
             WHERE IsOwnedByProfile = true AND ProfileId = :u.ProfileId
+            WITH USER_MODE
             LIMIT 1
+            
         ];
         if (profileSets.isEmpty()) return;
 
@@ -135,6 +154,10 @@ public with sharing class PEPermissionResolver {
      * object. PermissionSetGroupId being non-null is what distinguishes them,
      * and it is what lets us label the chip "via <group>" instead of showing a
      * permission set the admin never assigned directly.
+     *
+     * @param r Resolver result being populated for the selected user.
+     * @param userId User whose direct permission set assignments are being inspected.
+     * @return Permission set group Ids assigned to the user so component and muting sets can be expanded.
      */
     private static Set<Id> loadAssignments(Resolved r, Id userId) {
         // Map rather than Set: the drill-down needs the group's label and
@@ -148,6 +171,7 @@ public with sharing class PEPermissionResolver {
                    PermissionSetGroup.MasterLabel, PermissionSetGroup.Status
             FROM PermissionSetAssignment
             WHERE AssigneeId = :userId
+            WITH USER_MODE
         ]) {
             if (psa.PermissionSet.IsOwnedByProfile == true) {
                 continue;   // already handled, and would double-count
@@ -219,6 +243,12 @@ public with sharing class PEPermissionResolver {
      * Expand each assigned group into its component permission sets. The group
      * itself carries no ObjectPermissions rows — the components do.
      */
+    /**
+     * Expands assigned permission set groups into component permission sets so effective access includes group grants.
+     *
+     * @param r Resolver result being populated with group-derived grants and muting sources.
+     * @param groupIds Permission set group Ids assigned to the selected user.
+     */
     private static void loadGroupComponents(Resolved r, Set<Id> groupIds) {
         if (groupIds.isEmpty()) return;
 
@@ -229,6 +259,7 @@ public with sharing class PEPermissionResolver {
                        PermissionSetGroup.Status
                 FROM PermissionSetGroupComponent
                 WHERE PermissionSetGroupId IN :batch
+                WITH USER_MODE
             ]) {
                 if (isMutingType(c.PermissionSet.Type)) {
                     r.mutingParents.add(c.PermissionSetId);
@@ -285,6 +316,12 @@ public with sharing class PEPermissionResolver {
      * the standard Setup UI reports, then delete or complete this method
      * according to the finding.
      */
+    /**
+     * Completes muting-set source labels when the component pass found applicable muting parents.
+     *
+     * @param r Resolver result whose muting source labels may need completion.
+     * @param groupIds Permission set group Ids assigned to the selected user.
+     */
     private static void loadMutingSets(Resolved r, Set<Id> groupIds) {
         if (groupIds.isEmpty() || r.mutingParents.isEmpty()) return;
 
@@ -293,6 +330,7 @@ public with sharing class PEPermissionResolver {
                 SELECT Id, Label
                 FROM PermissionSet
                 WHERE Id IN :batch
+                WITH USER_MODE
             ]) {
                 // Fill in a label only. Never replace the source wholesale —
                 // loadGroupComponents already attached the group Id, which is
@@ -326,6 +364,13 @@ public with sharing class PEPermissionResolver {
      * permission. `mutedByParent` is the same over muting sets. Callers build
      * both from ObjectPermissions / FieldPermissions rows they already have,
      * so this method does no querying — it is pure logic, and cheap to test.
+     *
+     * @param permName Salesforce permission API name being evaluated.
+     * @param permLabel Admin-facing label for the permission result.
+     * @param r Effective permission context for the selected user.
+     * @param grantedByParent Permission grant flags keyed by effective parent Id.
+     * @param mutedByParent Permission mute flags keyed by muting permission set Id.
+     * @return Grant row that explains whether the permission applies and which sources caused the result.
      */
     public static PEDto.Grant applyGrant(
         String permName,

@@ -16,7 +16,7 @@ private class PermissionExplorerFlowTest {
 
     @TestSetup
     static void makeData() {
-        Profile admin = [SELECT Id FROM Profile WHERE Name = 'System Administrator' LIMIT 1];
+        Profile admin = [SELECT Id FROM Profile WHERE Name = 'System Administrator' WITH USER_MODE LIMIT 1];
         String stamp = String.valueOf(Datetime.now().getTime());
 
         User inspector = new User(
@@ -35,7 +35,7 @@ private class PermissionExplorerFlowTest {
 
         List<PermissionSet> gate = [
             SELECT Id FROM PermissionSet
-            WHERE Name = 'PermissionCheckerPermissionSet' LIMIT 1
+            WHERE Name = 'PermissionCheckerPermissionSet' WITH USER_MODE LIMIT 1
         ];
         if (!gate.isEmpty()) {
             insert new PermissionSetAssignment(
@@ -45,7 +45,7 @@ private class PermissionExplorerFlowTest {
     }
 
     private static User inspector() {
-        return [SELECT Id FROM User WHERE Email = :INSPECTOR_EMAIL LIMIT 1];
+        return [SELECT Id FROM User WHERE Email = :INSPECTOR_EMAIL WITH USER_MODE LIMIT 1];
     }
 
     @IsTest

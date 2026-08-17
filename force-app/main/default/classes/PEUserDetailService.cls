@@ -29,6 +29,13 @@ public with sharing class PEUserDetailService {
      * Login history
      * --------------------------------------------------------------- */
 
+    /**
+     * Returns login history for the selected user, or a structural unavailability reason when Salesforce blocks it.
+     *
+     * @param userId User whose login activity is being inspected.
+     * @param requestedLimit Requested maximum rows for the login history drill-down.
+     * @return Login history result with rows, applied limit, truncation hint, or unavailable reason.
+     */
     public static PEDto.LoginHistoryResult loginHistory(Id userId, Integer requestedLimit) {
         PEDto.LoginHistoryResult out = new PEDto.LoginHistoryResult();
 
@@ -52,6 +59,7 @@ public with sharing class PEUserDetailService {
                        Application, Browser, Platform
                 FROM LoginHistory
                 WHERE UserId = :userId
+                WITH USER_MODE
                 ORDER BY LoginTime DESC
                 LIMIT :lim
             ]) {
@@ -84,6 +92,8 @@ public with sharing class PEUserDetailService {
      * Describe-based check, deliberately not a try/catch around the query.
      * A caught QueryException gives the same outcome but costs a query against
      * an object we already know we cannot read.
+     *
+     * @return True when the running admin can read LoginHistory for the drill-down.
      */
     private static Boolean canReadLoginHistory() {
         try {
@@ -102,6 +112,9 @@ public with sharing class PEUserDetailService {
      * apply through a group are reported as a number, not silently folded in:
      * listing them here would make the modal disagree with the header, and
      * omitting them entirely would imply they do not apply.
+     *
+     * @param userId User whose direct permission set assignments are being inspected.
+     * @return Direct permission set list and counts that match the selected user's resolver summary.
      */
     public static PEDto.PermSetList permissionSets(Id userId) {
         PEPermissionResolver.Resolved r = PEPermissionResolver.resolve(userId);
@@ -113,6 +126,12 @@ public with sharing class PEUserDetailService {
         return out;
     }
 
+    /**
+     * Returns assigned permission set groups from the cached resolver so the drill-down matches the header count.
+     *
+     * @param userId User whose permission set group assignments are being inspected.
+     * @return Permission set group rows assigned to the selected user.
+     */
     public static List<PEDto.PermSetGroupRow> permissionSetGroups(Id userId) {
         return PEPermissionResolver.resolve(userId).assignedGroups;
     }

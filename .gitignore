@@ -48,3 +48,20 @@ $RECYCLE.BIN/
 **/venv/
 
 destructive/
+
+# Code Analyzer output
+CodeAnalyzerReport.html
+analyzer-*.html
+analyzer-*.json
+apexdoc.json
+appexchange.json
+baseline.*
+wsw-analyzer*.html
+
+# Code Analyzer output (regenerate on demand)
+analyzer-*.html
+analyzer-*.json
+apexdoc*
+appexchange.json
+CodeAnalyzerReport.html
+code-analyzer-full.yml

@@ -11,6 +11,14 @@
  */
 public with sharing class PEAppVisibilityService {
 
+    /**
+     * Resolves the app list shown in the permission inspection workflow, using
+     * the only Apex-queryable source and preserving the estimated-visibility notice.
+     *
+     * @param userId User selected for app visibility inspection.
+     * @param r Effective permission-set resolution for the inspected user.
+     * @return App list rows and setup messaging for the admin-facing app column.
+     */
     public static PEDto.AppList getVisibleApps(Id userId, PEPermissionResolver.Resolved r) {
         return fromAppMenuItem(r);
     }
@@ -20,6 +28,9 @@ public with sharing class PEAppVisibilityService {
      * user's — safe for org structure, unsafe as the source of truth for the
      * target user's visibility. Every row is therefore marked estimated, and
      * the column shows a persistent notice.
+     *
+     * @param r Effective permission-set resolution retained for parity with permission-based service calls.
+     * @return App list built from AppMenuItem with product warnings that visibility is estimated.
      */
     private static PEDto.AppList fromAppMenuItem(PEPermissionResolver.Resolved r) {
         PEDto.AppList out = new PEDto.AppList();
@@ -33,7 +44,8 @@ public with sharing class PEAppVisibilityService {
             SELECT Name, Label, Type, IsAccessible, IsVisible
             FROM AppMenuItem
             WHERE Type IN ('TabSet', 'ConnectedApplication')
-            ORDER BY SortOrder
+            WITH USER_MODE
+            ORDER BY SortOrder 
         ]) {
             PEDto.AppRow row = new PEDto.AppRow();
             row.developerName = item.Name;

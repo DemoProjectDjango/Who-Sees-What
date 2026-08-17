@@ -1,3 +1,4 @@
+/* eslint-disable @salesforce-ux/slds/no-hardcoded-values-slds2 */
 @import 'c/peBase';
 
 .gs {

@@ -8,11 +8,19 @@
  */
 public with sharing class PEFlsClassifier {
 
+    /** Classification returned to the field grid when missing FLS is a structural Salesforce rule. */
     public class Verdict {
         public Boolean notApplicable = false;
         public String reason;
     }
 
+    /**
+     * Classifies a field describe so admins do not confuse non-controllable fields
+     * with permission gaps in the inspection results.
+     *
+     * @param d Field describe result for the object detail row being rendered.
+     * @return Verdict explaining whether FLS is not applicable and why.
+     */
     public static Verdict classify(Schema.DescribeFieldResult d) {
         Verdict v = new Verdict();
 

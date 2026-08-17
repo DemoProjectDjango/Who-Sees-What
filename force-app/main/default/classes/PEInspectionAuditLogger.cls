@@ -7,6 +7,13 @@ public with sharing class PEInspectionAuditLogger {
 
     private static List<PE_Inspection_Log__c> buffer = new List<PE_Inspection_Log__c>();
 
+    /**
+     * Records an admin permission inspection attempt for security review and org auditability.
+     *
+     * @param action Product action being audited, such as a user resolve or object drill-down.
+     * @param subjectUserId User whose permissions were inspected.
+     * @param detail Additional bounded context for the inspection event.
+     */
     public static void log(String action, Id subjectUserId, String detail) {
         PE_Inspection_Log__c row = new PE_Inspection_Log__c(
             Action__c          = action,
@@ -24,11 +31,14 @@ public with sharing class PEInspectionAuditLogger {
      * a Platform Event or Big Object write — the call sites do not change.
      */
     private static void flush() {
-        if (buffer.isEmpty()) return;
+        if (buffer.isEmpty())
+        {
+            return;
+        }
         List<PE_Inspection_Log__c> toInsert = buffer;
         buffer = new List<PE_Inspection_Log__c>();
         try {
-            insert toInsert;
+            insert as user toInsert;
         } catch (Exception e) {
             // Never let logging break an inspection, but do not swallow silently.
             System.debug(LoggingLevel.ERROR, 'Inspection log failed: ' + e.getMessage());

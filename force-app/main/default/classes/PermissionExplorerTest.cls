@@ -344,7 +344,7 @@ private class PermissionExplorerTest {
     }
 
     private static User buildUser(String username) {
-        Profile p = [SELECT Id FROM Profile WHERE Name = 'Standard User' LIMIT 1];
+        Profile p = [SELECT Id FROM Profile WHERE Name = 'Standard User' WITH USER_MODE LIMIT 1];
         return new User(
             FirstName = 'PE',
             LastName = 'Tester',
@@ -360,7 +360,13 @@ private class PermissionExplorerTest {
         );
     }
 
-    /** Synthetic Ids let the pure-logic tests run without touching the database. */
+    /**
+     * Synthetic Ids let the pure-logic tests run without touching the database.
+     *
+     * @param sot SObject type whose key prefix should make the fake Id look realistic.
+     * @param index Numeric suffix used to keep generated test Ids distinct.
+     * @return Synthetic Salesforce Id for resolver and grant logic tests.
+     */
     private static Id fakeId(Schema.SObjectType sot, Integer index) {
         String suffix = String.valueOf(index);
         return sot.getDescribe().getKeyPrefix()
