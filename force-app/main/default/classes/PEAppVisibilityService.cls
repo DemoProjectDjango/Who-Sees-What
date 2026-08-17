@@ -40,18 +40,29 @@ public with sharing class PEAppVisibilityService {
             'App visibility is estimated from the org-level app menu. ' +
             'Per-permission-set app assignments are not analysed.';
 
-        for (AppMenuItem item : [
+        // Materialised into a List deliberately, NOT iterated as an inline SOQL
+        // for-loop. The loop form opens a query cursor and pages via queryMore(),
+        // which several app/tab setup objects reject outright — TabDefinition in
+        // PEMetadataCatalog failed exactly that way in a subscriber org. AppMenuItem
+        // returns a few dozen rows at most, so fetching in one batch costs nothing
+        // and removes the paging question entirely.
+        List<AppMenuItem> items = [
             SELECT Name, Label, Type, IsAccessible, IsVisible
             FROM AppMenuItem
             WHERE Type IN ('TabSet', 'ConnectedApplication')
             WITH USER_MODE
-            ORDER BY SortOrder 
-        ]) {
+            ORDER BY SortOrder
+            LIMIT 2000
+        ];
+
+        for (AppMenuItem item : items) {
             PEDto.AppRow row = new PEDto.AppRow();
             row.developerName = item.Name;
             row.label = item.Label;
             row.appType = item.Type == 'ConnectedApplication' ? 'Connected' : 'Lightning';
-            row.visible = item.IsAccessible && item.IsVisible;
+            // Null-safe: IsAccessible and IsVisible are Boolean fields and a null
+            // on either would throw on unboxing during the && evaluation.
+            row.visible = item.IsAccessible == true && item.IsVisible == true;
             row.visibilityEstimated = true;
             out.apps.add(row);
         }

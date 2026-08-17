@@ -22,31 +22,59 @@ public with sharing class PEMetadataCatalog {
     /**
      * Returns the org-level tab catalog used when an admin drills into app visibility.
      *
-     * @param appDeveloperName Developer name of the app selected in the UI.
+     * The result does not vary by app: TabDefinition has no app association, so
+     * this is the org's full tab list and the app → tab join happens downstream.
+     * It is therefore cached under a single fixed key rather than one key per
+     * app, which would store an identical 2,000-row list once per app and put
+     * needless pressure on the org cache partition.
+     *
+     * @param appDeveloperName Developer name of the app selected in the UI. Accepted
+     *                         for call-site symmetry with the other catalog lookups;
+     *                         the tab list itself is org-wide.
      * @return Tab metadata rows used to join app navigation with permission set tab settings.
      */
     public static List<TabInfo> getAppTabs(String appDeveloperName) {
-        String key = 'appTabs' + appDeveloperName;
+        final String key = 'appTabsAll';
         Object cached = PECacheManager.orgGet(key);
         if (cached != null) {
             return (List<TabInfo>) cached;
         }
 
-        List<TabInfo> out = new List<TabInfo>();
-        for (TabDefinition t : [
+        // Materialised into a List deliberately, NOT iterated as an inline SOQL
+        // for-loop. A SOQL for-loop opens a query cursor and pages in batches of
+        // 200 via queryMore(), and TabDefinition does not support queryMore():
+        // it fails with "TabDefinition does not support queryMore(), use LIMIT to
+        // restrict the results to a single batch" in any org with more than 200
+        // tabs. LIMIT alone does not help — the cursor is created by the loop
+        // form, so the query must be assigned to a List and the List iterated.
+        List<TabDefinition> tabs = [
             SELECT DurableId, Name, Label, SobjectName
             FROM TabDefinition
             WITH USER_MODE
             ORDER BY Label
-            
-        ]) {
+            LIMIT 2000
+        ];
+
+        List<TabInfo> out = new List<TabInfo>();
+        for (TabDefinition t : tabs) {
             TabInfo info = new TabInfo();
             // PermissionSetTabSetting addresses standard object tabs as
             // 'standard-<Object>' and custom tabs by developer name. TabDefinition
             // exposes no IsCustom flag, so the '__' suffix is the available signal.
+            //
+            // The null guard has to wrap BOTH tests. Written as
+            //   t.Name != null && t.Name.endsWith('__c') || t.Name.contains('__')
+            // && binds tighter than ||, so a null Name makes the first group false
+            // and evaluation falls through to contains() on a null — which throws.
+            //
+            // endsWith('__c') is subsumed by contains('__') and is kept only as
+            // documentation of the common case.
+            //
             // CONFIRM during the Phase 0 spike — custom tabs on standard objects
-            // and packaged tabs with a namespace prefix are the edge cases.
-            Boolean isCustom = t.Name != null && t.Name.endsWith('__c') || t.Name.contains('__');
+            // and packaged tabs with a namespace prefix are the edge cases, and a
+            // subscriber org with managed packages installed will have the latter.
+            Boolean isCustom = t.Name != null
+                && (t.Name.endsWith('__c') || t.Name.contains('__'));
             info.tabName = isCustom ? t.Name : 'standard-' + t.Name;
             info.label = t.Label;
             info.objectApiName = String.isBlank(t.SobjectName) ? null : t.SobjectName;
@@ -106,6 +134,8 @@ public with sharing class PEMetadataCatalog {
         Map<String, String> out = new Map<String, String>{
             'internal' => 'Unknown', 'external' => 'Unknown'
         };
+        // Already a List assignment with LIMIT 1, so no cursor is opened.
+        // EntityDefinition has the same queryMore() restriction as TabDefinition.
         List<EntityDefinition> defs = [
             SELECT InternalSharingModel, ExternalSharingModel
             FROM EntityDefinition
