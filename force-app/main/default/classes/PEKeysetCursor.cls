@@ -20,12 +20,24 @@ public with sharing class PEKeysetCursor {
 
     private static final Set<String> ALLOWED_SORTS = new Set<String>{ 'Name', 'LastLoginDate' };
 
+    /**
+     * Creates the server-side representation of the last row seen in user search pagination.
+     *
+     * @param sortField Allowed user search sort field.
+     * @param sortValue Last row's sort value encoded as text for the next-page boundary.
+     * @param lastId Last row's user Id used as the keyset tiebreaker.
+     */
     public PEKeysetCursor(String sortField, String sortValue, Id lastId) {
         this.sortField = sortField;
         this.sortValue = sortValue;
         this.lastId = lastId;
     }
 
+    /**
+     * Encodes the keyset boundary into an opaque value that the LWC can send back unchanged.
+     *
+     * @return Base64 cursor containing the allowed sort field, sort value, and last user Id.
+     */
     public String encode() {
         return EncodingUtil.base64Encode(Blob.valueOf(
             JSON.serialize(new Map<String, String>{
@@ -36,6 +48,12 @@ public with sharing class PEKeysetCursor {
         ));
     }
 
+    /**
+     * Decodes and validates a cursor supplied by the user column before it is used in SOQL.
+     *
+     * @param encoded Opaque cursor value returned by a previous user search page.
+     * @return Cursor boundary for the next page, or null when no cursor was supplied.
+     */
     public static PEKeysetCursor decode(String encoded) {
         if (String.isBlank(encoded)) return null;
         if (encoded.length() > PEConstants.CURSOR_MAX_LENGTH) {
@@ -55,6 +73,12 @@ public with sharing class PEKeysetCursor {
         }
     }
 
+    /**
+     * Checks whether a requested user search sort is supported by the keyset pagination contract.
+     *
+     * @param field Sort field requested by the admin UI.
+     * @return True when the field is explicitly supported for user pagination.
+     */
     public static Boolean isAllowedSort(String field) {
         return ALLOWED_SORTS.contains(field);
     }

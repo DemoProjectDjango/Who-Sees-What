@@ -19,11 +19,11 @@ private class PermissionExplorerTest {
         Id psA = fakeId(PermissionSet.SObjectType, 1);
         Id psB = fakeId(PermissionSet.SObjectType, 2);
 
-        PermissionResolver.Resolved r = resolvedWith(new Set<Id>{ psA, psB });
+        PEPermissionResolver.Resolved r = resolvedWith(new Set<Id>{ psA, psB });
         r.sourcesById.put(psA, new PEDto.Source(psA, 'Set A', 'permset'));
         r.sourcesById.put(psB, new PEDto.Source(psB, 'Set B', 'permset'));
 
-        PEDto.Grant g = PermissionResolver.applyGrant(
+        PEDto.Grant g = PEPermissionResolver.applyGrant(
             'PermissionsRead', 'Read', r,
             new Map<Id, Boolean>{ psA => false, psB => true },
             new Map<Id, Boolean>()
@@ -38,9 +38,9 @@ private class PermissionExplorerTest {
     @IsTest
     static void grantIsDeniedWhenNoParentGrants() {
         Id psA = fakeId(PermissionSet.SObjectType, 1);
-        PermissionResolver.Resolved r = resolvedWith(new Set<Id>{ psA });
+        PEPermissionResolver.Resolved r = resolvedWith(new Set<Id>{ psA });
 
-        PEDto.Grant g = PermissionResolver.applyGrant(
+        PEDto.Grant g = PEPermissionResolver.applyGrant(
             'PermissionsEdit', 'Edit', r,
             new Map<Id, Boolean>{ psA => false },
             new Map<Id, Boolean>()
@@ -53,10 +53,10 @@ private class PermissionExplorerTest {
     @IsTest
     static void absentRowMeansNoAccessNotUnknown() {
         Id psA = fakeId(PermissionSet.SObjectType, 1);
-        PermissionResolver.Resolved r = resolvedWith(new Set<Id>{ psA });
+        PEPermissionResolver.Resolved r = resolvedWith(new Set<Id>{ psA });
 
         // Empty map: the parent has no ObjectPermissions row at all.
-        PEDto.Grant g = PermissionResolver.applyGrant(
+        PEDto.Grant g = PEPermissionResolver.applyGrant(
             'PermissionsDelete', 'Delete', r,
             new Map<Id, Boolean>(),
             new Map<Id, Boolean>()
@@ -71,12 +71,12 @@ private class PermissionExplorerTest {
         Id psA    = fakeId(PermissionSet.SObjectType, 1);
         Id muting = fakeId(PermissionSet.SObjectType, 9);
 
-        PermissionResolver.Resolved r = resolvedWith(new Set<Id>{ psA });
+        PEPermissionResolver.Resolved r = resolvedWith(new Set<Id>{ psA });
         r.mutingParents.add(muting);
         r.sourcesById.put(psA, new PEDto.Source(psA, 'Set A', 'permset'));
         r.sourcesById.put(muting, new PEDto.Source(muting, 'Mute Me', 'muting'));
 
-        PEDto.Grant g = PermissionResolver.applyGrant(
+        PEDto.Grant g = PEPermissionResolver.applyGrant(
             'PermissionsRead', 'Read', r,
             new Map<Id, Boolean>{ psA => true },
             new Map<Id, Boolean>{ muting => true }
@@ -95,10 +95,10 @@ private class PermissionExplorerTest {
         Id psA    = fakeId(PermissionSet.SObjectType, 1);
         Id muting = fakeId(PermissionSet.SObjectType, 9);
 
-        PermissionResolver.Resolved r = resolvedWith(new Set<Id>{ psA });
+        PEPermissionResolver.Resolved r = resolvedWith(new Set<Id>{ psA });
         r.mutingParents.add(muting);
 
-        PEDto.Grant g = PermissionResolver.applyGrant(
+        PEDto.Grant g = PEPermissionResolver.applyGrant(
             'PermissionsRead', 'Read', r,
             new Map<Id, Boolean>{ psA => false },
             new Map<Id, Boolean>{ muting => true }
@@ -114,11 +114,11 @@ private class PermissionExplorerTest {
         Id psA    = fakeId(PermissionSet.SObjectType, 1);
         Id muting = fakeId(PermissionSet.SObjectType, 9);
 
-        PermissionResolver.Resolved r = resolvedWith(new Set<Id>{ psA });
+        PEPermissionResolver.Resolved r = resolvedWith(new Set<Id>{ psA });
         r.mutingParents.add(muting);
         r.sourcesById.put(psA, new PEDto.Source(psA, 'Set A', 'permset'));
 
-        PEDto.Grant edit = PermissionResolver.applyGrant(
+        PEDto.Grant edit = PEPermissionResolver.applyGrant(
             'PermissionsEdit', 'Edit', r,
             new Map<Id, Boolean>{ psA => true },
             new Map<Id, Boolean>{ muting => false }
@@ -134,7 +134,7 @@ private class PermissionExplorerTest {
 
     @IsTest
     static void recordIdIsNotFlsControllable() {
-        FlsClassifier.Verdict v = classify('Account', 'Id');
+        PEFlsClassifier.Verdict v = classify('Account', 'Id');
         Assert.isTrue(v.notApplicable, 'Id is never FLS-controllable');
         Assert.isTrue(v.reason.containsIgnoreCase('Record Id'),
             'Reason should name the Id, got: ' + v.reason);
@@ -142,7 +142,7 @@ private class PermissionExplorerTest {
 
     @IsTest
     static void nameFieldIsAlwaysReadable() {
-        FlsClassifier.Verdict v = classify('Account', 'Name');
+        PEFlsClassifier.Verdict v = classify('Account', 'Name');
         Assert.isTrue(v.notApplicable, 'Name is always readable');
         Assert.isTrue(v.reason.containsIgnoreCase('Name field'),
             'Reason should name the Name field, got: ' + v.reason);
@@ -150,7 +150,7 @@ private class PermissionExplorerTest {
 
     @IsTest
     static void auditFieldsAreLabelledAsAuditNotMasterDetail() {
-        FlsClassifier.Verdict created = classify('Account', 'CreatedDate');
+        PEFlsClassifier.Verdict created = classify('Account', 'CreatedDate');
         Assert.isTrue(created.notApplicable, 'CreatedDate is not FLS-controllable');
         Assert.isTrue(created.reason.containsIgnoreCase('audit'),
             'CreatedDate should be labelled an audit field, got: ' + created.reason);
@@ -158,7 +158,7 @@ private class PermissionExplorerTest {
         // CreatedById is a non-nillable reference. A master-detail heuristic
         // based on nillability alone mislabels it, and a tool that explains
         // itself wrongly is barely better than one that says nothing.
-        FlsClassifier.Verdict createdBy = classify('Account', 'CreatedById');
+        PEFlsClassifier.Verdict createdBy = classify('Account', 'CreatedById');
         Assert.isTrue(createdBy.notApplicable, 'CreatedById is not FLS-controllable');
         Assert.isFalse(createdBy.reason.containsIgnoreCase('master-detail'),
             'CreatedById is not a master-detail relationship, got: ' + createdBy.reason);
@@ -166,7 +166,7 @@ private class PermissionExplorerTest {
 
     @IsTest
     static void ordinaryFieldIsFlsControllable() {
-        FlsClassifier.Verdict v = classify('Account', 'Description');
+        PEFlsClassifier.Verdict v = classify('Account', 'Description');
         Assert.isFalse(v.notApplicable,
             'Description is an ordinary nillable field and must be reported as ' +
             'a real permission, not excused as structural');
@@ -278,7 +278,7 @@ private class PermissionExplorerTest {
 
         String cause;
         try {
-            AccessGate.assertInspectable(u.Id);
+            PEAccessGate.assertInspectable(u.Id);
         } catch (PermissionExplorerException e) {
             cause = e.causeCode;
         }
@@ -293,7 +293,7 @@ private class PermissionExplorerTest {
         User u = buildUser('pe.active@test.invalid');
         insert u;
 
-        User found = AccessGate.assertInspectable(u.Id);
+        User found = PEAccessGate.assertInspectable(u.Id);
         Assert.areEqual(u.Id, found.Id, 'Active users are inspectable');
     }
 
@@ -301,7 +301,7 @@ private class PermissionExplorerTest {
     static void missingUserIsNotFound() {
         String cause;
         try {
-            AccessGate.assertInspectable(fakeId(User.SObjectType, 999));
+            PEAccessGate.assertInspectable(fakeId(User.SObjectType, 999));
         } catch (PermissionExplorerException e) {
             cause = e.causeCode;
         }
@@ -330,21 +330,21 @@ private class PermissionExplorerTest {
      * Helpers
      * =============================================================== */
 
-    private static PermissionResolver.Resolved resolvedWith(Set<Id> parents) {
-        PermissionResolver.Resolved r = new PermissionResolver.Resolved();
+    private static PEPermissionResolver.Resolved resolvedWith(Set<Id> parents) {
+        PEPermissionResolver.Resolved r = new PEPermissionResolver.Resolved();
         r.effectiveParents.addAll(parents);
         return r;
     }
 
-    private static FlsClassifier.Verdict classify(String objectName, String fieldName) {
+    private static PEFlsClassifier.Verdict classify(String objectName, String fieldName) {
         Schema.DescribeFieldResult dfr = Schema.getGlobalDescribe()
             .get(objectName).getDescribe().fields.getMap()
             .get(fieldName).getDescribe();
-        return FlsClassifier.classify(dfr);
+        return PEFlsClassifier.classify(dfr);
     }
 
     private static User buildUser(String username) {
-        Profile p = [SELECT Id FROM Profile WHERE Name = 'Standard User' LIMIT 1];
+        Profile p = [SELECT Id FROM Profile WHERE Name = 'Standard User' WITH USER_MODE LIMIT 1];
         return new User(
             FirstName = 'PE',
             LastName = 'Tester',
@@ -360,7 +360,13 @@ private class PermissionExplorerTest {
         );
     }
 
-    /** Synthetic Ids let the pure-logic tests run without touching the database. */
+    /**
+     * Synthetic Ids let the pure-logic tests run without touching the database.
+     *
+     * @param sot SObject type whose key prefix should make the fake Id look realistic.
+     * @param index Numeric suffix used to keep generated test Ids distinct.
+     * @return Synthetic Salesforce Id for resolver and grant logic tests.
+     */
     private static Id fakeId(Schema.SObjectType sot, Integer index) {
         String suffix = String.valueOf(index);
         return sot.getDescribe().getKeyPrefix()

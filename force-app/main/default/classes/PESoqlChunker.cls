@@ -5,10 +5,23 @@
  */
 public with sharing class PESoqlChunker {
 
+    /**
+     * Splits effective parent Ids into the product's standard SOQL batch size.
+     *
+     * @param ids Parent Ids collected by the permission resolver.
+     * @return Ordered batches suitable for repeated permission metadata queries.
+     */
     public static List<List<Id>> chunk(Set<Id> ids) {
         return chunk(new List<Id>(ids), PEConstants.PARENT_ID_CHUNK);
     }
 
+    /**
+     * Splits parent Ids into caller-sized batches for permission metadata queries.
+     *
+     * @param ids Parent Ids to bind into repeated SOQL IN clauses.
+     * @param size Maximum number of Ids per batch.
+     * @return Batches that keep large-org inspections under SOQL and heap limits.
+     */
     public static List<List<Id>> chunk(List<Id> ids, Integer size) {
         List<List<Id>> out = new List<List<Id>>();
         if (ids == null || ids.isEmpty()) return out;
@@ -24,7 +37,11 @@ public with sharing class PESoqlChunker {
         return out;
     }
 
-    /** Guard before a large loop of queries. Fails loudly, not mysteriously. */
+    /**
+     * Guard before a large loop of queries. Fails loudly, not mysteriously.
+     *
+     * @param plannedQueries Number of permission metadata queries the caller is about to run.
+     */
     public static void assertQueryBudget(Integer plannedQueries) {
         Integer remaining = Limits.getLimitQueries() - Limits.getQueries();
         if (plannedQueries > remaining - 5) {

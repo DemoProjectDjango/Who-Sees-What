@@ -4,7 +4,7 @@
  *
  * `with sharing` on the facade, but note that the services deliberately read
  * setup objects the running user may not own — which is the product's purpose,
- * gated by AccessGate and recorded by InspectionAuditLogger. That combination
+ * gated by PEAccessGate and recorded by PEInspectionAuditLogger. That combination
  * is the security model, and it is documented as such for review.
  */
 public with sharing class PermissionExplorerController {
@@ -13,11 +13,16 @@ public with sharing class PermissionExplorerController {
      * Column 1
      * --------------------------------------------------------------- */
 
+    /**
+     * Provides filter picklists for the user search column after confirming the admin can use the tool.
+     *
+     * @return Profile, role, and user type options used to narrow permission inspections.
+     */
     @AuraEnabled(cacheable=true)
     public static Map<String, Object> getFilterOptions() {
         try {
-            AccessGate.assertAuthorised();
-            return UserSearchService.filterOptions();
+            PEAccessGate.assertAuthorised();
+            return PEUserSearchService.filterOptions();
         } catch (Exception e) {
             throw toAura(e);
         }
@@ -27,6 +32,15 @@ public with sharing class PermissionExplorerController {
      * Not cacheable: the cursor makes each page a distinct call anyway, and
      * @AuraEnabled(cacheable=true) would strand pages in the client cache after
      * a refresh-token bump.
+     *
+     * @param term Text entered by the admin to find users by name, username, or email.
+     * @param profileId Optional profile filter selected in the user column.
+     * @param roleId Optional role filter selected in the user column.
+     * @param userType Optional Salesforce user type filter.
+     * @param sortField Requested keyset-supported sort field.
+     * @param cursor Opaque next-page cursor from the previous search response.
+     * @param pageSize Requested number of rows for the user column.
+     * @return Paged active-user search results for choosing a permission inspection subject.
      */
     @AuraEnabled
     public static PEDto.PagedResult searchUsers(
@@ -34,16 +48,16 @@ public with sharing class PermissionExplorerController {
         String sortField, String cursor, Integer pageSize
     ) {
         try {
-            AccessGate.assertAuthorised();
+            PEAccessGate.assertAuthorised();
 
-            UserSearchService.Filters f = new UserSearchService.Filters();
+            PEUserSearchService.Filters f = new PEUserSearchService.Filters();
             f.term      = term;
             f.profileId = profileId;
             f.roleId    = roleId;
             f.userType  = userType;
             f.sortField = String.isBlank(sortField) ? 'LastLoginDate' : sortField;
 
-            return UserSearchService.search(f, cursor, pageSize);
+            return PEUserSearchService.search(f, cursor, pageSize);
         } catch (Exception e) {
             throw toAura(e);
         }
@@ -56,20 +70,24 @@ public with sharing class PermissionExplorerController {
     /**
      * Runs the resolver, caches the effective parent Ids, and returns the
      * summary header plus the visible app list in the same round trip.
+     *
+     * @param userId User selected as the permission inspection subject.
+     * @param forceRefresh True when the admin clicked refresh and wants resolver caches rebuilt.
+     * @return User header and app visibility payload for the selected user.
      */
     @AuraEnabled
     public static PEDto.UserContext resolveUser(Id userId, Boolean forceRefresh) {
         try {
-            AccessGate.assertAuthorisedAndLog('RESOLVE_USER', userId, null);
+            PEAccessGate.assertAuthorisedAndLog('RESOLVE_USER', userId, null);
 
-            User u = AccessGate.assertInspectable(userId);
-            PermissionResolver.Resolved r = PermissionResolver.resolve(
+            User u = PEAccessGate.assertInspectable(userId);
+            PEPermissionResolver.Resolved r = PEPermissionResolver.resolve(
                 userId, forceRefresh == true
             );
 
             PEDto.UserContext ctx = new PEDto.UserContext();
             ctx.summary = buildSummary(u, r);
-            ctx.apps = AppVisibilityService.getVisibleApps(userId, r);
+            ctx.apps = PEAppVisibilityService.getVisibleApps(userId, r);
             return ctx;
         } catch (Exception e) {
             throw toAura(e);
@@ -85,31 +103,50 @@ public with sharing class PermissionExplorerController {
      * paying for it on every user selection would be paying for nothing.
      * --------------------------------------------------------------- */
 
+    /**
+     * Returns recent login activity for the selected user when the running admin can read it.
+     *
+     * @param userId User whose login activity is being inspected.
+     * @param maxRows Maximum number of login rows to return to the drill-down.
+     * @return Login history payload with unavailable/truncated state for the UI.
+     */
     @AuraEnabled
     public static PEDto.LoginHistoryResult getLoginHistory(Id userId, Integer maxRows) {
         try {
-            AccessGate.assertAuthorisedAndLog('VIEW_LOGIN_HISTORY', userId, null);
-            AccessGate.assertInspectable(userId);
+            PEAccessGate.assertAuthorisedAndLog('VIEW_LOGIN_HISTORY', userId, null);
+            PEAccessGate.assertInspectable(userId);
             return PEUserDetailService.loginHistory(userId, maxRows);
         } catch (Exception e) {
             throw toAura(e);
         }
     }
 
+    /**
+     * Returns directly assigned permission sets for the selected user summary drill-down.
+     *
+     * @param userId User whose direct permission set assignments are being inspected.
+     * @return Permission set list matching the summary count and unreadable-set warnings.
+     */
     @AuraEnabled
     public static PEDto.PermSetList getAssignedPermissionSets(Id userId) {
         try {
-            AccessGate.assertAuthorisedAndLog('VIEW_PERM_SETS', userId, null);
+            PEAccessGate.assertAuthorisedAndLog('VIEW_PERM_SETS', userId, null);
             return PEUserDetailService.permissionSets(userId);
         } catch (Exception e) {
             throw toAura(e);
         }
     }
 
+    /**
+     * Returns assigned permission set groups so admins can trace group-derived effective access.
+     *
+     * @param userId User whose permission set group assignments are being inspected.
+     * @return Permission set group rows for the selected user's header drill-down.
+     */
     @AuraEnabled
     public static List<PEDto.PermSetGroupRow> getAssignedPermissionSetGroups(Id userId) {
         try {
-            AccessGate.assertAuthorisedAndLog('VIEW_PERM_SET_GROUPS', userId, null);
+            PEAccessGate.assertAuthorisedAndLog('VIEW_PERM_SET_GROUPS', userId, null);
             return PEUserDetailService.permissionSetGroups(userId);
         } catch (Exception e) {
             throw toAura(e);
@@ -120,12 +157,19 @@ public with sharing class PermissionExplorerController {
      * App selection — populates the modal rail
      * --------------------------------------------------------------- */
 
+    /**
+     * Returns object and tab permission rows for the selected app and inspected user.
+     *
+     * @param userId User whose app object access is being inspected.
+     * @param appDeveloperName Developer name of the app selected by the admin.
+     * @return Object rows that combine tab visibility, CRUD, and access-without-tab signals.
+     */
     @AuraEnabled
     public static List<PEDto.ObjectRow> getAppObjects(Id userId, String appDeveloperName) {
         try {
-            AccessGate.assertAuthorisedAndLog('GET_APP_OBJECTS', userId, appDeveloperName);
-            PermissionResolver.Resolved r = PermissionResolver.resolve(userId);
-            return AccessQueryService.getAppObjects(r, appDeveloperName);
+            PEAccessGate.assertAuthorisedAndLog('GET_APP_OBJECTS', userId, appDeveloperName);
+            PEPermissionResolver.Resolved r = PEPermissionResolver.resolve(userId);
+            return PEAccessQueryService.getAppObjects(r, appDeveloperName);
         } catch (Exception e) {
             throw toAura(e);
         }
@@ -135,12 +179,19 @@ public with sharing class PermissionExplorerController {
      * Object selection — one composite call, not four
      * --------------------------------------------------------------- */
 
+    /**
+     * Returns composite object detail for the modal opened from an app object row.
+     *
+     * @param userId User whose object and field permissions are being inspected.
+     * @param objectApiName API name of the object selected by the admin.
+     * @return Object detail payload with CRUD, FLS, record type, sharing, and section error data.
+     */
     @AuraEnabled
     public static PEDto.ObjectDetail getObjectDetail(Id userId, String objectApiName) {
         try {
-            AccessGate.assertAuthorisedAndLog('GET_OBJECT_DETAIL', userId, objectApiName);
-            PermissionResolver.Resolved r = PermissionResolver.resolve(userId);
-            return AccessQueryService.getObjectDetail(r, objectApiName);
+            PEAccessGate.assertAuthorisedAndLog('GET_OBJECT_DETAIL', userId, objectApiName);
+            PEPermissionResolver.Resolved r = PEPermissionResolver.resolve(userId);
+            return PEAccessQueryService.getObjectDetail(r, objectApiName);
         } catch (Exception e) {
             throw toAura(e);
         }
@@ -150,11 +201,15 @@ public with sharing class PermissionExplorerController {
      * Refresh
      * --------------------------------------------------------------- */
 
-    /** Bumps the version token rather than clearing the partition. */
+    /**
+     * Bumps the version token rather than clearing the partition.
+     *
+     * @return Fresh cache version token that makes later permission inspections recompute resolver data.
+     */
     @AuraEnabled
     public static String refreshCache() {
         try {
-            AccessGate.assertAuthorised();
+            PEAccessGate.assertAuthorised();
             return PECacheManager.bumpVersionToken();
         } catch (Exception e) {
             throw toAura(e);
@@ -165,7 +220,7 @@ public with sharing class PermissionExplorerController {
      * Internals
      * --------------------------------------------------------------- */
 
-    private static PEDto.UserSummary buildSummary(User u, PermissionResolver.Resolved r) {
+    private static PEDto.UserSummary buildSummary(User u, PEPermissionResolver.Resolved r) {
         PEDto.UserSummary s = new PEDto.UserSummary();
         s.userId            = u.Id;
         s.name              = u.Name;
@@ -178,7 +233,7 @@ public with sharing class PermissionExplorerController {
                               ? u.Profile.UserLicense.Name : null;
         s.userType          = u.UserType;
         s.lastLogin         = u.LastLoginDate;
-        s.isFrozen          = UserSearchService.isFrozen(u.Id);
+        s.isFrozen          = PEUserSearchService.isFrozen(u.Id);
         s.permSetCount      = r.permSetCount;
         s.permSetGroupCount = r.permSetGroupCount;
         s.mutingSetCount    = r.mutingParents.size();
@@ -191,6 +246,9 @@ public with sharing class PermissionExplorerController {
     /**
      * Serialises the structured cause into the AuraHandledException message as
      * JSON, so the client can branch on cause instead of matching strings.
+     *
+     * @param e Exception raised by the controller or delegated service.
+     * @return AuraHandledException containing a serialized ErrorInfo payload for the LWC.
      */
     private static AuraHandledException toAura(Exception e) {
         PEDto.ErrorInfo info;

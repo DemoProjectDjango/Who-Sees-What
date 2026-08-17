@@ -23,7 +23,7 @@ private class PEUserDetailServiceTest {
 
     @TestSetup
     static void makeData() {
-        Profile admin = [SELECT Id FROM Profile WHERE Name = 'System Administrator' LIMIT 1];
+        Profile admin = [SELECT Id FROM Profile WHERE Name = 'System Administrator' WITH USER_MODE LIMIT 1];
         String stamp = String.valueOf(Datetime.now().getTime());
 
         User subject = buildUser(admin.Id, 'Drill', 'Subject', 'drlsub', SUBJECT_EMAIL, stamp + 'a');
@@ -45,10 +45,11 @@ private class PEUserDetailServiceTest {
             psas.add(new PermissionSetAssignment(AssigneeId = subject.Id, PermissionSetId = ps.Id));
         }
 
-        // Grants Use_Permission_Explorer plus Inspection_Log__c create access.
+        // Grants Use_Permission_Explorer plus PE_Inspection_Log__c create access.
         List<PermissionSet> gate = [
             SELECT Id FROM PermissionSet
             WHERE Name = 'PermissionCheckerPermissionSet'
+            WITH USER_MODE
             LIMIT 1
         ];
         if (!gate.isEmpty()) {
@@ -77,11 +78,11 @@ private class PEUserDetailServiceTest {
     }
 
     private static User subject() {
-        return [SELECT Id FROM User WHERE Email = :SUBJECT_EMAIL LIMIT 1];
+        return [SELECT Id FROM User WHERE Email = :SUBJECT_EMAIL WITH USER_MODE LIMIT 1];
     }
 
     private static User inspector() {
-        return [SELECT Id FROM User WHERE Email = :INSPECTOR_EMAIL LIMIT 1];
+        return [SELECT Id FROM User WHERE Email = :INSPECTOR_EMAIL WITH USER_MODE LIMIT 1];
     }
 
     /* ===============================================================
@@ -93,7 +94,7 @@ private class PEUserDetailServiceTest {
         Id userId = subject().Id;
 
         Test.startTest();
-        PermissionResolver.Resolved r = PermissionResolver.resolve(userId, true);
+        PEPermissionResolver.Resolved r = PEPermissionResolver.resolve(userId, true);
         PEDto.PermSetList result = PEUserDetailService.permissionSets(userId);
         Test.stopTest();
 
@@ -211,19 +212,21 @@ private class PEUserDetailServiceTest {
     @IsTest
     static void unauthorisedUserIsRejectedBeforeAnyQuery() {
         Id userId = subject().Id;
+        User plain = [SELECT Id FROM User WHERE Email = :SUBJECT_EMAIL WITH USER_MODE LIMIT 1];
 
-        // The test-running user holds no custom permission, so this is the
-        // unauthorised path without needing a second runAs.
-        Test.startTest();
         Boolean threw = false;
         String message;
-        try {
-            PermissionExplorerController.getAssignedPermissionSets(userId);
-        } catch (Exception e) {
-            threw = true;
-            message = e.getMessage();
+
+        System.runAs(plain) {
+                Test.startTest();
+            try {
+                PermissionExplorerController.getAssignedPermissionSets(userId);
+            } catch (Exception e) {
+                threw = true;
+                message = e.getMessage();
+            }
+            Test.stopTest();
         }
-        Test.stopTest();
 
         Assert.isTrue(threw, 'The gate must reject a user without the custom permission');
         Assert.isTrue(

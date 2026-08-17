@@ -1,0 +1,69 @@
+<template>
+    <div class="gs">
+        <div class="masthead">
+            <span class="pe-eyebrow">Getting started</span>
+            <h1 class="lede">Inspect what a user can see and do — and what granted it.</h1>
+            <p class="sub">Pick a user from the list to begin. A little setup first.</p>
+        </div>
+
+        <ol class="steps">
+            <li class="step">
+                <h2 class="step-h">Assign the permission set</h2>
+                <p class="step-b">
+                    Setup → Permission Sets →&nbsp;<span class="pe-mono">PermissionCheckerPermissionSet</span>&nbsp;→
+                    Manage Assignments. Assign it to your System Administrators.
+                </p>
+                <p class="step-note">
+                    Deliberately not automatic. It grants the ability to inspect every
+                    user's permissions, so it should be a decision rather than a default —
+                    and it belongs with the people who already administer the org.
+                </p>
+            </li>
+            <li class="step">
+                <h2 class="step-h">Check whether you already have the app</h2>
+                <p class="step-b">
+                    Open the App Launcher and search for&nbsp;<strong>Who Sees What</strong>.
+                    If it appears, you're set — skip the next step.
+                </p>
+            </li>
+            <li class="step">
+                <h2 class="step-h">If it isn't there, assign it</h2>
+                <p class="step-b">
+                    Setup → Profiles → your profile → Assigned Apps → Edit → enable&nbsp;<strong>Who Sees What</strong>&nbsp;→
+                    Save.
+                </p>
+                <p class="step-note">
+                    App assignment lives in profile metadata, so it can't be granted by
+                    the permission set above.
+                </p>
+            </li>
+            <li class="step">
+                <h2 class="step-h">Know that use is logged</h2>
+                <p class="step-b">
+                    Every inspection writes a row to&nbsp;<span class="pe-mono">Inspection Log</span>&nbsp;—
+                    who looked at whom, and when.
+                </p>
+                <p class="step-note">
+                    Holders of this permission set can read those rows but cannot edit or
+                    delete them.
+                </p>
+            </li>
+        </ol>
+
+        <section class="card card_grant">
+            <h2 class="card-h">What this tool tells you</h2>
+            <ul class="facts">
+                <li>Object permissions — create, read, update, delete, view all, modify all</li>
+                <li>Field-level security — readable and editable, per field</li>
+                <li>Which permission set, group, or profile granted each one</li>
+                <li>Permission set and group assignments</li>
+                <li>Login history, where your own permissions allow it</li>
+            </ul>
+        </section>
+
+        <p class="foot">
+            Where this tool can't determine something, it says so in place. An empty
+            result never silently means <em>no access</em>.
+        </p>
+    </div>
+</template>

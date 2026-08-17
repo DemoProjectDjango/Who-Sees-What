@@ -15,6 +15,14 @@ public with sharing class PermissionExplorerException extends Exception {
     public String causeCode = UNKNOWN;
     public Boolean retryable = false;
 
+    /**
+     * Builds a typed product exception that the controller can serialize for LWC error handling.
+     *
+     * @param causeCode Stable Permission Explorer error code.
+     * @param msg Admin-facing error message.
+     * @param retryable True when the failed inspection action can reasonably be retried.
+     * @return Exception carrying the structured cause and retry state.
+     */
     public static PermissionExplorerException build(String causeCode, String msg, Boolean retryable) {
         PermissionExplorerException e = new PermissionExplorerException(msg);
         e.causeCode = causeCode;
@@ -22,6 +30,11 @@ public with sharing class PermissionExplorerException extends Exception {
         return e;
     }
 
+    /**
+     * Converts the exception into the DTO shape expected by the client error boundary.
+     *
+     * @return Structured error payload for Permission Explorer UI handling.
+     */
     public PEDto.ErrorInfo toInfo() {
         return new PEDto.ErrorInfo(this.causeCode, this.getMessage(), this.retryable);
     }

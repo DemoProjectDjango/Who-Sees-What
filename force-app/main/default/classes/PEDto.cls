@@ -41,6 +41,14 @@ public with sharing class PEDto {
          */
         @AuraEnabled public Boolean linkable;
 
+        /**
+         * Creates a source chip that tells an admin which profile, permission set,
+         * group, or muting set produced a permission result.
+         *
+         * @param parentId PermissionSet-family parent Id used by permission metadata rows.
+         * @param label Display label shown in the inspection UI.
+         * @param kind Source category used for grouping, linking, and muting treatment.
+         */
         public Source(Id parentId, String label, String kind) {
             this.parentId = parentId;
             this.label = label;
@@ -59,6 +67,13 @@ public with sharing class PEDto {
         @AuraEnabled public Boolean muted;    // granted somewhere, then muted
         @AuraEnabled public List<Source> sources = new List<Source>();
 
+        /**
+         * Creates an ungranted permission row that the resolver can mark with
+         * grants, mutes, and explanatory sources.
+         *
+         * @param name Salesforce permission API name being evaluated.
+         * @param label Admin-facing label for the permission row.
+         */
         public Grant(String name, String label) {
             this.name = name;
             this.label = label;
@@ -87,6 +102,14 @@ public with sharing class PEDto {
         @AuraEnabled public String message;
         @AuraEnabled public Boolean retryable;
 
+        /**
+         * Creates a structured service error for partial failures that the LWC can
+         * render without losing already-resolved permission inspection data.
+         *
+         * @param cause Stable product error code.
+         * @param message Admin-facing explanation of the failed inspection section.
+         * @param retryable True when the UI should present the failure as worth retrying.
+         */
         public ErrorInfo(String cause, String message, Boolean retryable) {
             this.cause = cause;
             this.message = message;
@@ -139,6 +162,7 @@ public with sharing class PEDto {
      * printed above it.
      * --------------------------------------------------------------- */
 
+    /** One login history row shown in the selected user's header drill-down. */
     public class LoginEvent {
         @AuraEnabled public Datetime loginTime;
         @AuraEnabled public String status;
@@ -167,6 +191,7 @@ public with sharing class PEDto {
             'Salesforce retains roughly six months of login history. Older sign-ins are not available here.';
     }
 
+    /** Direct permission set assignment row shown from the selected user's summary count. */
     public class PermSetRow {
         @AuraEnabled public Id permSetId;
         @AuraEnabled public String label;
@@ -187,6 +212,7 @@ public with sharing class PEDto {
         @AuraEnabled public Integer unreadableCount = 0;
     }
 
+    /** Permission set group assignment row used to explain group-derived effective access. */
     public class PermSetGroupRow {
         @AuraEnabled public Id groupId;
         @AuraEnabled public String developerName;
@@ -199,6 +225,7 @@ public with sharing class PEDto {
      * Column 2 — apps
      * --------------------------------------------------------------- */
 
+    /** App visibility row shown in the second column of the admin inspection workspace. */
     public class AppRow {
         @AuraEnabled public String developerName;
         @AuraEnabled public String label;
@@ -228,6 +255,7 @@ public with sharing class PEDto {
      * Modal rail — objects and tabs
      * --------------------------------------------------------------- */
 
+    /** Object or tab row shown when an admin opens app visibility details. */
     public class ObjectRow {
         @AuraEnabled public String apiName;
         @AuraEnabled public String label;
@@ -248,6 +276,7 @@ public with sharing class PEDto {
      * Modal detail
      * --------------------------------------------------------------- */
 
+    /** Field-level security row used in object detail to show readable/editable outcomes and sources. */
     public class FieldPerm {
         @AuraEnabled public String apiName;
         @AuraEnabled public String label;
@@ -261,6 +290,7 @@ public with sharing class PEDto {
         @AuraEnabled public String flsNotApplicableReason;
     }
 
+    /** Composite object detail payload that backs the modal tabs for CRUD, FLS, record types, and sharing context. */
     public class ObjectDetail {
         @AuraEnabled public String apiName;
         @AuraEnabled public String label;
@@ -274,6 +304,7 @@ public with sharing class PEDto {
         @AuraEnabled public List<RecordTypeRow> recordTypes = new List<RecordTypeRow>();
     }
 
+    /** Org-level record type row displayed with an explicit running-user availability caveat. */
     public class RecordTypeRow {
         @AuraEnabled public String developerName;
         @AuraEnabled public String label;
