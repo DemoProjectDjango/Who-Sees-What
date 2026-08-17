@@ -68,3 +68,5 @@ code-analyzer-full.yml
 
 braces.json
 braces-worklist.txt
+
+*CodeAnalyzerReport.html
