@@ -55,7 +55,9 @@ public with sharing class PEKeysetCursor {
      * @return Cursor boundary for the next page, or null when no cursor was supplied.
      */
     public static PEKeysetCursor decode(String encoded) {
-        if (String.isBlank(encoded)) return null;
+        if (String.isBlank(encoded)) {
+            return null;
+        }
         if (encoded.length() > PEConstants.CURSOR_MAX_LENGTH) {
             throw badCursor();
         }
@@ -64,7 +66,9 @@ public with sharing class PEKeysetCursor {
                 EncodingUtil.base64Decode(encoded).toString()
             );
             String f = (String) raw.get('f');
-            if (!ALLOWED_SORTS.contains(f)) throw badCursor();
+            if (!ALLOWED_SORTS.contains(f)) {
+                throw badCursor();
+            }
             return new PEKeysetCursor(f, (String) raw.get('v'), (Id) raw.get('i'));
         } catch (PermissionExplorerException e) {
             throw e;

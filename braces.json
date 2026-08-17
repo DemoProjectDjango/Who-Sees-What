@@ -1,0 +1,617 @@
+{
+  "runDir": "D:\\PermissionChecker\\PermissionChecker\\",
+  "violationCounts": {
+    "total": 25,
+    "sev1": 0,
+    "sev2": 0,
+    "sev3": 25,
+    "sev4": 0,
+    "sev5": 0
+  },
+  "versions": {
+    "code-analyzer": "0.52.0",
+    "pmd": "0.45.0"
+  },
+  "violations": [
+    {
+      "rule": "IfStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PEKeysetCursor.cls",
+          "startLine": 58,
+          "startColumn": 38,
+          "endLine": 58,
+          "endColumn": 50
+        }
+      ],
+      "message": "Avoid using if statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifstmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfElseStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PEKeysetCursor.cls",
+          "startLine": 58,
+          "startColumn": 38,
+          "endLine": 58,
+          "endColumn": 50
+        }
+      ],
+      "message": "Avoid using if...else statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifelsestmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PEKeysetCursor.cls",
+          "startLine": 67,
+          "startColumn": 45,
+          "endLine": 67,
+          "endColumn": 63
+        }
+      ],
+      "message": "Avoid using if statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifstmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfElseStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PEKeysetCursor.cls",
+          "startLine": 67,
+          "startColumn": 45,
+          "endLine": 67,
+          "endColumn": 63
+        }
+      ],
+      "message": "Avoid using if...else statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifelsestmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PEMetadataCatalog.cls",
+          "startLine": 31,
+          "startColumn": 29,
+          "endLine": 31,
+          "endColumn": 59
+        }
+      ],
+      "message": "Avoid using if statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifstmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfElseStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PEMetadataCatalog.cls",
+          "startLine": 31,
+          "startColumn": 29,
+          "endLine": 31,
+          "endColumn": 59
+        }
+      ],
+      "message": "Avoid using if...else statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifelsestmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PEMetadataCatalog.cls",
+          "startLine": 100,
+          "startColumn": 29,
+          "endLine": 100,
+          "endColumn": 65
+        }
+      ],
+      "message": "Avoid using if statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifstmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfElseStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PEMetadataCatalog.cls",
+          "startLine": 100,
+          "startColumn": 29,
+          "endLine": 100,
+          "endColumn": 65
+        }
+      ],
+      "message": "Avoid using if...else statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifelsestmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PEPermissionResolver.cls",
+          "startLine": 126,
+          "startColumn": 34,
+          "endLine": 126,
+          "endColumn": 41
+        }
+      ],
+      "message": "Avoid using if statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifstmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfElseStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PEPermissionResolver.cls",
+          "startLine": 126,
+          "startColumn": 34,
+          "endLine": 126,
+          "endColumn": 41
+        }
+      ],
+      "message": "Avoid using if...else statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifelsestmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PEPermissionResolver.cls",
+          "startLine": 136,
+          "startColumn": 36,
+          "endLine": 136,
+          "endColumn": 43
+        }
+      ],
+      "message": "Avoid using if statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifstmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfElseStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PEPermissionResolver.cls",
+          "startLine": 136,
+          "startColumn": 36,
+          "endLine": 136,
+          "endColumn": 43
+        }
+      ],
+      "message": "Avoid using if...else statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifelsestmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PEPermissionResolver.cls",
+          "startLine": 253,
+          "startColumn": 33,
+          "endLine": 253,
+          "endColumn": 40
+        }
+      ],
+      "message": "Avoid using if statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifstmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfElseStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PEPermissionResolver.cls",
+          "startLine": 253,
+          "startColumn": 33,
+          "endLine": 253,
+          "endColumn": 40
+        }
+      ],
+      "message": "Avoid using if...else statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifelsestmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PEPermissionResolver.cls",
+          "startLine": 326,
+          "startColumn": 62,
+          "endLine": 326,
+          "endColumn": 69
+        }
+      ],
+      "message": "Avoid using if statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifstmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfElseStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PEPermissionResolver.cls",
+          "startLine": 326,
+          "startColumn": 62,
+          "endLine": 326,
+          "endColumn": 69
+        }
+      ],
+      "message": "Avoid using if...else statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifelsestmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PEPermissionResolver.cls",
+          "startLine": 388,
+          "startColumn": 34,
+          "endLine": 388,
+          "endColumn": 53
+        }
+      ],
+      "message": "Avoid using if statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifstmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfElseStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PEPermissionResolver.cls",
+          "startLine": 388,
+          "startColumn": 34,
+          "endLine": 388,
+          "endColumn": 53
+        }
+      ],
+      "message": "Avoid using if...else statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifelsestmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PEPermissionResolver.cls",
+          "startLine": 398,
+          "startColumn": 38,
+          "endLine": 398,
+          "endColumn": 57
+        }
+      ],
+      "message": "Avoid using if statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifstmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfElseStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PEPermissionResolver.cls",
+          "startLine": 398,
+          "startColumn": 38,
+          "endLine": 398,
+          "endColumn": 57
+        }
+      ],
+      "message": "Avoid using if...else statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifelsestmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PESoqlChunker.cls",
+          "startLine": 27,
+          "startColumn": 43,
+          "endLine": 27,
+          "endColumn": 54
+        }
+      ],
+      "message": "Avoid using if statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifstmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfElseStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PESoqlChunker.cls",
+          "startLine": 27,
+          "startColumn": 43,
+          "endLine": 27,
+          "endColumn": 54
+        }
+      ],
+      "message": "Avoid using if...else statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifelsestmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PESoqlChunker.cls",
+          "startLine": 36,
+          "startColumn": 33,
+          "endLine": 36,
+          "endColumn": 50
+        }
+      ],
+      "message": "Avoid using if statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifstmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "IfElseStmtsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PESoqlChunker.cls",
+          "startLine": 36,
+          "startColumn": 33,
+          "endLine": 36,
+          "endColumn": 50
+        }
+      ],
+      "message": "Avoid using if...else statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#ifelsestmtsmustusebraces"
+      ]
+    },
+    {
+      "rule": "ForLoopsMustUseBraces",
+      "engine": "pmd",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "CodeStyle",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app\\main\\default\\classes\\PermissionExplorerTest.cls",
+          "startLine": 250,
+          "startColumn": 35,
+          "endLine": 250,
+          "endColumn": 53
+        }
+      ],
+      "message": "Avoid using for statements without curly braces",
+      "resources": [
+        "https://docs.pmd-code.org/pmd-doc-7.26.0/pmd_rules_apex_codestyle.html#forloopsmustusebraces"
+      ]
+    }
+  ]
+}

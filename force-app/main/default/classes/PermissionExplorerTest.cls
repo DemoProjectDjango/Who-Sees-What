@@ -247,7 +247,9 @@ private class PermissionExplorerTest {
         Assert.areEqual(50, chunks[2].size(), 'Remainder must not be dropped');
 
         Integer total = 0;
-        for (List<Id> c : chunks) total += c.size();
+        for (List<Id> c : chunks) {
+            total += c.size();
+        }
         Assert.areEqual(250, total, 'No Id may be lost while chunking');
     }
 

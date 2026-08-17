@@ -28,7 +28,9 @@ public with sharing class PEMetadataCatalog {
     public static List<TabInfo> getAppTabs(String appDeveloperName) {
         String key = 'appTabs' + appDeveloperName;
         Object cached = PECacheManager.orgGet(key);
-        if (cached != null) return (List<TabInfo>) cached;
+        if (cached != null) {
+            return (List<TabInfo>) cached;
+        }
 
         List<TabInfo> out = new List<TabInfo>();
         for (TabDefinition t : [
@@ -97,7 +99,9 @@ public with sharing class PEMetadataCatalog {
     public static Map<String, String> sharingModel(String objectApiName) {
         String key = 'owd' + objectApiName;
         Object cached = PECacheManager.orgGet(key);
-        if (cached != null) return (Map<String, String>) cached;
+        if (cached != null) {
+            return (Map<String, String>) cached;
+        }
 
         Map<String, String> out = new Map<String, String>{
             'internal' => 'Unknown', 'external' => 'Unknown'

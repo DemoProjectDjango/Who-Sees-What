@@ -38,12 +38,12 @@ public with sharing class PEUserSearchService {
     private static final String PROFILE_FILTER = ' AND ProfileId = :profileId';
     private static final String ROLE_FILTER    = ' AND UserRoleId = :roleId';
     private static final String TYPE_FILTER    = ' AND UserType = :userType';
-    private static final String CURSOR_DESC    =
+    private static final String CURSOR_LAST_LOGIN_DESC    =
         ' AND (LastLoginDate < :cursorDate OR (LastLoginDate = :cursorDate AND Id > :cursorId))';
-    private static final String CURSOR_ASC     =
+    private static final String CURSOR_NAME_ASC     =
         ' AND (Name > :cursorValue OR (Name = :cursorValue AND Id > :cursorId))';
-    private static final String ORDER_DESC     = ' ORDER BY LastLoginDate DESC NULLS LAST, Id ASC';
-    private static final String ORDER_ASC      = ' ORDER BY Name ASC NULLS LAST, Id ASC';
+    private static final String ORDER_LAST_LOGIN_DESC     = ' ORDER BY LastLoginDate DESC NULLS LAST, Id ASC';
+    private static final String ORDER_NAME_ASC      = ' ORDER BY Name ASC NULLS LAST, Id ASC';
     private static final String LIMIT_CLAUSE   = ' LIMIT :fetchSize';
 
     /**
@@ -89,7 +89,10 @@ public with sharing class PEUserSearchService {
         result.pageSize = pageSize == null ? PEConstants.USER_PAGE_SIZE : pageSize;
 
         String sortField = PEKeysetCursor.isAllowedSort(f.sortField) ? f.sortField : 'Name';
-        Boolean descending = sortField == 'LastLoginDate';
+        // Field and direction travel together. Selecting on the field rather than a
+        // derived boolean means a future third sort option cannot pair the wrong
+        // cursor predicate with the wrong ORDER BY.
+        Boolean byLastLogin = sortField == 'LastLoginDate';
         PEKeysetCursor cursor = PEKeysetCursor.decode(encodedCursor);
 
         String cursorValue = cursor == null ? null : cursor.sortValue;
@@ -120,9 +123,9 @@ public with sharing class PEUserSearchService {
             soql += TYPE_FILTER;
         }
         if (cursor != null) {
-            soql += descending ? CURSOR_DESC : CURSOR_ASC;
+            soql += byLastLogin ? CURSOR_LAST_LOGIN_DESC : CURSOR_NAME_ASC;
         }
-        soql += descending ? ORDER_DESC : ORDER_ASC;
+        soql += byLastLogin ? ORDER_LAST_LOGIN_DESC : ORDER_NAME_ASC;
         soql += LIMIT_CLAUSE;
 
         List<User> rows = Database.queryWithBinds(soql, binds, AccessLevel.USER_MODE);

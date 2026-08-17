@@ -13,7 +13,9 @@
     "prettier": "prettier --write \"**/*.{cls,cmp,component,css,html,js,json,md,page,trigger,xml,yaml,yml}\"",
     "prettier:verify": "prettier --check \"**/*.{cls,cmp,component,css,html,js,json,md,page,trigger,xml,yaml,yml}\"",
     "prepare": "husky || true",
-    "precommit": "lint-staged"
+    "precommit": "lint-staged",
+    "scan": "sf code-analyzer run --workspace force-app --config-file code-analyzer.yml --rule-selector AppExchange --rule-selector Recommended:Security --output-file analyzer-full.html",
+    "scan:all": "sf code-analyzer run --workspace force-app --config-file code-analyzer.yml --rule-selector Recommended --output-file analyzer-full.html --view detail"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

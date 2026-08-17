@@ -24,7 +24,9 @@ public with sharing class PESoqlChunker {
      */
     public static List<List<Id>> chunk(List<Id> ids, Integer size) {
         List<List<Id>> out = new List<List<Id>>();
-        if (ids == null || ids.isEmpty()) return out;
+        if (ids == null || ids.isEmpty()) {
+            return out;
+        }
         List<Id> current = new List<Id>();
         for (Id i : ids) {
             current.add(i);
@@ -33,7 +35,9 @@ public with sharing class PESoqlChunker {
                 current = new List<Id>();
             }
         }
-        if (!current.isEmpty()) out.add(current);
+        if (!current.isEmpty()) {
+            out.add(current);
+        }
         return out;
     }
 

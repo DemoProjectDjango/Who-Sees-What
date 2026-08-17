@@ -123,7 +123,9 @@ public with sharing class PEPermissionResolver {
      * @param u Active user record whose profile permission set contributes baseline access.
      */
     private static void loadProfileAsPermissionSet(Resolved r, User u) {
-        if (u.ProfileId == null) return;
+        if (u.ProfileId == null) {
+            return;
+        }
 
         List<PermissionSet> profileSets = [
             SELECT Id, Label, ProfileId, Profile.Name
@@ -133,7 +135,9 @@ public with sharing class PEPermissionResolver {
             LIMIT 1
             
         ];
-        if (profileSets.isEmpty()) return;
+        if (profileSets.isEmpty()) {
+            return;
+        }
 
         PermissionSet ps = profileSets[0];
         r.profilePermSetId = ps.Id;
@@ -250,7 +254,9 @@ public with sharing class PEPermissionResolver {
      * @param groupIds Permission set group Ids assigned to the selected user.
      */
     private static void loadGroupComponents(Resolved r, Set<Id> groupIds) {
-        if (groupIds.isEmpty()) return;
+        if (groupIds.isEmpty()) {
+            return;
+        }
 
         for (List<Id> batch : PESoqlChunker.chunk(groupIds)) {
             for (PermissionSetGroupComponent c : [
@@ -323,7 +329,9 @@ public with sharing class PEPermissionResolver {
      * @param groupIds Permission set group Ids assigned to the selected user.
      */
     private static void loadMutingSets(Resolved r, Set<Id> groupIds) {
-        if (groupIds.isEmpty() || r.mutingParents.isEmpty()) return;
+        if (groupIds.isEmpty() || r.mutingParents.isEmpty()) {
+            return;
+        }
 
         for (List<Id> batch : PESoqlChunker.chunk(r.mutingParents)) {
             for (PermissionSet ps : [
@@ -385,7 +393,9 @@ public with sharing class PEPermissionResolver {
             if (grantedByParent.get(parentId) == true) {
                 g.granted = true;
                 PEDto.Source src = r.sourcesById.get(parentId);
-                if (src != null) g.sources.add(src);
+                if (src != null) {
+                    g.sources.add(src);
+                }
             }
         }
 
@@ -395,7 +405,9 @@ public with sharing class PEPermissionResolver {
                     g.granted = false;
                     g.muted = true;
                     PEDto.Source src = r.sourcesById.get(mutingId);
-                    if (src != null) g.sources.add(src);
+                    if (src != null) {
+                        g.sources.add(src);
+                    }
                     break;
                 }
             }
