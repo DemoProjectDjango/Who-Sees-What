@@ -50,7 +50,7 @@ $RECYCLE.BIN/
 destructive/
 
 # Code Analyzer output
-CodeAnalyzerReport.html
+# CodeAnalyzerReport.html
 analyzer-*.html
 analyzer-*.json
 apexdoc.json
@@ -63,10 +63,10 @@ analyzer-*.html
 analyzer-*.json
 apexdoc*
 appexchange.json
-CodeAnalyzerReport.html
+# CodeAnalyzerReport.html
 code-analyzer-full.yml
 
 braces.json
 braces-worklist.txt
 
-*CodeAnalyzerReport.html
+# CodeAnalyzerReport.html
