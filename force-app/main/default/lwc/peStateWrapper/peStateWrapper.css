@@ -1,46 +1,33 @@
 @import 'c/peBase';
 
+:host {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* The default slot is display:contents by default, which takes it out of the
+   box tree and breaks the flex/height chain one level deeper: slotted content
+   (a listbox, a row list) stops being a proper flex item of anything and just
+   renders at its natural size. Only takes effect where a consumer also gives
+   this component's host a bounded height (see peUserColumn.css / peAppColumn.css
+   / peObjectList.css) — everywhere else this is a no-op, same as today. */
+slot {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
 .pe-state {
-    padding: calc(var(--pe-pad) * 2) var(--pe-pad);
+    padding: calc(var(--pe-pad) * 1.5) var(--pe-pad);
     text-align: left;
-    border-left: 2px solid var(--pe-line);
-    margin: var(--pe-gap);
-}
-
-.pe-state_error { border-left-color: var(--pe-error); }
-
-.headline {
-    font-size: var(--pe-fs-md);
-    font-weight: 600;
-    color: var(--pe-ink);
-    margin: 0 0 0.25rem;
-}
-
-.detail {
-    font-size: var(--pe-fs-sm);
     color: var(--pe-ink-muted);
-    margin: 0;
-    line-height: 1.4;
-}
-
-.retry {
-    margin-top: 0.75rem;
-    font-size: var(--pe-fs-sm);
-    font-weight: 600;
-    color: var(--pe-accent);
-    background: none;
-    border: 1px solid var(--pe-line-strong);
-    border-radius: var(--pe-radius);
-    padding: 0.25rem 0.625rem;
-    cursor: pointer;
-}
-.retry:hover { background: var(--pe-surface-hover); }
-.retry:focus-visible { outline: 2px solid var(--pe-accent); outline-offset: 1px; }
-
-.stale {
-    font-size: var(--pe-fs-xs);
-    color: var(--pe-ink-faint);
-    padding: 0.25rem var(--pe-pad);
-    margin: 0;
-    border-top: 1px solid var(--pe-line);
+    background: var(--pe-surface-sunken);
+    border: 1px solid var(--pe-line);
+    border-left: 3px solid var(--pe-line-strong);
+    border-radius: var(--pe-radius-sm);
+    margin: var(--pe-gap);
 }

@@ -1,0 +1,162 @@
+@import 'c/peBase';
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    background: var(--pe-surface);
+    overflow: hidden;
+}
+
+/* The app name used to be repeated in a dark bar here. The left rail's stage
+   header carries it now, one row above, so this panel starts at its tools. */
+.chiprow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--pe-gap);
+    min-width: 0;
+}
+
+/* Same fix as peUserColumn.css / peAppColumn.css: without this, .rows below
+   sizes to its full content instead of the panel's remaining height. */
+.panel c-pe-state-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+.count { font-size: var(--pe-fs-xs); color: var(--pe-ink-faint); white-space: nowrap; flex: 0 0 auto; }
+
+.emptyapp {
+    margin: 0;
+    padding: 0.75rem;
+    font-size: var(--pe-fs-sm);
+    line-height: 1.5;
+    color: var(--pe-ink-muted);
+    background: var(--pe-surface-sunken);
+    border-bottom: 1px solid var(--pe-line);
+}
+
+.tools {
+    display: flex;
+    flex-direction: column;
+    gap: var(--pe-gap);
+    padding: 0.625rem 0.75rem;
+    border-bottom: 1px solid var(--pe-line);
+    background: var(--pe-surface-sunken);
+}
+.filter {
+    height: 2rem;
+    padding: 0 0.625rem;
+    font-size: var(--pe-fs-sm);
+    color: var(--pe-ink);
+    background: var(--pe-surface);
+    border: 1px solid var(--pe-line-strong);
+    border-radius: var(--pe-radius-sm);
+    box-sizing: border-box;
+}
+.filter:focus { outline: 2px solid var(--pe-accent); outline-offset: -1px; }
+
+.chips { display: flex; gap: 3px; flex-wrap: wrap; }
+.chip {
+    font-size: var(--pe-fs-xs);
+    color: var(--pe-ink-muted);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--pe-radius-pill);
+    padding: 0.25rem 0.5625rem;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.chip:hover { background: var(--pe-surface-hover); }
+.chip_on {
+    color: #ffffff;
+    font-weight: 600;
+    background: var(--pe-accent);
+    border-color: var(--pe-accent);
+}
+.chip:focus-visible { outline: 2px solid var(--pe-accent); outline-offset: 1px; }
+
+.rows {
+    margin: 0;
+    padding: 0.25rem 0;
+    list-style: none;
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.orow {
+    display: flex;
+    align-items: center;
+    gap: 0.5625rem;
+    width: 100%;
+    min-height: 2.25rem;
+    padding: 0.4375rem 0.75rem;
+    font-family: inherit;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+.orow:hover:not(:disabled) { background: var(--pe-surface-hover); }
+.orow:disabled { cursor: default; }
+.orow:focus-visible { outline: 2px solid var(--pe-accent); outline-offset: -2px; }
+.orow_on {
+    background: var(--pe-surface-select);
+    box-shadow: inset 3px 0 0 0 var(--pe-accent);
+}
+.orow_on .oname { font-weight: 600; }
+
+.odot { width: 7px; height: 7px; border-radius: var(--pe-radius-pill); flex: 0 0 auto; }
+.odot_grant { background: var(--pe-grant); }
+.odot_deny  { background: var(--pe-deny); }
+.odot_mute  { background: var(--pe-caution); }
+.odot_na    { background: var(--pe-na); }
+
+.oname {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: var(--pe-fs-md);
+    color: var(--pe-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.otag {
+    flex: 0 0 auto;
+    font-size: var(--pe-fs-xs);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.otag_grant { color: var(--pe-ink-faint); }
+.otag_deny  { color: var(--pe-deny-ink); }
+.otag_mute  { color: var(--pe-caution-ink); }
+.otag_na    { color: var(--pe-na); }
+
+.morewrap { padding: 0.5rem 0.75rem; }
+.more {
+    font-size: var(--pe-fs-xs);
+    font-weight: 600;
+    color: var(--pe-accent);
+    background: var(--pe-surface);
+    border: 1px solid var(--pe-line-strong);
+    border-radius: var(--pe-radius-sm);
+    padding: 0.25rem 0.625rem;
+    cursor: pointer;
+}
+.more:hover { background: var(--pe-accent-soft); border-color: var(--pe-accent); }
+
+.footnote {
+    margin: 0;
+    padding: 0.625rem 0.75rem;
+    border-top: 1px solid var(--pe-line);
+    background: var(--pe-surface-sunken);
+    font-size: var(--pe-fs-xs);
+    line-height: 1.5;
+    color: var(--pe-ink-muted);
+}
+.footnote strong { color: var(--pe-ink); font-weight: 600; }

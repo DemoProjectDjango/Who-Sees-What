@@ -72,6 +72,23 @@ export function sourceUrl(source) {
     }
 }
 
+/**
+ * Opens a Setup URL in a real new browser tab.
+ *
+ * These are deliberately wired up on <button> elements, not <a> tags.
+ * Lightning Experience's own navigation shell listens for clicks on anchors
+ * pointing at internal `/lightning/...` routes in the CAPTURE phase, ahead of
+ * any bubble-phase click handler a component adds — so even calling
+ * `preventDefault()` from inside an anchor's own onclick never runs in time to
+ * stop it. A <button> has no href for that shell to recognise or intercept in
+ * the first place, so this always lands on a genuine new tab.
+ */
+export function openInNewTab(url) {
+    if (url) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+    }
+}
+
 export function tabVisibilityLabel(visibility) {
     switch (visibility) {
         case 'DefaultOn':  return 'Default on';

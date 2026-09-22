@@ -138,6 +138,8 @@ public with sharing class PEDto {
         @AuraEnabled public String name;
         @AuraEnabled public String username;
         @AuraEnabled public String email;
+        @AuraEnabled public String department;
+        @AuraEnabled public String managerName;
         @AuraEnabled public String profileName;
         @AuraEnabled public Id profileId;
         @AuraEnabled public String roleName;
@@ -312,5 +314,52 @@ public with sharing class PEDto {
         @AuraEnabled public Boolean isMaster = false;
         /** Running user's access, NOT the target user's. Label it as such. */
         @AuraEnabled public Boolean availableToRunningUser = false;
+    }
+
+    /* ---------------------------------------------------------------
+     * License Inspector
+     * --------------------------------------------------------------- */
+
+    /** One row of the license table: a User License, Permission Set License,
+        Package License, or Usage-Based Entitlement. */
+    public class LicenseRow {
+        @AuraEnabled public Id licenseId;
+        @AuraEnabled public String licenseType;   // 'UserLicense' | 'PermissionSetLicense' | 'PackageLicense' | 'UsageEntitlement'
+        @AuraEnabled public String name;
+        @AuraEnabled public String status;
+        @AuraEnabled public Integer total;        // null when isUnlimited
+        @AuraEnabled public Integer used = 0;
+        @AuraEnabled public Integer free;         // null when isUnlimited
+        @AuraEnabled public Boolean isUnlimited = false;
+        @AuraEnabled public Datetime expirationDate;  // PSL/PackageLicense expiry, or entitlement period end
+        @AuraEnabled public String frequency;         // set for usage-based entitlements only, e.g. 'Daily'
+    }
+
+    /** One user holding a license, shown in the "view users" drill-down. */
+    public class LicenseUserRow {
+        @AuraEnabled public Id userId;
+        @AuraEnabled public String name;
+        @AuraEnabled public String username;
+        @AuraEnabled public String profileName;
+        @AuraEnabled public Boolean isActive = true;
+    }
+
+    /* ---------------------------------------------------------------
+     * Org stats bar
+     * --------------------------------------------------------------- */
+
+    /**
+     * Org-wide counts for the top KPI bar. Every field is nullable and
+     * independently optional — one count failing to compute (an object this
+     * running user cannot query, say) hides that one card, not the whole
+     * bar. See PEOrgStatsService for how each is derived.
+     */
+    public class OrgStats {
+        @AuraEnabled public Integer activeUsers;
+        @AuraEnabled public Integer permissionSets;
+        @AuraEnabled public Integer permissionSetGroups;
+        @AuraEnabled public Integer profiles;
+        @AuraEnabled public Integer reachableApps;
+        @AuraEnabled public Integer objectsWithAccess;
     }
 }

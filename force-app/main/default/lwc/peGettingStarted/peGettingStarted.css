@@ -1,12 +1,34 @@
 /* eslint-disable @salesforce-ux/slds/no-hardcoded-values-slds2 */
 @import 'c/peBase';
 
+:host {
+    display: block;
+    height: 100%;
+    overflow-y: auto;
+}
+
 .gs {
     padding: calc(var(--pe-pad) * 2);
     max-width: 54rem;
     color: var(--pe-ink);
     font-family: var(--pe-font);
 }
+
+.setuplink {
+    display: inline;
+    font: inherit;
+    color: var(--pe-accent);
+    font-weight: 600;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    text-decoration: underline;
+    text-underline-offset: 0.125rem;
+    cursor: pointer;
+}
+.setuplink:hover { color: var(--pe-accent-ink); }
+.setuplink:focus-visible { outline: 2px solid var(--pe-accent); outline-offset: 1px; }
 
 /* Masthead ---------------------------------------------------------------- */
 .masthead {

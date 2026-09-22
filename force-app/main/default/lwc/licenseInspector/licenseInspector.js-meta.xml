@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>67.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>License Inspector</masterLabel>
+    <description>Inventory of user and permission set licenses in this org: total, used, and free seats, and who holds each one.</description>
+    <targets>
+        <target>lightning__AppPage</target>
+        <target>lightning__Tab</target>
+    </targets>
+</LightningComponentBundle>

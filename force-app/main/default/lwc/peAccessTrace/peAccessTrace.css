@@ -1,0 +1,276 @@
+@import 'c/peBase';
+
+/* The chain column no longer stretches to the rail's height. On a system
+   administrator there is exactly one Profile card to show, and a column of
+   white space under it made a correct answer look like a failed load. */
+.trace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 21rem;
+    align-items: start;
+    min-height: 0;
+}
+
+/* ---- the chain ---------------------------------------------------------- */
+
+.chain { padding: var(--pe-pad); min-width: 0; }
+.chain h3 { margin: 0 0 0.75rem; }
+
+.links { display: flex; flex-direction: column; gap: 0.625rem; }
+
+.link {
+    border: 1px solid var(--pe-line);
+    border-radius: var(--pe-radius);
+    background: var(--pe-surface);
+    padding: 0.75rem 0.875rem;
+    box-shadow: var(--pe-shadow);
+}
+.link_cut {
+    background: var(--pe-caution-bg);
+    border-color: var(--pe-caution-line);
+}
+
+.linkhead {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    flex-wrap: wrap;
+}
+
+.kind {
+    font-size: var(--pe-fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    border: 1px solid var(--pe-line-strong);
+    border-radius: var(--pe-radius-sm);
+    padding: 0.0625rem 0.4375rem;
+    color: var(--pe-ink-muted);
+    white-space: nowrap;
+}
+.kind_permset { color: var(--pe-grant-ink); border-color: var(--pe-grant-line); }
+.kind_group   { color: var(--pe-accent); border-color: var(--pe-accent-line); }
+.kind_muting  { color: var(--pe-caution-ink); border-color: var(--pe-caution-line); }
+
+.sourcename {
+    font-size: var(--pe-fs-lg);
+    font-weight: 600;
+    color: var(--pe-ink);
+    min-width: 0;
+}
+
+.setup {
+    margin-left: auto;
+    font: inherit;
+    font-size: var(--pe-fs-sm);
+    font-weight: 600;
+    color: var(--pe-accent);
+    background: none;
+    border: none;
+    padding: 0;
+    text-decoration: underline;
+    text-underline-offset: 0.125rem;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.setup:focus-visible { outline: 2px solid var(--pe-accent); outline-offset: 2px; }
+
+.grants {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin-top: 0.625rem;
+}
+
+/* Sign carries the meaning; colour only reinforces it. Printed in black and
+   white, a plus and a minus still read correctly. */
+.gpill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    height: 1.625rem;
+    padding: 0 0.625rem;
+    border-radius: var(--pe-radius-pill);
+    font-size: var(--pe-fs-sm);
+    font-weight: 500;
+    white-space: nowrap;
+}
+.gpill_add { background: var(--pe-grant-bg); color: var(--pe-grant-ink); }
+.gpill_cut { background: #fbeee0; color: var(--pe-caution-ink); }
+.sign { font-size: var(--pe-fs-xs); }
+
+.outdated {
+    margin: 0.625rem 0 0;
+    font-size: var(--pe-fs-sm);
+    color: var(--pe-caution-ink);
+}
+
+.nochain {
+    margin: 0;
+    padding: 0.875rem;
+    font-size: var(--pe-fs-md);
+    color: var(--pe-ink-muted);
+    background: var(--pe-surface-sunken);
+    border: 1px solid var(--pe-line);
+    border-radius: var(--pe-radius);
+}
+
+/* ---- the resolution ----------------------------------------------------- */
+
+.effective {
+    margin-top: 1.125rem;
+    padding: 0.875rem 1rem;
+    background: var(--pe-chrome);
+    border-radius: var(--pe-radius);
+    color: #ffffff;
+}
+.effhead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--pe-pad);
+    flex-wrap: wrap;
+}
+.efftitle {
+    font-family: var(--pe-display);
+    font-size: var(--pe-fs-lg);
+    font-weight: 700;
+}
+.effrule { font-size: var(--pe-fs-xs); color: var(--pe-chrome-ink-muted); }
+
+.effpills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4375rem;
+    margin-top: 0.75rem;
+}
+.effpill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4375rem;
+    height: 1.875rem;
+    padding: 0 0.75rem;
+    border-radius: var(--pe-radius-pill);
+    border: 1px solid;
+    font-size: var(--pe-fs-sm);
+    font-weight: 600;
+    white-space: nowrap;
+}
+.effpill_grant { background: #1c3a34; border-color: #2e6d60; color: #bfe9dd; }
+.effpill_mute  { background: #37301e; border-color: #6b5526; color: #efd9a8; }
+.effpill_deny  { background: #3a2220; border-color: #6e3029; color: #f0c2bc; }
+
+.effdot { width: 7px; height: 7px; border-radius: var(--pe-radius-pill); }
+.effdot_grant { background: #3fbfa3; }
+.effdot_mute  { background: #d6a23f; }
+.effdot_deny  { background: #d9695c; }
+
+.effnote {
+    margin: 0.875rem 0 0;
+    font-size: var(--pe-fs-md);
+    line-height: 1.55;
+    color: #c8ccd2;
+}
+
+/* ---- the rail ----------------------------------------------------------- */
+
+.rail {
+    border-left: 1px solid var(--pe-line);
+    background: var(--pe-surface-sunken);
+    padding: var(--pe-pad);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-width: 0;
+}
+.rail h3 { margin: 0 0 0.625rem; }
+
+/* One line, truncated. The full URL was four lines of mono that nobody reads
+   and everybody copies — the button does the work, the text just confirms
+   which link it is. */
+.url {
+    margin: 0;
+    padding: 0.5rem 0.625rem;
+    background: var(--pe-surface);
+    border: 1px solid var(--pe-line);
+    border-radius: var(--pe-radius-sm);
+    font-size: var(--pe-fs-xs);
+    line-height: 1.5;
+    color: var(--pe-ink-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    direction: rtl;
+    text-align: left;
+}
+
+.copy {
+    width: 100%;
+    height: 2.5rem;
+    margin-top: 0.625rem;
+    font-family: inherit;
+    font-size: var(--pe-fs-md);
+    font-weight: 600;
+    color: #ffffff;
+    background: var(--pe-accent);
+    border: 1px solid var(--pe-accent);
+    border-radius: var(--pe-radius-sm);
+    cursor: pointer;
+}
+.copy:hover { background: var(--pe-accent-ink); border-color: var(--pe-accent-ink); }
+.copy:focus-visible { outline: 2px solid var(--pe-accent); outline-offset: 2px; }
+
+.railnote {
+    margin: 0.5rem 0 0;
+    font-size: var(--pe-fs-sm);
+    line-height: 1.5;
+    color: var(--pe-ink-muted);
+}
+
+.railsection {
+    border-top: 1px solid var(--pe-line);
+    padding-top: 1.125rem;
+}
+
+.facts { margin: 0; display: flex; flex-direction: column; gap: 0.4375rem; }
+.fact {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: var(--pe-fs-sm);
+}
+.fact dt { color: var(--pe-ink-faint); }
+.fact dd {
+    margin: 0;
+    font-weight: 600;
+    color: var(--pe-ink);
+    text-align: right;
+    min-width: 0;
+    word-break: break-word;
+}
+
+.assurance {
+    margin-top: auto;
+    padding: 0.75rem 0.875rem;
+    background: var(--pe-grant-bg);
+    border: 1px solid var(--pe-grant-line);
+    border-radius: var(--pe-radius-sm);
+}
+.atitle {
+    margin: 0;
+    font-size: var(--pe-fs-md);
+    font-weight: 600;
+    color: var(--pe-grant-ink);
+}
+.abody {
+    margin: 0.375rem 0 0;
+    font-size: var(--pe-fs-sm);
+    line-height: 1.5;
+    color: var(--pe-ink-muted);
+}
+
+/* The rail stacks under the chain before it gets too narrow to read a URL in. */
+@media (max-width: 899px) {
+    .trace { grid-template-columns: 1fr; }
+    .rail { border-left: none; border-top: 1px solid var(--pe-line); }
+    .assurance { margin-top: 0; }
+}

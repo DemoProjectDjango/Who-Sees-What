@@ -1,0 +1,51 @@
+@import 'c/peBase';
+
+.strip {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: var(--pe-gap);
+}
+
+.tile {
+    padding: 0.5rem 0.625rem;
+    border: 1px solid var(--pe-line);
+    border-radius: var(--pe-radius-sm);
+    background: var(--pe-surface-sunken);
+    min-width: 0;
+}
+.tile_grant { border-color: var(--pe-grant-line); background: var(--pe-grant-bg); }
+.tile_deny  { border-color: var(--pe-deny-line);  background: var(--pe-deny-bg); }
+.tile_mute  { border-color: var(--pe-caution-line); background: var(--pe-caution-bg); }
+
+.tlabel {
+    display: block;
+    font-size: var(--pe-fs-xs);
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--pe-ink-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tstate {
+    display: flex;
+    align-items: center;
+    gap: 0.4375rem;
+    margin-top: 0.375rem;
+}
+.tdot { width: 8px; height: 8px; border-radius: var(--pe-radius-pill); flex: 0 0 auto; }
+.tdot_grant { background: var(--pe-grant); }
+.tdot_deny  { background: var(--pe-deny); }
+.tdot_mute  { background: var(--pe-caution); }
+
+.ttext { font-size: var(--pe-fs-md); font-weight: 600; }
+.ttext_grant { color: var(--pe-grant-ink); }
+.ttext_deny  { color: var(--pe-deny-ink); }
+.ttext_mute  { color: var(--pe-caution-ink); }
+
+/* Six tiles stop being readable well before the column does. */
+@media (max-width: 1199px) {
+    .strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}

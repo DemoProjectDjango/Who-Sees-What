@@ -45,6 +45,10 @@ export default class PeUserColumn extends LightningElement {
     /* ------------------------------ derived ------------------------------ */
 
     get isLoading()  { return this.state === STATE.LOADING; }
+
+    /* Pagination for a single page of eight users took more vertical room than
+       the results it described. It appears when there is somewhere to go. */
+    get showPager()  { return this.hasMore || this.canGoBack || this.capReached; }
     get shownCount() { return this.rows.length; }
     get pageNumber() { return this.cursors.pageNumber; }
     get canGoBack()  { return this.cursors.canGoBack; }

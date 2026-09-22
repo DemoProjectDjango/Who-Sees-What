@@ -1,0 +1,28 @@
+<template>
+    <div class="granted">
+        <p class="sectionlabel">Granted by</p>
+
+        <template lwc:if={hasSources}>
+            <ul class="slist">
+                <template for:each={sources} for:item="s">
+                    <li key={s.key} class="srow">
+                        <span class="skind">{s.kindLabel}</span>
+                        <template lwc:if={s.url}>
+                            <button class="slink" type="button" data-url={s.url} onclick={handleOpen}>{s.label}</button>
+                        </template>
+                        <template lwc:else>
+                            <span class="splain">{s.label}</span>
+                        </template>
+                    </li>
+                </template>
+            </ul>
+        </template>
+        <template lwc:else>
+            <p class="none">Nothing grants this user access to this object.</p>
+        </template>
+
+        <template lwc:if={hasMuting}>
+            <p class="muting">{mutingText}</p>
+        </template>
+    </div>
+</template>

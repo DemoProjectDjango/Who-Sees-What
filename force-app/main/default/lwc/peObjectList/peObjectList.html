@@ -1,0 +1,57 @@
+<template>
+    <section class="panel">
+        <template lwc:if={isEmptyApp}>
+            <p class="emptyapp">This app exposes no objects this user can reach, and no objects with data access behind it.</p>
+        </template>
+
+        <div class="tools">
+            <input class="filter" type="search" placeholder="Filter objects"
+                   aria-label="Filter objects" oninput={handleFilter} />
+            <div class="chiprow">
+                <div class="chips" role="group" aria-label="Access filter">
+                    <template for:each={chips} for:item="c">
+                        <button key={c.key} class={c.class} type="button"
+                                data-key={c.key} onclick={handleChip}>{c.label}</button>
+                    </template>
+                </div>
+                <span class="count pe-mono">{countText}</span>
+            </div>
+        </div>
+
+        <c-pe-state-wrapper
+            state={state}
+            error={error}
+            empty-headline="No objects in this app"
+            empty-detail="The app has no tabs this user can reach, and no objects with data access."
+            skeleton-rows="8"
+            onretry={handleRetry}>
+
+            <ul class="rows">
+                <template for:each={visibleRows} for:item="r">
+                    <li key={r.apiName}>
+                        <button class={r.rowClass} type="button" data-api={r.apiName}
+                                data-label={r.label} aria-pressed={r.selectedStr}
+                                disabled={r.notAnObject} onclick={handleSelect}>
+                            <span class={r.dotClass} aria-hidden="true"></span>
+                            <span class="oname">{r.label}</span>
+                            <span class={r.tagClass}>{r.tag}</span>
+                        </button>
+                    </li>
+                </template>
+            </ul>
+
+            <template lwc:if={hasMore}>
+                <div class="morewrap">
+                    <button class="more" type="button" onclick={showMore}>Show more</button>
+                </div>
+            </template>
+        </c-pe-state-wrapper>
+
+        <!-- The sentence that turns a permission list into a finding. It stays
+             pinned to the list rather than living in help text nobody opens. -->
+        <p class="footnote">
+            <strong>No tab</strong> means the data is reachable by API, report or list view
+            even though nothing appears in the app menu.
+        </p>
+    </section>
+</template>

@@ -1,55 +1,73 @@
 <template>
-    <div class="summary">
-        <div class="identity">
-            <h3 class="name">{summary.name}</h3>
-            <span class="username pe-mono">{summary.username}</span>
-            <template lwc:if={summary.isFrozen}>
-                <span class="frozen" title="This user is frozen but still active. Their permissions are unchanged.">Frozen</span>
-            </template>
+    <div class="idcard">
+        <div class="idhead">
+            <span class="avatar" aria-hidden="true">{initials}</span>
+            <div class="idnames">
+                <h3 class="name">{summary.name}</h3>
+                <p class="role">{roleText}</p>
+            </div>
+            <span class={statusClass}>{statusLabel}</span>
         </div>
 
-        <dl class="facts">
-            <div class="fact"><dt>Profile</dt><dd><span class="val">{profileText}</span></dd></div>
-            <div class="fact"><dt>Role</dt><dd><span class="val">{roleText}</span></dd></div>
-            <div class="fact"><dt>License</dt><dd><span class="val">{licenseText}</span></dd></div>
+        <p class="sectionlabel">User Identity &amp; Access</p>
 
+        <dl class="facts">
+            <template lwc:if={hasEmail}>
+                <div class="fact">
+                    <dt>Email</dt>
+                    <dd class="pe-mono">{emailText}</dd>
+                </div>
+            </template>
+            <template lwc:if={hasDepartment}>
+                <div class="fact">
+                    <dt>Department</dt>
+                    <dd>{departmentText}</dd>
+                </div>
+            </template>
+            <template lwc:if={hasManager}>
+                <div class="fact">
+                    <dt>Manager</dt>
+                    <dd>{managerText}</dd>
+                </div>
+            </template>
+            <div class="fact">
+                <dt>Profile</dt>
+                <dd>{profileText}</dd>
+            </div>
+            <div class="fact">
+                <dt>License</dt>
+                <dd>{licenseText}</dd>
+            </div>
             <div class="fact">
                 <dt>Last sign-in</dt>
                 <dd>
-                    <span class="val">{lastLoginText}</span>
+                    {lastLoginText}
                     <button class="probe" type="button"
                             onclick={handleLoginHistory}
                             aria-label={loginHistoryAriaLabel}
                             title="View this user's login history">History</button>
                 </dd>
             </div>
-
-            <div class="fact">
-                <dt>Permission sets</dt>
-                <dd>
-                    <span class="val">{permSetText}</span>
-                    <template lwc:if={hasPermSets}>
-                        <button class="probe" type="button"
-                                onclick={handlePermSets}
-                                aria-label={permSetAriaLabel}
-                                title="List the assigned permission sets">View</button>
-                    </template>
-                </dd>
-            </div>
-
-            <div class="fact">
-                <dt>Groups</dt>
-                <dd>
-                    <span class="val">{groupText}</span>
-                    <template lwc:if={hasGroups}>
-                        <button class="probe" type="button"
-                                onclick={handleGroups}
-                                aria-label={groupAriaLabel}
-                                title="List the assigned permission set groups">View</button>
-                    </template>
-                </dd>
-            </div>
         </dl>
+
+        <div class="assigned">
+            <div class="assignedrow">
+                <span class="assignedlabel">Assigned permission sets ({permSetCount})</span>
+                <template lwc:if={hasPermSets}>
+                    <button class="probe" type="button"
+                            onclick={handlePermSets}
+                            aria-label={permSetAriaLabel}>View all</button>
+                </template>
+            </div>
+            <div class="assignedrow">
+                <span class="assignedlabel">Permission set groups ({groupCount})</span>
+                <template lwc:if={hasGroups}>
+                    <button class="probe" type="button"
+                            onclick={handleGroups}
+                            aria-label={groupAriaLabel}>View all</button>
+                </template>
+            </div>
+        </div>
 
         <template lwc:if={hasOutdatedGroups}>
             <p class="warn" role="status">

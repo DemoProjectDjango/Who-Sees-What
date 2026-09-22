@@ -1,50 +1,104 @@
 /**
- * Permission Explorer design tokens.
+ * Permission Explorer design tokens — 0.4 "Paper & Ink".
  *
- * Every colour routes through an SLDS styling hook with a fallback. Subscriber
- * orgs run their own themes, and a hand-styled tool that ignores them looks
- * broken in a way a base component never does. That is the actual tax on going
- * custom, and it is paid here, once.
+ * Brand-first, not theme-first. The 0.3 tokens routed every colour through an
+ * SLDS styling hook so a subscriber theme flowed straight through. That kept us
+ * invisible; it also meant the product had no face of its own. From 0.4 the
+ * tokens carry our own values and expose a --pe-brand-* override, so an org that
+ * genuinely needs to re-skin still can, at one place, on purpose.
+ *
+ * Signal colour is never themed. Grant, absence, muted and not-applicable are
+ * findings, not decoration, and they must read the same in every org.
  */
 :host {
-    /* Surfaces */
-    --pe-surface:        var(--slds-g-color-surface-1, #ffffff);
-    --pe-surface-sunken: var(--slds-g-color-surface-container-1, #f3f3f3);
-    --pe-surface-raised: var(--slds-g-color-surface-2, #ffffff);
-    --pe-surface-hover:  var(--slds-g-color-surface-container-2, #f3f3f3);
-    --pe-surface-select: var(--slds-g-color-surface-container-3, #eef4ff);
+    /* Ground and surfaces. A cool neutral ground behind white cards, so the
+       panels read as objects on a desk rather than panes of a grey window. */
+    --pe-ground:         var(--pe-brand-ground, #f4f6fa);
+    --pe-surface:        var(--pe-brand-surface, #ffffff);
+    --pe-surface-sunken: var(--pe-brand-sunken, #f7f9fc);
+    --pe-surface-raised: var(--pe-brand-surface, #ffffff);
+    --pe-surface-hover:  #eef2f9;
+    --pe-surface-select: #e8f0fd;
+
+    /* Chrome. Light from 0.4.2 rather than a dark slab: the tool sits inside
+       Lightning, and a heavy dark bar directly under the Salesforce header read
+       as a second application rather than a panel within one. The bar now
+       carries the accent only in its type and its primary button. */
+    --pe-chrome:           var(--pe-brand-chrome, #ffffff);
+    --pe-chrome-ink:       #10192b;
+    --pe-chrome-ink-muted: #5a6478;
+    --pe-chrome-line:      #dfe4ed;
+    --pe-chrome-field:     #eef2f9;
 
     /* Ink */
-    --pe-ink:        var(--slds-g-color-on-surface-1, #181818);
-    --pe-ink-muted:  var(--slds-g-color-on-surface-2, #5c5c5c);
-    --pe-ink-faint:  var(--slds-g-color-on-surface-3, #939393);
+    --pe-ink:       #10192b;
+    --pe-ink-muted: #4b5568;
+    --pe-ink-faint: #78819a;
 
     /* Lines */
-    --pe-line:        var(--slds-g-color-border-base-1, #e5e5e5);
-    --pe-line-strong: var(--slds-g-color-border-base-4, #c9c9c9);
+    --pe-line:        #e5e9f0;
+    --pe-line-strong: #d3dae5;
 
-    /* Signal — grant, absence, caution. Never colour alone. */
-    --pe-grant:   var(--slds-g-color-success-base-50, #2e844a);
-    --pe-deny:    var(--slds-g-color-neutral-base-50, #747474);
-    --pe-caution: var(--slds-g-color-warning-base-40, #a86403);
-    --pe-error:   var(--slds-g-color-error-base-40, #ba0517);
-    --pe-accent:  var(--slds-g-color-accent-base-50, #0176d3);
+    /* Signal — four states, never colour alone. Every one of these is paired
+       with a word in the markup: Yes, No, Muted, n/a. Deliberately unchanged
+       across the 0.4.2 retheme: a verdict must read identically in every org
+       and in every version, and green stays reserved for "granted" now that
+       the brand itself is no longer green. */
+    --pe-grant:        #2e9e63;
+    --pe-grant-ink:    #1a7346;
+    --pe-grant-bg:     #f0f8f3;
+    --pe-grant-line:   #c9e4d5;
 
-    /* Density. Admin tools are read, not admired — rows stay tight. */
-    --pe-row-h: 2rem;
+    --pe-deny:         #c0483c;
+    --pe-deny-ink:     #a03a30;
+    --pe-deny-bg:      #fcf5f4;
+    --pe-deny-line:    #e8cec9;
+
+    --pe-caution:      #b4801f;
+    --pe-caution-ink:  #8c6317;
+    --pe-caution-bg:   #fcf8f0;
+    --pe-caution-line: #e7dbc0;
+
+    --pe-na:           #a8aec0;
+    --pe-error:        #c0483c;
+
+    /* Accent. A deep enterprise blue, held one step darker and less cyan than
+       the SLDS brand blue on purpose: near enough to feel native inside
+       Lightning, far enough that a screenshot of this product is not mistaken
+       for a screenshot of Setup. */
+    --pe-accent:      var(--pe-brand-accent, #1b4db1);
+    --pe-accent-ink:  #16409a;
+    --pe-accent-soft: #eaf0fc;
+    --pe-accent-line: #c5d5f2;
+    --pe-accent-on-chrome: var(--pe-brand-accent, #1b4db1);
+
+    /* Density. Admin tools are read, not admired — but 0.3 was tight enough to
+       tire the eye on a 200-row field table. Rows gain 4px, no more. */
+    --pe-row-h: 2.25rem;
     --pe-row-h-lg: 2.75rem;
     --pe-gap: 0.5rem;
-    --pe-pad: 0.75rem;
-    --pe-radius: 0.25rem;
+    --pe-pad: 0.875rem;
+    --pe-radius: 0.625rem;
+    --pe-radius-sm: 0.4375rem;
+    --pe-radius-pill: 999px;
+    --pe-shadow: 0 1px 2px rgba(16, 25, 43, 0.06);
+    --pe-shadow-card: 0 1px 2px rgba(16, 25, 43, 0.06), 0 6px 16px rgba(16, 25, 43, 0.05);
+    --pe-shadow-lg: 0 24px 60px rgba(16, 25, 43, 0.28);
 
-    /* Type. One characterful move: API names are always monospaced, so the
-       eye separates "what Salesforce calls it" from "what the admin calls it". */
+    /* Type. Space Grotesk and IBM Plex are named first and degrade to the org
+       font if they are not installed — a managed package cannot fetch webfonts
+       without the subscriber trusting an external host, and that is not a cost
+       worth putting on a security review. The grotesque is used only for
+       headings; the one characterful rule stays: API names are monospaced, so
+       the eye separates "what Salesforce calls it" from "what the admin does". */
     --pe-font: var(--slds-g-font-family, inherit);
-    --pe-mono: 'SFMono-Regular', 'Roboto Mono', Menlo, Consolas, monospace;
+    --pe-display: 'Space Grotesk', 'Segoe UI Variable Display', 'Segoe UI', var(--slds-g-font-family, system-ui), sans-serif;
+    --pe-mono: 'IBM Plex Mono', 'SFMono-Regular', 'Roboto Mono', Menlo, Consolas, monospace;
     --pe-fs-xs: 0.6875rem;
     --pe-fs-sm: 0.75rem;
     --pe-fs-md: 0.8125rem;
     --pe-fs-lg: 0.9375rem;
+    --pe-fs-xl: 1.375rem;
 }
 
 .pe-mono {
@@ -54,11 +108,12 @@
 }
 
 .pe-eyebrow {
+    font-family: var(--pe-display);
     font-size: var(--pe-fs-xs);
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.09em;
     text-transform: uppercase;
-    color: var(--pe-ink-faint);
+    color: var(--pe-ink-muted);
 }
 
 /* The lineage spine: a 2px rail on the selected row, echoing the drill-down. */

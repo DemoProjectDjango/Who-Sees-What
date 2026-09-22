@@ -1,34 +1,34 @@
 <template>
-    <section class="column" aria-labelledby="col2-heading">
+    <section class="column" aria-label="Choose an app">
         <header class="head">
-            <h2 id="col2-heading" class="pe-eyebrow">App</h2>
-            <label class="toggle">
-                <input type="checkbox" checked={showHidden} onchange={handleToggle} />
-                <span>Show all apps, including hidden</span>
-            </label>
-            <p class="tally" aria-live="polite">{tally}</p>
+            <c-pe-state-wrapper
+                state={state}
+                error={error}
+                empty-headline={emptyHeadline}
+                empty-detail={emptyDetail}
+                skeleton-rows="1"
+                onretry={handleRetry}>
+
+                <select id="pe-app-select" class="appselect" aria-label="Choose an app" onchange={handleSelect}>
+                    <option value="">Select an app…</option>
+                    <template for:each={dropdownItems} for:item="a">
+                        <option key={a.id} value={a.id} selected={a.isSelected}>{a.label}</option>
+                    </template>
+                </select>
+            </c-pe-state-wrapper>
+
+            <div class="metarow">
+                <label class="toggle">
+                    <input type="checkbox" class="switch-input" checked={showHidden} onchange={handleToggle} />
+                    <span class="switch" aria-hidden="true"><span class="knob"></span></span>
+                    <span class="switch-label">Show apps hidden from this user</span>
+                </label>
+                <p class="tally" aria-live="polite">{tally}</p>
+            </div>
+
+            <template lwc:if={showDegradedNotice}>
+                <p class="degraded" role="status" title={appList.setupMessage}>{appList.setupMessage}</p>
+            </template>
         </header>
-
-        <template lwc:if={showDegradedNotice}>
-            <p class="degraded" role="status">{appList.setupMessage}</p>
-        </template>
-
-        <c-pe-state-wrapper
-            state={state}
-            error={error}
-            empty-headline={emptyHeadline}
-            empty-detail={emptyDetail}
-            skeleton-rows="8"
-            stale-since={staleSince}
-            onretry={handleRetry}>
-
-            <c-pe-listbox
-                items={listItems}
-                selected-id={selectedAppId}
-                aria-label="Apps"
-                id-prefix="app"
-                onrowselect={handleSelect}>
-            </c-pe-listbox>
-        </c-pe-state-wrapper>
     </section>
 </template>

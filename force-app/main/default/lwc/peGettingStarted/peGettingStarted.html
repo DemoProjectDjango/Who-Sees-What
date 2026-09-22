@@ -10,7 +10,7 @@
             <li class="step">
                 <h2 class="step-h">Assign the permission set</h2>
                 <p class="step-b">
-                    Setup → Permission Sets →&nbsp;<span class="pe-mono">PermissionCheckerPermissionSet</span>&nbsp;→
+                    <button type="button" class="setuplink" onclick={handleOpenPermSetsSetup}>Setup → Permission Sets</button>&nbsp;→&nbsp;<span class="pe-mono">PermissionCheckerPermissionSet</span>&nbsp;→
                     Manage Assignments. Assign it to your System Administrators.
                 </p>
                 <p class="step-note">
@@ -29,7 +29,7 @@
             <li class="step">
                 <h2 class="step-h">If it isn't there, assign it</h2>
                 <p class="step-b">
-                    Setup → Profiles → your profile → Assigned Apps → Edit → enable&nbsp;<strong>Who Sees What</strong>&nbsp;→
+                    <button type="button" class="setuplink" onclick={handleOpenProfilesSetup}>Setup → Profiles</button> → your profile → Assigned Apps → Edit → enable&nbsp;<strong>Who Sees What</strong>&nbsp;→
                     Save.
                 </p>
                 <p class="step-note">

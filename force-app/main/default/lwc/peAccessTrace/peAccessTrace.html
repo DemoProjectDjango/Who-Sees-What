@@ -1,0 +1,82 @@
+<template>
+    <div class="trace">
+        <div class="chain">
+            <h3 class="pe-eyebrow">Every assignment that touches this object</h3>
+
+            <template lwc:if={hasChain}>
+                <div class="links">
+                    <template for:each={chain} for:item="c">
+                        <div key={c.key} class={c.cardClass}>
+                            <div class="linkhead">
+                                <span class={c.kindClass}>{c.kindLabel}</span>
+                                <span class="sourcename">{c.label}</span>
+                                <template lwc:if={c.url}>
+                                    <button class="setup" type="button" data-url={c.url} onclick={handleOpenSetup}>Open in Setup</button>
+                                </template>
+                            </div>
+                            <div class="grants">
+                                <template for:each={c.grants} for:item="g">
+                                    <span key={g.key} class={g.pillClass}>
+                                        <span class="sign pe-mono" aria-hidden="true">{g.sign}</span>{g.label}
+                                    </span>
+                                </template>
+                            </div>
+                            <template lwc:if={c.outdated}>
+                                <p class="outdated">This group is still recalculating, so anything traced to it is provisional.</p>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </template>
+            <template lwc:else>
+                <p class="nochain">No profile, permission set or group grants this user any permission on this object.</p>
+            </template>
+
+            <!-- The resolution, stated as arithmetic. This block is the product's
+                 correctness claim: a union of grants is not the answer. -->
+            <div class="effective">
+                <div class="effhead">
+                    <span class="efftitle">Effective access</span>
+                    <span class="effrule pe-mono">union of grants, minus muting</span>
+                </div>
+                <div class="effpills">
+                    <template for:each={effective} for:item="e">
+                        <span key={e.key} class={e.pillClass}>
+                            <span class={e.dotClass} aria-hidden="true"></span>{e.text}
+                        </span>
+                    </template>
+                </div>
+                <template lwc:if={mutedNote}>
+                    <p class="effnote">{mutedNote}</p>
+                </template>
+            </div>
+        </div>
+
+        <aside class="rail">
+            <section>
+                <h3 class="pe-eyebrow">Share this exact view</h3>
+                <p class="url pe-mono" title={shareLink}>{shareLink}</p>
+                <button class="copy" type="button" onclick={handleCopy}>{copyLabel}</button>
+                <p class="railnote">Paste it into the ticket. Whoever opens it lands on this user, this app, this object.</p>
+            </section>
+
+            <section class="railsection">
+                <h3 class="pe-eyebrow">Recorded in the inspection log</h3>
+                <dl class="facts">
+                    <template for:each={logFacts} for:item="f">
+                        <div key={f.key} class="fact">
+                            <dt>{f.k}</dt>
+                            <dd>{f.v}</dd>
+                        </div>
+                    </template>
+                </dl>
+                <p class="railnote">Append only. Nobody, including an administrator, can edit or delete an entry through this app.</p>
+            </section>
+
+            <div class="assurance">
+                <p class="atitle">Nothing was changed</p>
+                <p class="abody">Every query ran in user mode as you. The app holds no write access to permissions and makes no callouts.</p>
+            </div>
+        </aside>
+    </div>
+</template>

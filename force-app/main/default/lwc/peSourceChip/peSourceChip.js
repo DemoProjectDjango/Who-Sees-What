@@ -113,13 +113,4 @@ export default class PeSourceChip extends LightningElement {
     toggle() {
         this.expanded = !this.expanded;
     }
-
-    /**
-     * A chip inside a clickable table row would otherwise both navigate and
-     * expand the row. The anchor's own default is untouched, so cmd-click,
-     * middle-click and "open in new tab" all still behave.
-     */
-    stopRowClick(event) {
-        event.stopPropagation();
-    }
 }

@@ -1,81 +1,627 @@
-@import 'c/peBase';
+@import "c/peBase";
+
+:host {
+  display: block;
+  min-width: 0;
+}
 
 .explorer {
-    /* peModal overlays with position:absolute, so this is its containing block.
-       position:fixed would be simpler but breaks inside App Builder regions. */
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: 30rem;
-    background: var(--pe-surface);
-    border: 1px solid var(--pe-line);
-    border-radius: var(--pe-radius);
-    overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: var(--pe-explorer-h, calc(100dvh - 9.5rem));
+  max-height: var(--pe-explorer-h, calc(100dvh - 9.5rem));
+  min-height: 34rem;
+  background: var(--pe-ground);
+  border: 1px solid var(--pe-line-strong);
+  border-radius: var(--pe-radius);
+  overflow: hidden;
 }
+
+/* --------------------------------------------------------------------------
+ * Persistent product chrome
+ * -------------------------------------------------------------------------- */
 
 .topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--pe-pad);
-    padding: 0.5rem var(--pe-pad);
-    border-bottom: 1px solid var(--pe-line-strong);
-    background: var(--pe-surface-sunken);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pe-pad);
+  padding: 0.625rem var(--pe-pad);
+  border-bottom: 1px solid var(--pe-chrome-line);
+  background: var(--pe-chrome);
+  color: var(--pe-chrome-ink);
+  flex: 0 0 auto;
 }
 
-.title { min-width: 0; }
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0.625rem;
+  flex: 0 0 auto;
+}
+
+.wordmark {
+  font-family: var(--pe-display);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--pe-chrome-ink);
+}
+
+.producttag {
+  font-size: var(--pe-fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--pe-chrome-ink-muted);
+}
+
+.title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
 
 .crumbs {
-    display: flex;
-    align-items: baseline;
-    gap: 0.375rem;
-    flex-wrap: wrap;
-    margin-top: 0.125rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+  margin-top: 0.125rem;
 }
+
 .crumb {
-    font-size: var(--pe-fs-md);
-    font-weight: 600;
-    color: var(--pe-ink);
-}
-.crumb_placeholder { font-weight: 400; color: var(--pe-ink-faint); }
-.sep { margin-right: 0.375rem; color: var(--pe-ink-faint); font-weight: 400; }
-
-.actions { display: flex; gap: var(--pe-gap); flex: 0 0 auto; }
-
-.link {
-    font-size: var(--pe-fs-sm);
-    font-weight: 600;
-    color: var(--pe-accent);
-    background: none;
-    border: none;
-    padding: 0.25rem;
-    cursor: pointer;
-}
-.link:hover { text-decoration: underline; }
-.link:focus-visible { outline: 2px solid var(--pe-accent); outline-offset: 1px; }
-
-/* Two columns now that objects live in the modal, which leaves the modal more
-   room and gets the field table close to full width at 1280px. */
-.columns {
-    display: grid;
-    grid-template-columns: minmax(17rem, 22rem) minmax(17rem, 1fr);
-    flex: 1 1 auto;
-    min-height: 0;
-}
-.col { min-width: 0; min-height: 0; display: flex; }
-.col > * { flex: 1 1 auto; min-width: 0; }
-
-/* 768–1279px: columns still fit side by side but tighten. */
-@media (max-width: 1279px) {
-    .columns { grid-template-columns: minmax(14rem, 18rem) 1fr; }
+  font-size: var(--pe-fs-md);
+  font-weight: 600;
+  color: var(--pe-chrome-ink);
 }
 
-/* <768px: single-column wizard. The app column takes over once a user is
-   chosen, matching the breadcrumb stack the narrow layout already uses. */
-@media (max-width: 767px) {
-    .columns { grid-template-columns: 1fr; }
-    .col_app { display: none; }
-    .explorer[data-step='app'] .col_user { display: none; }
-    .explorer[data-step='app'] .col_app { display: flex; }
+.crumb_placeholder {
+  font-weight: 400;
+  color: var(--pe-chrome-ink-muted);
+}
+
+.sep {
+  margin-right: 0.375rem;
+  color: var(--pe-chrome-ink-muted);
+  font-weight: 400;
+}
+
+.trust {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  height: 1.875rem;
+  padding: 0 0.6875rem;
+  border: 1px solid var(--pe-chrome-line);
+  border-radius: var(--pe-radius-pill);
+  font-size: var(--pe-fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--pe-ink-muted);
+  white-space: nowrap;
+}
+
+.pill_live {
+  border-color: var(--pe-grant-line);
+  background: var(--pe-grant-bg);
+  color: var(--pe-grant-ink);
+}
+
+.pill_dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--pe-radius-pill);
+  background: var(--pe-grant);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--pe-gap);
+  flex: 0 0 auto;
+}
+
+.btn {
+  height: 2.25rem;
+  padding: 0 0.875rem;
+  font-family: inherit;
+  font-size: var(--pe-fs-sm);
+  font-weight: 600;
+  color: var(--pe-ink-muted);
+  background: var(--pe-surface);
+  border: 1px solid var(--pe-chrome-line);
+  border-radius: var(--pe-radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  background: var(--pe-chrome-field);
+  color: var(--pe-ink);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--pe-accent-on-chrome);
+  outline-offset: 1px;
+}
+
+.btn_primary {
+  color: #ffffff;
+  background: var(--pe-accent);
+  border-color: var(--pe-accent);
+}
+
+.btn_primary:hover {
+  background: var(--pe-accent-ink);
+  border-color: var(--pe-accent-ink);
+  color: #ffffff;
+}
+
+/* --------------------------------------------------------------------------
+ * 20 / 80 layout
+ * -------------------------------------------------------------------------- */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(19rem, 22%) minmax(0, 1fr);
+  gap: var(--pe-gap);
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: var(--pe-gap);
+  background: var(--pe-ground);
+  overflow: hidden;
+}
+
+.navigator {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pe-gap);
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+  padding-right: 2px;
+}
+
+.navigator_intro {
+  flex: 0 0 auto;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--pe-line);
+  border-radius: var(--pe-radius);
+  background: var(--pe-surface);
+  box-shadow: var(--pe-shadow-card);
+}
+
+.navigator_eyebrow {
+  margin: 0;
+  font-size: var(--pe-fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pe-accent-ink);
+}
+
+.navigator_help {
+  margin: 0.1875rem 0 0;
+  font-size: var(--pe-fs-xs);
+  line-height: 1.45;
+  color: var(--pe-ink-muted);
+}
+
+.nav_section {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--pe-line);
+  border-radius: var(--pe-radius);
+  background: var(--pe-surface);
+  box-shadow: var(--pe-shadow-card);
+}
+
+/* WHO and OBJECT/TAB share the available vertical room. WHERE is deliberately
+   compact because its app picker is a dropdown, not a scrolling list. */
+.nav_section_who {
+  flex: 1 0 14rem;
+  min-height: 14rem;
+}
+
+.nav_section_where {
+  flex: 0 0 auto;
+}
+
+.nav_section_objects {
+  flex: 1 0 15rem;
+  min-height: 15rem;
+}
+
+.nav_section_waiting {
+  border-style: dashed;
+  background: var(--pe-surface-sunken);
+}
+
+.nav_section_ready {
+  border-color: var(--pe-line-strong);
+}
+
+.nav_section_head {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex: 0 0 auto;
+  min-height: 3rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--pe-line);
+  background: var(--pe-surface-sunken);
+}
+
+.nav_step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 50%;
+  background: var(--pe-accent);
+  color: #ffffff;
+  font-family: var(--pe-display);
+  font-size: var(--pe-fs-sm);
+  font-weight: 700;
+}
+
+.nav_section_waiting .nav_step {
+  background: var(--pe-na);
+}
+
+.nav_heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.0625rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.nav_title {
+  font-family: var(--pe-display);
+  font-size: var(--pe-fs-md);
+  font-weight: 700;
+  color: var(--pe-ink);
+}
+
+.nav_summary {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--pe-fs-xs);
+  color: var(--pe-ink-muted);
+}
+
+.nav_mark {
+  flex: 0 0 auto;
+  padding: 0.125rem 0.4375rem;
+  font-size: var(--pe-fs-xs);
+  font-weight: 600;
+  color: var(--pe-caution-ink);
+  background: var(--pe-caution-bg);
+  border: 1px solid var(--pe-caution-line);
+  border-radius: var(--pe-radius-pill);
+  cursor: help;
+}
+
+.nav_section_body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.nav_section_body > * {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.nav_section_body_compact {
+  flex: 0 0 auto;
+}
+
+.nav_section_body_compact > * {
+  flex: 0 0 auto;
+}
+
+/* --------------------------------------------------------------------------
+ * Right-side inspection workspace
+ * -------------------------------------------------------------------------- */
+
+.workspace {
+  min-width: 0;
+  min-height: 0;
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--pe-line);
+  border-radius: var(--pe-radius);
+  background: var(--pe-surface);
+  box-shadow: var(--pe-shadow-card);
+}
+
+.workspace_with_context {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(15rem, 18rem);
+}
+
+.workspace_main {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--pe-surface);
+}
+
+.workspace_main > * {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.workspace_context {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--pe-pad);
+  border-left: 1px solid var(--pe-line);
+  background: var(--pe-ground);
+}
+
+.workspace_context > * {
+  margin-bottom: var(--pe-gap);
+}
+
+.workspace_context > *:last-child {
+  margin-bottom: 0;
+}
+
+.context_label {
+  margin: 0 0 0.625rem;
+  font-size: var(--pe-fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pe-ink-faint);
+}
+
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0.5rem;
+  width: 100%;
+  padding: clamp(2rem, 6vw, 5rem);
+  background:
+    radial-gradient(
+      circle at 75% 25%,
+      var(--pe-accent-soft) 0,
+      transparent 18rem
+    ),
+    var(--pe-surface);
+}
+
+.placeholder_icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: 0.375rem;
+  border-radius: 50%;
+  color: var(--pe-accent-ink);
+  background: var(--pe-accent-soft);
+  border: 1px solid var(--pe-grant-line);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.phead {
+  margin: 0;
+  font-family: var(--pe-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--pe-ink);
+}
+
+.pbody {
+  margin: 0;
+  max-width: 34rem;
+  font-size: var(--pe-fs-md);
+  line-height: 1.55;
+  color: var(--pe-ink-muted);
+}
+
+.placeholder_steps {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.progress_step {
+  position: relative;
+  min-width: 14rem;
+  padding: 0.625rem 0.75rem 0.625rem 2rem;
+  border: 1px solid var(--pe-line);
+  border-radius: var(--pe-radius-sm);
+  background: var(--pe-surface-sunken);
+  color: var(--pe-ink-faint);
+  font-size: var(--pe-fs-sm);
+  font-weight: 600;
+}
+
+.progress_step::before {
+  content: "";
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: var(--pe-na);
+}
+
+.progress_current {
+  color: var(--pe-accent-ink);
+  border-color: var(--pe-grant-line);
+  background: var(--pe-accent-soft);
+}
+
+.progress_current::before {
+  background: var(--pe-accent);
+}
+
+.progress_done {
+  color: var(--pe-grant-ink);
+  border-color: var(--pe-grant-line);
+  background: var(--pe-grant-bg);
+}
+
+.progress_done::before {
+  background: var(--pe-grant);
+}
+
+/* --------------------------------------------------------------------------
+ * Responsive behavior
+ * -------------------------------------------------------------------------- */
+
+/* At normal 100% browser zoom on common 1366–1536px laptops, Salesforce's
+   own chrome consumes a meaningful amount of width. Give the inspection table
+   priority before the browser is forced to make everything microscopic. */
+@media (max-width: 1500px) and (min-width: 1024px) {
+  .layout {
+    grid-template-columns: minmax(17rem, 21%) minmax(0, 1fr);
+  }
+
+  .workspace_with_context {
+    grid-template-columns: minmax(0, 1fr) 15rem;
+  }
+}
+
+/* Short desktop windows are the real reason the UI looked better at 68% zoom:
+   zooming out increases the CSS-pixel viewport height. Keep WHO and OBJECT/TAB
+   usable at 100% and let only the left rail scroll instead of crushing lists. */
+@media (max-height: 820px) and (min-width: 1024px) {
+  .nav_section_who {
+    flex-basis: 13rem;
+    min-height: 13rem;
+  }
+
+  .nav_section_objects {
+    flex-basis: 14rem;
+    min-height: 14rem;
+  }
+
+  .nav_section_head {
+    min-height: 2.65rem;
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+  }
+}
+
+@media (max-width: 1220px) {
+  .layout {
+    grid-template-columns: minmax(18rem, 25%) minmax(0, 1fr);
+  }
+
+  .workspace_with_context {
+    grid-template-columns: minmax(0, 1fr) 17rem;
+  }
+}
+
+@media (max-width: 1023px) {
+  .explorer {
+    height: auto;
+    max-height: none;
+  }
+
+  .topbar {
+    flex-wrap: wrap;
+  }
+
+  .trust {
+    display: none;
+  }
+
+  .layout {
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+
+  .navigator {
+    overflow: visible;
+  }
+
+  .nav_section_who,
+  .nav_section_objects {
+    min-height: 20rem;
+    flex: 0 0 auto;
+  }
+
+  .workspace,
+  .workspace_with_context {
+    display: block;
+    min-height: 32rem;
+    overflow: visible;
+  }
+
+  .workspace_main {
+    min-height: 28rem;
+  }
+
+  .workspace_context {
+    border-left: none;
+    border-top: 1px solid var(--pe-line);
+    overflow-y: visible;
+  }
+}
+
+@media (max-width: 44rem) {
+  .brand {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .layout {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .placeholder {
+    padding: 2rem 1.25rem;
+  }
+
+  .progress_step {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
 }

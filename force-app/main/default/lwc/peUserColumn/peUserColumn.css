@@ -6,64 +6,84 @@
     height: 100%;
     min-height: 0;
     background: var(--pe-surface);
-    border-right: 1px solid var(--pe-line);
+    border-right: none;
 }
 
 .head {
     flex: 0 0 auto;
-    padding: var(--pe-pad);
+    padding: 0.75rem var(--pe-pad) 0.875rem;
     border-bottom: 1px solid var(--pe-line);
-    background: var(--pe-surface-sunken);
+    background: var(--pe-surface);
 }
-.head h2 { margin: 0 0 0.5rem; }
+.head h2 { margin: 0 0 0.625rem; font-family: var(--pe-display); }
+
+/* Without this, the state-wrapper and the listbox inside it size to their
+   content (all users, unclipped) instead of the space left under the header
+   and paginator — that content then overflows the column instead of
+   scrolling. See peStateWrapper.css / peListbox.css for the other half. */
+.column c-pe-state-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+.column c-pe-listbox {
+    flex: 1 1 auto;
+    min-height: 0;
+}
 
 .controls {
     display: flex;
     gap: var(--pe-gap);
-    margin-top: var(--pe-gap);
+    margin-top: 0.625rem;
 }
 
 .select {
     flex: 1 1 auto;
     min-width: 0;
-    height: 1.75rem;
+    height: 2rem;
+    padding: 0 0.5rem;
     font-size: var(--pe-fs-sm);
     color: var(--pe-ink);
     background: var(--pe-surface);
     border: 1px solid var(--pe-line-strong);
-    border-radius: var(--pe-radius);
+    border-radius: var(--pe-radius-sm);
 }
 .select:focus-visible { outline: 2px solid var(--pe-accent); outline-offset: -1px; }
 
+/* Filters read as pills now, matching the state chips elsewhere: one shape
+   language for "a thing you can switch on". */
 .filter-btn {
     flex: 0 0 auto;
+    height: 2rem;
     font-size: var(--pe-fs-sm);
     font-weight: 600;
     color: var(--pe-ink-muted);
     background: var(--pe-surface);
     border: 1px solid var(--pe-line-strong);
-    border-radius: var(--pe-radius);
-    padding: 0 0.5rem;
+    border-radius: var(--pe-radius-pill);
+    padding: 0 0.75rem;
     cursor: pointer;
 }
-.filter-btn:hover { background: var(--pe-surface-hover); }
+.filter-btn:hover { background: var(--pe-surface-hover); color: var(--pe-ink); }
+.filter-btn:focus-visible { outline: 2px solid var(--pe-accent); outline-offset: 1px; }
 
 .filters {
     display: grid;
     gap: var(--pe-gap);
-    margin-top: var(--pe-gap);
-    padding-top: var(--pe-gap);
-    border-top: 1px dashed var(--pe-line);
+    margin-top: 0.625rem;
+    padding-top: 0.625rem;
+    border-top: 1px solid var(--pe-line);
 }
 .flabel {
     display: grid;
-    gap: 0.125rem;
+    gap: 0.1875rem;
     font-size: var(--pe-fs-xs);
     font-weight: 600;
+    letter-spacing: 0.04em;
     color: var(--pe-ink-muted);
 }
 .note {
     margin: 0;
     font-size: var(--pe-fs-xs);
+    line-height: 1.5;
     color: var(--pe-ink-faint);
 }

@@ -13,5 +13,7 @@
     <label>Who Sees What</label>
     <navType>Standard</navType>
     <tabs>Permission_Explorer</tabs>
+    <tabs>License_Inspector</tabs>
+    <tabs>Getting_Started</tabs>
     <uiType>Lightning</uiType>
 </CustomApplication>

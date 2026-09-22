@@ -1,0 +1,12 @@
+<template>
+    <template lwc:if={hasCards}>
+        <div class="statsbar">
+            <template for:each={cards} for:item="c">
+                <div key={c.key} class="stat">
+                    <p class="stat_label">{c.label}</p>
+                    <p class="stat_value">{c.display}</p>
+                </div>
+            </template>
+        </div>
+    </template>
+</template>

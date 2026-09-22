@@ -25,10 +25,15 @@
 }
 
 .label {
+    font: inherit;
     font-size: var(--pe-fs-md);
     font-weight: 600;
     color: var(--pe-accent);
+    background: none;
+    border: none;
+    padding: 0;
     text-decoration: none;
+    cursor: pointer;
 }
 .label:hover { text-decoration: underline; }
 .label:focus-visible { outline: 2px solid var(--pe-accent); outline-offset: 2px; }

@@ -40,8 +40,11 @@ export default class PeFieldTable extends LightningElement {
     get visibleRows() {
         return this.filtered.slice(0, this.limit).map((f) => ({
             ...f,
-            readText:  f.readable ? 'yes' : 'no',
-            editText:  f.editable ? 'yes' : 'no',
+            // Sentence case, matching the CRUD tiles directly above. Two
+            // registers for the same verdict on one screen reads as two
+            // different kinds of fact.
+            readText:  f.readable ? 'Yes' : 'No',
+            editText:  f.editable ? 'Yes' : 'No',
             readClass: f.readable ? 'flag flag_on' : 'flag flag_off',
             editClass: f.editable ? 'flag flag_on' : 'flag flag_off',
             hasSources: (f.readSources?.length ?? 0) > 0 || (f.editSources?.length ?? 0) > 0,
