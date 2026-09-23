@@ -17,8 +17,12 @@ export default class PePaginator extends LightningElement {
     get nextDisabled() { return !this.hasMore || this.loading; }
 
     get summary() {
-        if (this.loading) return 'Loading…';
-        if (!this.shown) return 'No results';
+        if (this.loading) {
+            return 'Loading…';
+        }
+        if (!this.shown) {
+            return 'No results';
+        }
         return `Showing ${this.shown} · page ${this.pageNumber}`;
     }
 

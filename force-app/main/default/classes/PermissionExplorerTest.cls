@@ -8,6 +8,12 @@
  * All four were found by hand. These tests exist so the fifth is found here.
  */
 @IsTest
+// Whole class is pure-logic unit tests (applyGrant arithmetic, FLS describe
+// classification, keyset cursor codec, SOQL chunking) plus the PEAccessGate
+// subject-guards. None asserts a property of the running user's own context,
+// and the USER_MODE queries would simply resolve different row sets for a runAs
+// user, so there is no meaningful runAs to implement.
+@SuppressWarnings('PMD.ApexUnitTestClassShouldHaveRunAs')
 private class PermissionExplorerTest {
 
     /* ===============================================================

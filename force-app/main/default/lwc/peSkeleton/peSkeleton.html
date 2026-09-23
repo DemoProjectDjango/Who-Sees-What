@@ -1,6 +1,7 @@
 <template>
     <div class="skeleton" aria-hidden="true">
         <template for:each={rows} for:item="row">
+            <!-- code-analyzer-suppress(pmd:AvoidInlineStyles) Row height comes from the caller-bound @api height; fixed CSS would break the configurable skeleton. -->
             <div key={row} class="line" style={lineStyle}></div>
         </template>
     </div>

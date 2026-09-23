@@ -239,6 +239,7 @@
 
                                                 <template lwc:if={r.showProgress}>
                                                     <div class="bar-track" aria-label={r.progressAriaLabel}>
+                                                        <!-- code-analyzer-suppress(pmd:AvoidInlineStyles) Bar width is the per-row usage percentage bound from data; static CSS cannot render it. -->
                                                         <span class={r.barClass} style={r.barStyle}></span>
                                                     </div>
                                                 </template>

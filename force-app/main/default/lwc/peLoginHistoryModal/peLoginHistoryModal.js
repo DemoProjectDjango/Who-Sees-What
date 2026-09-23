@@ -44,7 +44,9 @@ export default class PeLoginHistoryModal extends LightningElement {
     formatWhen(value) {
         if (!value) return '—';
         const d = new Date(value);
-        if (Number.isNaN(d.getTime())) return '—';
+        if (Number.isNaN(d.getTime())) {
+            return '—';
+        }
         return d.toLocaleString([], {
             year: 'numeric', month: 'short', day: '2-digit',
             hour: '2-digit', minute: '2-digit'

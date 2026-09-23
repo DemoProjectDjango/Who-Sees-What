@@ -19,6 +19,9 @@ public with sharing class PEInspectionAuditLogger {
             Action__c          = action,
             Inspector_User__c  = UserInfo.getUserId(),
             Subject_User__c    = subjectUserId,
+            // The ternary already null-guards; sfge's path engine flags the
+            // abbreviate() deref as nullable through the caller-passed args.
+            // code-analyzer-suppress-next-line(sfge:ApexNullPointerException)
             Detail__c          = detail == null ? null : detail.abbreviate(255),
             Inspected_At__c    = System.now()
         );
@@ -30,6 +33,9 @@ public with sharing class PEInspectionAuditLogger {
      * Single-row insert today. If volume becomes a problem, swap the body for
      * a Platform Event or Big Object write — the call sites do not change.
      */
+    // Suppressed: the ERROR debug is the only fallback trail when the audit
+    // insert fails; removing it would silently swallow inspection history.
+    @SuppressWarnings('PMD.AvoidDebugStatements')
     private static void flush() {
         if (buffer.isEmpty())
         {

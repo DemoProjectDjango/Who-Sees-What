@@ -23,36 +23,50 @@ public with sharing class PEFlsClassifier {
      */
     public static Verdict classify(Schema.DescribeFieldResult d) {
         Verdict v = new Verdict();
+        String reason = fieldTypeReason(d);
+        if (reason == null) {
+            reason = relationshipReason(d);
+        }
+        if (reason != null) {
+            return flag(v, reason);
+        }
+        return v;
+    }
 
+    private static String fieldTypeReason(Schema.DescribeFieldResult d) {
         if (d.isCalculated()) {
-            return flag(v, 'Formula field — read-only by nature.');
+            return 'Formula field — read-only by nature.';
         }
         if (d.isAutoNumber()) {
-            return flag(v, 'Auto-number — read-only by nature.');
+            return 'Auto-number — read-only by nature.';
         }
         if (d.getType() == Schema.DisplayType.ID) {
-            return flag(v, 'Record Id — FLS does not apply.');
+            return 'Record Id — FLS does not apply.';
         }
         if (d.isNameField()) {
-            return flag(v, 'Name field — always readable.');
+            return 'Name field — always readable.';
         }
-// Audit fields first: CreatedById and OwnerId are non-nillable
+        // Audit fields first: CreatedById and OwnerId are non-nillable
         // references, so a master-detail heuristic based on nillability alone
         // mislabels them.
         if (isSystemAudit(d.getName())) {
-            return flag(v, 'System audit field — not FLS-controllable.');
+            return 'System audit field — not FLS-controllable.';
         }
+        return null;
+    }
+
+    private static String relationshipReason(Schema.DescribeFieldResult d) {
         // getRelationshipOrder() is 0 or 1 for master-detail, null otherwise.
         if (d.getRelationshipOrder() != null) {
-            return flag(v, 'Master-detail relationship — FLS not applicable.');
+            return 'Master-detail relationship — FLS not applicable.';
         }
         if (!d.isNillable() && d.isCreateable() && !d.isDefaultedOnCreate()) {
-            return flag(v, 'Required field — FLS not applicable.');
+            return 'Required field — FLS not applicable.';
         }
         if (!d.isPermissionable()) {
-            return flag(v, 'Not FLS-controllable.');
+            return 'Not FLS-controllable.';
         }
-        return v;
+        return null;
     }
 
     private static Boolean isSystemAudit(String name) {

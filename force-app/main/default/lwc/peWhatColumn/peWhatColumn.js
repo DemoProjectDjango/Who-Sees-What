@@ -39,10 +39,16 @@ export default class PeWhatColumn extends LightningElement {
      * --------------------------------------------------------------- */
 
     get objectTypeLabel() {
-        const api = this.objectApiName ?? '';
-        if (api.endsWith('__mdt')) return 'Custom Metadata Type';
-        if (api.endsWith('__x')) return 'External Object';
-        if (api.endsWith('__c')) return 'Custom Object';
+        const apiName = this.objectApiName ?? '';
+        if (apiName.endsWith('__mdt')) {
+            return 'Custom Metadata Type';
+        }
+        if (apiName.endsWith('__x')) {
+            return 'External Object';
+        }
+        if (apiName.endsWith('__c')) {
+            return 'Custom Object';
+        }
         return 'Standard Object';
     }
 
@@ -76,7 +82,7 @@ export default class PeWhatColumn extends LightningElement {
     get recordActionsLabel() {
         const granted = (this.detail?.objectPermissions ?? [])
             .filter((g) => ['PermissionsRead', 'PermissionsEdit'].includes(g.name) && g.granted)
-            .map((g) => g.name === 'PermissionsRead' ? 'View' : 'Edit');
+            .map((g) => (g.name === 'PermissionsRead' ? 'View' : 'Edit'));
         return granted.length ? granted.join(', ') : 'No access';
     }
 
@@ -85,11 +91,17 @@ export default class PeWhatColumn extends LightningElement {
 
     fieldAccessLabel(custom) {
         const fields = (this.detail?.fields ?? []).filter((f) => (f.apiName ?? '').endsWith('__c') === custom);
-        if (!fields.length) return '—';
+        if (!fields.length) {
+            return '—';
+        }
         const anyEditable = fields.some((f) => f.editable);
         const anyReadable = fields.some((f) => f.readable);
-        if (anyEditable) return 'Read, Edit';
-        if (anyReadable) return 'Read';
+        if (anyEditable) {
+            return 'Read, Edit';
+        }
+        if (anyReadable) {
+            return 'Read';
+        }
         return 'No access';
     }
 

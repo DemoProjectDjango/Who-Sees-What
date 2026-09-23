@@ -43,7 +43,9 @@ export default class PeAppColumn extends LightningElement {
     get tally() {
         const total = this.apps.length;
         const visible = this.apps.filter((a) => a.visible).length;
-        if (!total) return '';
+        if (!total) {
+            return '';
+        }
         return `${visible} of ${total} visible to this user`;
     }
 
@@ -80,7 +82,9 @@ export default class PeAppColumn extends LightningElement {
 
     handleSelect(event) {
         const appId = event.target.value;
-        if (!appId) return;
+        if (!appId) {
+            return;
+        }
         this.dispatchEvent(new CustomEvent('appselect', {
             detail: { appId }
         }));

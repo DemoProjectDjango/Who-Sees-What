@@ -87,8 +87,12 @@ export default class PeSourceChip extends LightningElement {
     get primaryClass() {
         const base = 'chip';
         const kind = this.primary?.kind ?? 'permset';
-        if (kind === 'muting') return `${base} chip_muting`;
-        if (this.primary?.isOutdatedGroup) return `${base} chip_stale`;
+        if (kind === 'muting') {
+            return `${base} chip_muting`;
+        }
+        if (this.primary?.isOutdatedGroup) {
+            return `${base} chip_stale`;
+        }
         return `${base} chip_${kind}`;
     }
 
@@ -103,7 +107,9 @@ export default class PeSourceChip extends LightningElement {
         const stale = s.isOutdatedGroup ? ' — group is still recalculating' : '';
         const base = `${kind}: ${s.label}${via}${stale}`;
 
-        if (linked) return base;
+        if (linked) {
+            return base;
+        }
         if (s.kind === 'muting') {
             return `${base} — muting permission sets have no Setup page of their own`;
         }

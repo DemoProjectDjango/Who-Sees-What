@@ -56,7 +56,9 @@ export default class PeGrantedByPanel extends LightningElement {
             (g.sources ?? []).forEach((s) => {
                 if (s.kind !== 'muting') return;
                 const key = `${s.parentId ?? ''}|${s.label ?? ''}`;
-                if (!bySource.has(key)) bySource.set(key, s.label ?? 'A muting permission set');
+                if (!bySource.has(key)) {
+                    bySource.set(key, s.label ?? 'A muting permission set');
+                }
             });
         });
         return [...bySource.values()];

@@ -42,6 +42,9 @@ private class PermissionExplorerControllerTest {
         }
     }
 
+    // Four positional args map 1:1 to the User fields that differ per test user;
+    // grouping them would make the fixture reads harder to follow.
+    @SuppressWarnings('PMD.ExcessiveParameterList')
     private static User newUser(String first, String alias, String stamp, Id profileId) {
         return new User(
             FirstName = first,
@@ -94,6 +97,12 @@ private class PermissionExplorerControllerTest {
     /**
      * Calls one entry point and returns 1 if it threw. Kept as a dispatcher so
      * the nine calls read as a list rather than nine near-identical try blocks.
+     *
+     * @param method Name of the @AuraEnabled entry point to invoke.
+     * @param userId Subject user Id passed to methods that need one, or null.
+     * @param extra Second argument (for example an app/object name) or null.
+     * @return 1 if the entry point threw as expected, 0 otherwise (the fail
+     *         assertion makes the 0 path unreachable after a pass).
      */
     private static Integer expectRejection(String method, Id userId, String extra) {
         try {

@@ -13,12 +13,27 @@
  */
 public with sharing class PEOrgStatsService {
 
+    /**
+     * Returns the org-level KPI counts used by the Permission Explorer header.
+     *
+     * The method runs each count in its own try/catch block so that a failure in
+     * one query does not prevent the remaining stats from being returned.
+     *
+     * @return Org statistics for active users, permission sets, groups,
+     *         profiles, reachable apps, and objects with read access.
+     */
+    // Suppressed: the COUNT queries intentionally span the whole org to build the
+    // KPI figures; adding WHERE/LIMIT would change the statistics the header shows.
+    @SuppressWarnings('PMD.AvoidNonRestrictiveQueries')
     public static PEDto.OrgStats getStats() {
         PEDto.OrgStats s = new PEDto.OrgStats();
 
         try {
             s.activeUsers = [SELECT COUNT() FROM User WHERE IsActive = true WITH USER_MODE];
-        } catch (Exception e) { /* card hidden, not the whole bar */ }
+        } catch (Exception e) {
+            /* card hidden, not the whole bar */
+            s.activeUsers = null;
+        }
 
         try {
             // IsOwnedByProfile excludes the hidden permission set every
@@ -27,21 +42,33 @@ public with sharing class PEOrgStatsService {
             s.permissionSets = [
                 SELECT COUNT() FROM PermissionSet WHERE IsOwnedByProfile = false WITH USER_MODE
             ];
-        } catch (Exception e) { /* card hidden, not the whole bar */ }
+        } catch (Exception e){
+             /* card hidden, not the whole bar */
+            s.permissionSets = null;
+        }
 
         try {
             s.permissionSetGroups = [SELECT COUNT() FROM PermissionSetGroup WITH USER_MODE];
-        } catch (Exception e) { /* card hidden, not the whole bar */ }
+        } catch (Exception e) {
+            /* card hidden, not the whole bar */
+            s.permissionSetGroups = null;
+        }
 
         try {
             s.profiles = [SELECT COUNT() FROM Profile WITH USER_MODE];
-        } catch (Exception e) { /* card hidden, not the whole bar */ }
+        } catch (Exception e) {
+            /* card hidden, not the whole bar */
+            s.profiles = null;
+        }
 
         try {
             s.reachableApps = [
                 SELECT COUNT() FROM AppDefinition WHERE UiType = 'Lightning' WITH USER_MODE
             ];
-        } catch (Exception e) { /* card hidden, not the whole bar */ }
+        } catch (Exception e) {
+            /* card hidden, not the whole bar */
+            s.reachableApps = null;
+        }
 
         try {
             AggregateResult[] ar = [
@@ -51,7 +78,10 @@ public with sharing class PEOrgStatsService {
                 WITH USER_MODE
             ];
             s.objectsWithAccess = ar.isEmpty() ? null : (Integer) ar[0].get('cnt');
-        } catch (Exception e) { /* card hidden, not the whole bar */ }
+        } catch (Exception e) {
+            /* card hidden, not the whole bar */
+            s.objectsWithAccess = null;
+        }
 
         return s;
     }

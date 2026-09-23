@@ -9,12 +9,31 @@
  */
 public with sharing class PEMetadataCatalog {
 
+    /**
+     * Transaction-level cache for Schema.getGlobalDescribe().
+     * Avoids rebuilding/retrieving the same describe map repeatedly while
+     * preserving the exact same metadata and lookup behavior.
+     */
+    private static Map<String, Schema.SObjectType> globalDescribeCache;
+
     /** App tab metadata row used to line up navigation visibility with object permissions. */
     public class TabInfo {
         public String tabName;        // PermissionSetTabSetting.Name
         public String label;
         public String objectApiName;  // null for Visualforce / web / Reports tabs
         public String tabType;
+    }
+
+    /**
+     * Returns the transaction-cached global describe map.
+     *
+     * @return Global object describe map keyed by object API name.
+     */
+    private static Map<String, Schema.SObjectType> globalDescribe() {
+        if (globalDescribeCache == null) {
+            globalDescribeCache = Schema.getGlobalDescribe();
+        }
+        return globalDescribeCache;
     }
 
     /* ----------------------------- tabs ----------------------------- */
@@ -58,6 +77,7 @@ public with sharing class PEMetadataCatalog {
         List<TabInfo> out = new List<TabInfo>();
         for (TabDefinition t : tabs) {
             TabInfo info = new TabInfo();
+
             // PermissionSetTabSetting addresses standard object tabs as
             // 'standard-<Object>' and custom tabs by developer name. TabDefinition
             // exposes no IsCustom flag, so the '__' suffix is the available signal.
@@ -75,6 +95,7 @@ public with sharing class PEMetadataCatalog {
             // subscriber org with managed packages installed will have the latter.
             Boolean isCustom = t.Name != null
                 && (t.Name.endsWith('__c') || t.Name.contains('__'));
+
             info.tabName = isCustom ? t.Name : 'standard-' + t.Name;
             info.label = t.Label;
             info.objectApiName = String.isBlank(t.SobjectName) ? null : t.SobjectName;
@@ -95,7 +116,7 @@ public with sharing class PEMetadataCatalog {
      * @return Object label when describe metadata is available, otherwise the API name.
      */
     public static String labelFor(String objectApiName) {
-        Schema.SObjectType t = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType t = globalDescribe().get(objectApiName);
         return t == null ? objectApiName : t.getDescribe().getLabel();
     }
 
@@ -106,13 +127,16 @@ public with sharing class PEMetadataCatalog {
      * @return Field describe map keyed by field API name.
      */
     public static Map<String, Schema.SObjectField> fieldMap(String objectApiName) {
-        Schema.SObjectType t = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType t = globalDescribe().get(objectApiName);
+
         if (t == null) {
             throw PermissionExplorerException.build(
                 PermissionExplorerException.NOT_FOUND,
-                'That object is not available in this org.', false
+                'That object is not available in this org.',
+                false
             );
         }
+
         return t.getDescribe().fields.getMap();
     }
 
@@ -127,13 +151,16 @@ public with sharing class PEMetadataCatalog {
     public static Map<String, String> sharingModel(String objectApiName) {
         String key = 'owd' + objectApiName;
         Object cached = PECacheManager.orgGet(key);
+
         if (cached != null) {
             return (Map<String, String>) cached;
         }
 
         Map<String, String> out = new Map<String, String>{
-            'internal' => 'Unknown', 'external' => 'Unknown'
+            'internal' => 'Unknown',
+            'external' => 'Unknown'
         };
+
         // Already a List assignment with LIMIT 1, so no cursor is opened.
         // EntityDefinition has the same queryMore() restriction as TabDefinition.
         List<EntityDefinition> defs = [
@@ -143,10 +170,12 @@ public with sharing class PEMetadataCatalog {
             WITH USER_MODE
             LIMIT 1
         ];
+
         if (!defs.isEmpty()) {
             out.put('internal', defs[0].InternalSharingModel);
             out.put('external', defs[0].ExternalSharingModel);
         }
+
         PECacheManager.orgPut(key, out, 3600);
         return out;
     }

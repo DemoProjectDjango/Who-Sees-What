@@ -17,6 +17,13 @@
  * recalculation so the settled branch can be reached too.
  */
 @IsTest
+// Every method is a unit test against data this class creates in @TestSetup:
+// either pure applyGrant logic on synthetic Ids or resolve() assertions about
+// the inspected subject user's assignments and groups. The running user's own
+// context is never asserted, and a runAs user would not see the subject's
+// PermissionSetAssignment or group rows through the USER_MODE queries, so no
+// meaningful runAs exists without changing the scenario.
+@SuppressWarnings('PMD.ApexUnitTestClassShouldHaveRunAs')
 private class PEPermissionResolverTest {
 
     private static final String SUBJECT_ALIAS = 'perSubj';
@@ -383,7 +390,12 @@ private class PEPermissionResolverTest {
      * Helpers
      * --------------------------------------------------------------- */
 
-    /** Synthetic PermissionSet Ids. applyGrant only uses them as map keys. */
+    /**
+     * Synthetic PermissionSet Ids. applyGrant only uses them as map keys.
+     *
+     * @param n Numeric suffix used solely to keep generated Ids distinct.
+     * @return Synthetic PermissionSet Id used only as a map key.
+     */
     private static Id fakeSetId(Integer n) {
         return Id.valueOf('0PS000000000' + String.valueOf(n).leftPad(3, '0'));
     }

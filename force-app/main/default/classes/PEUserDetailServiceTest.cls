@@ -60,6 +60,9 @@ private class PEUserDetailServiceTest {
         insert psas;
     }
 
+    // Fixture builder mirroring the six User fields every test user requires;
+    // collapsing them into an object would bury the fields the assertions read.
+    @SuppressWarnings('PMD.ExcessiveParameterList')
     private static User buildUser(
         Id profileId, String first, String last, String alias, String email, String stamp
     ) {
@@ -90,6 +93,8 @@ private class PEUserDetailServiceTest {
      * =============================================================== */
 
     @IsTest
+    // Unit check: the resolver and the drill-down list must agree count-for-count; no running-user right is under test.
+    @SuppressWarnings('PMD.ApexUnitTestClassShouldHaveRunAs')
     static void listLengthMatchesHeaderCount() {
         Id userId = subject().Id;
 
@@ -106,6 +111,8 @@ private class PEUserDetailServiceTest {
     }
 
     @IsTest
+    // Unit check: labels and API names survive the mapping; no running-user right is under test.
+    @SuppressWarnings('PMD.ApexUnitTestClassShouldHaveRunAs')
     static void directSetsCarryLabelAndApiName() {
         Id userId = subject().Id;
 
@@ -128,6 +135,8 @@ private class PEUserDetailServiceTest {
     }
 
     @IsTest
+    // Unit check: profile-as-parent must not appear as an assignment row; no running-user right is under test.
+    @SuppressWarnings('PMD.ApexUnitTestClassShouldHaveRunAs')
     static void profileOwnedSetIsNotListedAsAnAssignment() {
         Id userId = subject().Id;
 
@@ -148,6 +157,8 @@ private class PEUserDetailServiceTest {
      * =============================================================== */
 
     @IsTest
+    // Unit check: an empty-but-initialised group list is the valid answer; no running-user right is under test.
+    @SuppressWarnings('PMD.ApexUnitTestClassShouldHaveRunAs')
     static void groupListIsNeverNull() {
         Id userId = subject().Id;
 
@@ -164,6 +175,8 @@ private class PEUserDetailServiceTest {
      * =============================================================== */
 
     @IsTest
+    // Contract check of the payload shape. runAs changes sharing, not the LoginHistory CRUD/accessibility flag, so no runAs can exercise this branch differently.
+    @SuppressWarnings('PMD.ApexUnitTestClassShouldHaveRunAs')
     static void loginHistoryAlwaysReportsItsOwnAvailability() {
         Id userId = subject().Id;
 
@@ -184,6 +197,8 @@ private class PEUserDetailServiceTest {
     }
 
     @IsTest
+    // Pure limit-clamping logic; the clamped value does not depend on the running user.
+    @SuppressWarnings('PMD.ApexUnitTestClassShouldHaveRunAs')
     static void loginHistoryClampsAnAbsurdLimit() {
         Test.startTest();
         PEDto.LoginHistoryResult res = PEUserDetailService.loginHistory(subject().Id, 999999);
@@ -193,6 +208,8 @@ private class PEUserDetailServiceTest {
     }
 
     @IsTest
+    // Pure limit-clamping logic; the clamped values do not depend on the running user.
+    @SuppressWarnings('PMD.ApexUnitTestClassShouldHaveRunAs')
     static void loginHistoryClampsZeroAndNegative() {
         Id userId = subject().Id;
 

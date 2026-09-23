@@ -50,7 +50,9 @@ export default class PeObjectList extends LightningElement {
     get filtered() {
         const term = this.term.toLowerCase();
         return this._rows.filter((r) => {
-            if (term && !`${r.apiName} ${r.label}`.toLowerCase().includes(term)) return false;
+            if (term && !`${r.apiName} ${r.label}`.toLowerCase().includes(term)) {
+                return false;
+            }
             switch (this.chip) {
                 case 'readable': return r.canRead;
                 case 'editable': return r.canEdit;

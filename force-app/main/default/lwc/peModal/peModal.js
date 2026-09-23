@@ -57,7 +57,9 @@ export default class PeModal extends LightningElement {
         if (event.key !== 'Tab') return;
 
         const focusable = this.focusableElements();
-        if (!focusable.length) return;
+        if (!focusable.length) {
+            return;
+        }
 
         const first = focusable[0];
         const last = focusable[focusable.length - 1];

@@ -24,7 +24,9 @@ export default class PeUserSummaryHeader extends LightningElement {
 
     async handleCopyEmail(event) {
         event.stopPropagation();
-        if (!this.emailText) return;
+        if (!this.emailText) {
+            return;
+        }
         try {
             if (navigator?.clipboard?.writeText) {
                 await navigator.clipboard.writeText(this.emailText);
@@ -40,6 +42,7 @@ export default class PeUserSummaryHeader extends LightningElement {
             }
             this.copied = true;
             clearTimeout(this._copyTimer);
+            // eslint-disable-next-line @lwc/lwc/no-async-operation
             this._copyTimer = setTimeout(() => {
                 this.copied = false;
             }, 2000);
@@ -50,7 +53,9 @@ export default class PeUserSummaryHeader extends LightningElement {
 
     get initials() {
         const name = (this.summary.name ?? '').trim();
-        if (!name) return '?';
+        if (!name) {
+            return '?';
+        }
         const parts = name.split(/\s+/);
         const first = parts[0]?.[0] ?? '';
         const last = parts.length > 1 ? parts[parts.length - 1][0] : '';

@@ -1,17 +1,22 @@
-# PMD is scoped to Apex only. Its JavaScript rules predate ES modules and LWC,
-# so they flagged every browser global (window, document, URLSearchParams) as an
-# undeclared variable - 95 false positives with nothing real among them.
-#
-# ESLint is disabled here, not skipped. Code Analyzer bundles its own ESLint and
-# layers typescript-eslint, react, react-hooks and jsx-a11y presets onto the
-# project config, which cannot be reconciled with @salesforce/eslint-config-lwc.
-# LWC linting runs through `npm run lint` instead, which uses this project's own
-# ESLint and config. ESLint is not part of AppExchange security review.
+# Apex and Salesforce metadata remain available to PMD.
+# PMD JavaScript analysis is disabled because its ECMAScript rules produce
+# false positives against modern LWC patterns. LWC JavaScript is linted using
+# the project's Salesforce LWC ESLint configuration via npm run lint.
+
 engines:
   pmd:
     file_extensions:
       apex:
         - .cls
         - .trigger
+      javascript: []
+      typescript: []
+
   eslint:
     disable_engine: true
+  
+  sfge:
+    java_thread_timeout: 300000
+
+suppressions:
+  disable_suppressions: false

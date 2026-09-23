@@ -54,6 +54,10 @@ public with sharing class PEKeysetCursor {
      * @param encoded Opaque cursor value returned by a previous user search page.
      * @return Cursor boundary for the next page, or null when no cursor was supplied.
      */
+    // decode() validates an untrusted cursor end-to-end before it reaches SOQL;
+    // each guard is deliberate input validation, not complexity that refactoring
+    // could remove without weakening a security boundary.
+    @SuppressWarnings('PMD.CyclomaticComplexity')
     public static PEKeysetCursor decode(String encoded) {
         if (String.isBlank(encoded)) {
             return null;

@@ -139,6 +139,7 @@ export default class LicenseInspector extends LightningElement {
         const isUsageEntitlement = license.licenseType === 'UsageEntitlement';
         const key = `${license.licenseType}:${license.licenseId}`;
 
+        // eslint-disable-next-line no-void
         void this.previewVersion;
 
         const cachedUsers = this._userCache.get(key);
@@ -758,7 +759,7 @@ export default class LicenseInspector extends LightningElement {
             const list = Array.isArray(res) ? res : [];
 
             this._userCache.set(row.key, list);
-        } catch (e) {
+        } catch {
             this._previewErrors.add(row.key);
         } finally {
             this._previewLoading.delete(row.key);

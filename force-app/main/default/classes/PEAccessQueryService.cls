@@ -70,6 +70,9 @@ public with sharing class PEAccessQueryService {
     /**
      * Tab name to row-key mapping, lifted out so applyTabVisibility reads as
      * two steps rather than one long method.
+     *
+     * @param tabs Tab metadata for the app being inspected.
+     * @return Map of tab name to the row key used for that tab, which is the backing object API name where one exists.
      */
     private static Map<String, String> apiNameByTabName(List<PEMetadataCatalog.TabInfo> tabs) {
         Map<String, String> out = new Map<String, String>();
@@ -79,6 +82,14 @@ public with sharing class PEAccessQueryService {
         return out;
     }
 
+    /**
+     * Applies per-parent tab visibility onto the already-seeded rows, merging
+     * additively so DefaultOn beats DefaultOff beats Hidden.
+     *
+     * @param r Effective permission-set resolution for the inspected user.
+     * @param rows Rows keyed by object API name or tab name, mutated in place.
+     * @param tabs Tab metadata for the app being inspected.
+     */
     @SuppressWarnings('PMD.OperationWithLimitsInLoop')
     private static void applyTabVisibility(
         PEPermissionResolver.Resolved r,
@@ -123,6 +134,9 @@ public with sharing class PEAccessQueryService {
      * The six CRUD columns are OR-merged in two different query paths. Keeping
      * that in one place means the two can never disagree about what "additive"
      * means, which is the failure a permission tool cannot afford.
+     *
+     * @param row Row to merge into, mutated in place.
+     * @param op Object permission record contributing its six columns to the row.
      */
     private static void mergeCrud(PEDto.ObjectRow row, ObjectPermissions op) {
         row.canRead   = row.canRead   || op.PermissionsRead;
@@ -133,6 +147,13 @@ public with sharing class PEAccessQueryService {
         row.modifyAll = row.modifyAll || op.PermissionsModifyAllRecords;
     }
 
+    /**
+     * Applies effective object CRUD onto the object-backed rows already seeded
+     * from the app's tabs.
+     *
+     * @param r Effective permission-set resolution for the inspected user.
+     * @param rows Rows keyed by object API name or tab name, mutated in place.
+     */
     @SuppressWarnings('PMD.OperationWithLimitsInLoop')
     private static void applyObjectPermissions(
         PEPermissionResolver.Resolved r, Map<String, PEDto.ObjectRow> rows
@@ -166,7 +187,12 @@ public with sharing class PEAccessQueryService {
         }
     }
 
-    /** A row for an object reachable by data access but absent from this app's tabs. */
+    /**
+     * A row for an object reachable by data access but absent from this app's tabs.
+     *
+     * @param objectApiName API name of the object that has data access but no tab in the app.
+     * @return A row marked as reachable without a tab, ready for CRUD merging.
+     */
     private static PEDto.ObjectRow newAccessWithoutTabRow(String objectApiName) {
         PEDto.ObjectRow row = new PEDto.ObjectRow();
         row.apiName          = objectApiName;
@@ -177,6 +203,13 @@ public with sharing class PEAccessQueryService {
         return row;
     }
 
+    /**
+     * Adds rows for objects the user can read but which have no tab in the
+     * selected app, so navigation-invisible access is still explained.
+     *
+     * @param r Effective permission-set resolution for the inspected user.
+     * @param rows Rows keyed by object API name or tab name, mutated in place.
+     */
     @SuppressWarnings('PMD.OperationWithLimitsInLoop')
     private static void appendAccessWithoutTab(
         PEPermissionResolver.Resolved r, Map<String, PEDto.ObjectRow> rows
@@ -257,7 +290,12 @@ public with sharing class PEAccessQueryService {
         return d;
     }
 
-    /** Permission name to value, so the grant/mute split reads as one loop. */
+    /**
+     * Permission name to value, so the grant/mute split reads as one loop.
+     *
+     * @param op Object permission record whose six columns are being unpacked.
+     * @return Map of permission API name to its Boolean value on that record.
+     */
     private static Map<String, Boolean> permValues(ObjectPermissions op) {
         return new Map<String, Boolean>{
             'PermissionsRead'             => op.PermissionsRead,
@@ -269,6 +307,14 @@ public with sharing class PEAccessQueryService {
         };
     }
 
+    /**
+     * Builds the six object-level grants, keeping granting and muting parents in
+     * separate maps so the resolver can subtract rather than union.
+     *
+     * @param r Effective permission-set resolution for the inspected user.
+     * @param objectApiName API name of the object whose grants are being resolved.
+     * @return One grant per object permission, in the product's fixed display order.
+     */
     @SuppressWarnings('PMD.OperationWithLimitsInLoop')
     private static List<PEDto.Grant> buildObjectGrants(
         PEPermissionResolver.Resolved r, String objectApiName
@@ -317,6 +363,9 @@ public with sharing class PEAccessQueryService {
      * Every field on the object, classified before any permission row is read.
      * Seeding first is what lets absence mean "no access" rather than "not in
      * the result set".
+     *
+     * @param objectApiName API name of the object whose fields are being enumerated.
+     * @return Field rows keyed by qualified field name, pre-classified for FLS applicability and with no permissions applied yet.
      */
     private static Map<String, PEDto.FieldPerm> seedFieldRows(String objectApiName) {
         Map<String, Schema.SObjectField> fieldMap = PEMetadataCatalog.fieldMap(objectApiName);
@@ -339,6 +388,14 @@ public with sharing class PEAccessQueryService {
         return byApiName;
     }
 
+    /**
+     * Applies effective read and edit FLS onto the seeded field rows, recording
+     * the source of each grant.
+     *
+     * @param r Effective permission-set resolution for the inspected user.
+     * @param objectApiName API name of the object whose field permissions are being resolved.
+     * @return Every field on the object, with readability, editability, and grant sources filled in.
+     */
     @SuppressWarnings('PMD.OperationWithLimitsInLoop')
     private static List<PEDto.FieldPerm> buildFieldPerms(
         PEPermissionResolver.Resolved r, String objectApiName

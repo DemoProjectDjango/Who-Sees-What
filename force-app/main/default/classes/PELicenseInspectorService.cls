@@ -44,6 +44,7 @@ public with sharing class PELicenseInspectorService {
             FROM UserLicense
             WITH USER_MODE
             ORDER BY Name
+            LIMIT 1000
         ]) {
             rows.add(toRow(ul.Id, TYPE_USER_LICENSE, ul.Name, ul.Status,
                             ul.TotalLicenses, ul.UsedLicenses, null, null));
@@ -54,6 +55,7 @@ public with sharing class PELicenseInspectorService {
             FROM PermissionSetLicense
             WITH USER_MODE
             ORDER BY MasterLabel
+            LIMIT 1000
         ]) {
             rows.add(toRow(psl.Id, TYPE_PSL, psl.MasterLabel, psl.Status,
                             psl.TotalLicenses, psl.UsedLicenses, psl.ExpirationDate, null));
@@ -74,6 +76,7 @@ public with sharing class PELicenseInspectorService {
                 FROM PackageLicense
                 WITH USER_MODE
                 ORDER BY NamespacePrefix
+                LIMIT 1000
             ]) {
                 rows.add(toRow(pl.Id, TYPE_PACKAGE_LICENSE, pl.NamespacePrefix, pl.Status,
                                 pl.AllowedLicenses, pl.UsedLicenses, pl.ExpirationDate, null));
@@ -81,6 +84,7 @@ public with sharing class PELicenseInspectorService {
         } catch (Exception e) {
             // Package licenses simply do not appear in the table for this
             // org/user rather than breaking the other three categories.
+            return rows;
         }
 
         try {
@@ -92,6 +96,7 @@ public with sharing class PELicenseInspectorService {
                 SELECT Id, MasterLabel, CurrentAmountAllowed, AmountUsed, EndDate, Frequency
                 FROM TenantUsageEntitlement
                 WITH USER_MODE
+                LIMIT 1000
             ]) {
                 rows.add(toRow(tue.Id, TYPE_USAGE_ENTITLEMENT, tue.MasterLabel, null,
                                 roundToInt(tue.CurrentAmountAllowed), roundToInt(tue.AmountUsed),
@@ -100,6 +105,7 @@ public with sharing class PELicenseInspectorService {
         } catch (Exception e) {
             // Usage-based entitlements simply do not appear in the table for
             // this org/user rather than breaking the other three categories.
+            return rows;
         }
 
         return rows;
@@ -117,6 +123,9 @@ public with sharing class PELicenseInspectorService {
      * @param licenseType Discriminator returned alongside licenseId by getLicenses.
      * @return Users holding that license, in name order, capped for readability.
      */
+    // The four license categories are a real domain split with different query
+    // shapes; retaining the branches preserves the behavior each type requires.
+    @SuppressWarnings('PMD.CyclomaticComplexity')
     public static List<PELicenseUserRow> getLicenseUsers(Id licenseId, String licenseType) {
         if (licenseId == null) {
             throw PermissionExplorerException.build(
@@ -191,6 +200,9 @@ public with sharing class PELicenseInspectorService {
         return value == null ? null : Integer.valueOf(Math.round(value));
     }
 
+    // Maps one inventory query row to its PELicenseRow with derived free/unlimited
+    // handling; grouping the eight seat fields would obscure the row mapping.
+    @SuppressWarnings('PMD.ExcessiveParameterList')
     private static PELicenseRow toRow(
         Id licenseId, String licenseType, String name, String status,
         Integer total, Integer used, Datetime expirationDate, String frequency
@@ -212,6 +224,8 @@ public with sharing class PELicenseInspectorService {
         return r;
     }
 
+    // One-to-one mapping to the five PELicenseUserRow columns from the query row.
+    @SuppressWarnings('PMD.ExcessiveParameterList')
     private static PELicenseUserRow toUserRow(
         Id userId, String name, String username, String profileName, Boolean isActive
     ) {

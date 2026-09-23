@@ -27,6 +27,7 @@ export default class PeSearchInput extends LightningElement {
 
         // Below the minimum, emit an empty term so the column returns to browse
         // rather than sitting on a stale result set.
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
         this._timer = setTimeout(() => {
             this.dispatchEvent(new CustomEvent('search', {
                 detail: { term: term.length >= this.minChars ? term : '' }
