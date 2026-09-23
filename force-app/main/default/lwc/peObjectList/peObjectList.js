@@ -34,6 +34,14 @@ export default class PeObjectList extends LightningElement {
         return `${n} object${n === 1 ? '' : 's'}`;
     }
 
+    get isLoading() {
+        return this.state === STATE.LOADING;
+    }
+
+    get displayAppLabel() {
+        return this.appLabel || 'this application';
+    }
+
     /** Distinguishes "app has nothing" from "your filter matched nothing". */
     get isEmptyApp() {
         return this.state === STATE.LOADED_EMPTY || (this.state === STATE.LOADED && !this._rows.length);

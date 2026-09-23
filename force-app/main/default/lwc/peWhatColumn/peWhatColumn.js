@@ -24,6 +24,7 @@ export default class PeWhatColumn extends LightningElement {
 
     activeView = 'fields';
 
+    get isLoading() { return this.state === STATE.LOADING; }
     get loaded() { return this.state === STATE.LOADED && !!this.detail; }
     get hasGrants() { return (this.detail?.objectPermissions?.length ?? 0) > 0; }
     get showFields() { return this.loaded && this.activeView === 'fields'; }
@@ -96,9 +97,9 @@ export default class PeWhatColumn extends LightningElement {
         const count = this.detail?.fields?.length;
         return VIEWS.map((v) => ({
             ...v,
-            label: v.key === 'fields' && count ? `Fields ${count}` : v.label,
+            label: v.key === 'fields' && count ? `Fields (${count})` : v.label,
             selectedStr: String(v.key === this.activeView),
-            class: v.key === this.activeView ? 'view view_on' : 'view'
+            class: v.key === this.activeView ? 'vbtn vbtn_on' : 'vbtn'
         }));
     }
 

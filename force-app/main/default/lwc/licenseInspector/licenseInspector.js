@@ -154,12 +154,24 @@ export default class LicenseInspector extends LightningElement {
         const barClass = this.getBarClass(unlimited, used, total, pctUsed);
         const rowMeta = this.buildRowMeta(license);
 
+        const status = license.status || '';
+        const isStatusActive = status.toLowerCase() === 'active';
+        const isStatusDisabled = status.toLowerCase() === 'disabled';
+        const statusBadgeClass = isStatusActive
+            ? 'status-pill status-active'
+            : isStatusDisabled
+            ? 'status-pill status-disabled'
+            : status
+            ? 'status-pill status-neutral'
+            : '';
+
         return {
             key,
             licenseId: license.licenseId,
             licenseType: license.licenseType,
             name,
             orgStatus: license.status,
+            statusBadgeClass,
             frequency: license.frequency,
             expirationDate: license.expirationDate,
             expirationDisplay: license.expirationDate
@@ -197,10 +209,6 @@ export default class LicenseInspector extends LightningElement {
     buildRowMeta(license) {
         const parts = [];
 
-        if (license.status) {
-            parts.push(license.status);
-        }
-
         if (license.frequency) {
             parts.push(license.frequency);
         }
@@ -214,7 +222,7 @@ export default class LicenseInspector extends LightningElement {
 
     getAvailableClass(unlimited, free, total) {
         if (unlimited) {
-            return 'avail-value';
+            return 'avail-value avail-unlimited';
         }
 
         if (free === 0) {
@@ -225,7 +233,7 @@ export default class LicenseInspector extends LightningElement {
             return 'avail-badge avail-warning';
         }
 
-        return 'avail-value';
+        return 'avail-badge avail-positive';
     }
 
     getBarClass(unlimited, used, total, pctUsed) {

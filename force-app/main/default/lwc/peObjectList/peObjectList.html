@@ -4,19 +4,31 @@
             <p class="emptyapp">This app exposes no objects this user can reach, and no objects with data access behind it.</p>
         </template>
 
-        <div class="tools">
-            <input class="filter" type="search" placeholder="Filter objects"
-                   aria-label="Filter objects" oninput={handleFilter} />
-            <div class="chiprow">
-                <div class="chips" role="group" aria-label="Access filter">
-                    <template for:each={chips} for:item="c">
-                        <button key={c.key} class={c.class} type="button"
-                                data-key={c.key} onclick={handleChip}>{c.label}</button>
-                    </template>
+        <template lwc:if={isLoading}>
+            <div class="loading_panel">
+                <div class="spinner_container">
+                    <lightning-spinner size="medium" alternative-text="Loading objects and tabs" variant="brand"></lightning-spinner>
                 </div>
-                <span class="count pe-mono">{countText}</span>
+                <div class="loading_message_box">
+                    <p class="loading_main_text">Loading Objects &amp; Tabs</p>
+                    <p class="loading_sub_text">Fetching reachable objects and tab visibility for {displayAppLabel}…</p>
+                </div>
             </div>
-        </div>
+        </template>
+        <template lwc:else>
+            <div class="tools">
+                <input class="filter" type="search" placeholder="Filter objects"
+                       aria-label="Filter objects" oninput={handleFilter} />
+                <div class="chiprow">
+                    <div class="chips" role="group" aria-label="Access filter">
+                        <template for:each={chips} for:item="c">
+                            <button key={c.key} class={c.class} type="button"
+                                    data-key={c.key} onclick={handleChip}>{c.label}</button>
+                        </template>
+                    </div>
+                    <span class="count pe-mono">{countText}</span>
+                </div>
+            </div>
 
         <c-pe-state-wrapper
             state={state}
@@ -53,5 +65,6 @@
             <strong>No tab</strong> means the data is reachable by API, report or list view
             even though nothing appears in the app menu.
         </p>
+        </template>
     </section>
 </template>

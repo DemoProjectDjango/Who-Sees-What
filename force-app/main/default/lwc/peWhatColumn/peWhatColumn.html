@@ -3,21 +3,36 @@
         <header class="whathead">
             <div class="headrow">
                 <div class="ident">
-                    <span class="oicon" aria-hidden="true">&#9634;</span>
+                    <div class="oicon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" class="oicon_svg" fill="none" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                    </div>
                     <div class="objname">
                         <h2 id="col3-heading" class="olabel">{objectLabel}</h2>
-                        <span class="ometa">API Name <span class="pe-mono">{objectApiName}</span> | Type {objectTypeLabel}</span>
+                        <div class="ometa">
+                            <span class="meta_item"><span class="meta_label">API:</span> <span class="pe-mono">{objectApiName}</span></span>
+                            <span class="meta_sep" aria-hidden="true">&bull;</span>
+                            <span class="meta_item"><span class="meta_label">Type:</span> <span class="meta_val">{objectTypeLabel}</span></span>
+                        </div>
                     </div>
                 </div>
 
                 <div class="viewtools">
-                    <template for:each={views} for:item="v">
-                        <button key={v.key} class={v.class} type="button"
-                                aria-pressed={v.selectedStr} data-key={v.key}
-                                onclick={handleView}>{v.label}</button>
-                    </template>
-                    <button class="explain" type="button" disabled={explainDisabled}
-                            onclick={handleExplain}>Explain this access</button>
+                    <div class="vbtn_group" role="group" aria-label="Object view selector">
+                        <template for:each={views} for:item="v">
+                            <button key={v.key} class={v.class} type="button"
+                                    aria-pressed={v.selectedStr} data-key={v.key}
+                                    onclick={handleView}>{v.label}</button>
+                        </template>
+                    </div>
+                    <button class="explain slds-button slds-button_brand" type="button" disabled={explainDisabled}
+                            onclick={handleExplain}>
+                        <svg viewBox="0 0 24 24" class="explain_icon" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        <span>Explain this access</span>
+                    </button>
                 </div>
             </div>
 
@@ -43,13 +58,6 @@
                         <p class="badge_label">Record Actions</p>
                         <span class="bpill bpill_on">{recordActionsLabel}</span>
                     </div>
-                </div>
-            </template>
-
-            <template lwc:if={hasGrants}>
-                <div class="stripwrap">
-                    <p class="stripcaption">Object Permissions (CRUD)</p>
-                    <c-pe-crud-strip grants={detail.objectPermissions}></c-pe-crud-strip>
                 </div>
             </template>
         </header>

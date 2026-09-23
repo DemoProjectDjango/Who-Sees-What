@@ -13,9 +13,28 @@
 
         <dl class="facts">
             <template lwc:if={hasEmail}>
-                <div class="fact">
+                <div class="fact fact-email">
                     <dt>Email</dt>
-                    <dd class="pe-mono">{emailText}</dd>
+                    <dd class="email-dd">
+                        <span class="email-text" title={emailText}>{emailText}</span>
+                        <button class="copy-btn"
+                                type="button"
+                                onclick={handleCopyEmail}
+                                title={copyTitle}
+                                aria-label="Copy email address">
+                            <template lwc:if={copied}>
+                                <svg class="copy-icon copy-icon_success" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </template>
+                            <template lwc:else>
+                                <svg class="copy-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                            </template>
+                        </button>
+                    </dd>
                 </div>
             </template>
             <template lwc:if={hasDepartment}>

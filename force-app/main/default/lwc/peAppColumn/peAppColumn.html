@@ -1,6 +1,7 @@
 <template>
     <section class="column" aria-label="Choose an app">
         <header class="head">
+            <label class="flabel" for="pe-app-select">Application</label>
             <c-pe-state-wrapper
                 state={state}
                 error={error}
@@ -10,7 +11,7 @@
                 onretry={handleRetry}>
 
                 <select id="pe-app-select" class="appselect" aria-label="Choose an app" onchange={handleSelect}>
-                    <option value="">Select an app…</option>
+                    <option value="">Select an application…</option>
                     <template for:each={dropdownItems} for:item="a">
                         <option key={a.id} value={a.id} selected={a.isSelected}>{a.label}</option>
                     </template>
@@ -27,7 +28,12 @@
             </div>
 
             <template lwc:if={showDegradedNotice}>
-                <p class="degraded" role="status" title={appList.setupMessage}>{appList.setupMessage}</p>
+                <div class="degraded" role="status" title={appList.setupMessage}>
+                    <svg class="degraded-icon" viewBox="0 0 52 52" aria-hidden="true">
+                        <path fill="currentColor" d="M26 2C12.7 2 2 12.7 2 26s10.7 24 24 24 24-10.7 24-24S39.3 2 26 2zm0 38c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3zm3-14c0 .6-.4 1-1 1h-4c-.6 0-1-.4-1-1V13c0-.6.4-1 1-1h4c.6 0 1 .4 1 1v13z"/>
+                    </svg>
+                    <span>{appList.setupMessage}</span>
+                </div>
             </template>
         </header>
     </section>

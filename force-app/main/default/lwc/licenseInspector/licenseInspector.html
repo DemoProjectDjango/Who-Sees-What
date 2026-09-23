@@ -111,26 +111,39 @@
             </template>
 
             <div class="toolbar-wrap">
-                <div class="search-box">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
+                <div class="toolbar-filters">
+                    <div class="search-box">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
 
-                    <input
-                        class="search-input"
-                        type="search"
-                        placeholder="Search licenses or categories..."
-                        aria-label="Search licenses"
-                        value={searchTerm}
-                        oninput={handleSearch}
-                    />
+                        <input
+                            class="search-input"
+                            type="search"
+                            placeholder="Search licenses or categories..."
+                            aria-label="Search licenses"
+                            value={searchTerm}
+                            oninput={handleSearch}
+                        />
 
-                    <template lwc:if={searchTerm}>
-                        <button class="search-clear" type="button" title="Clear search" onclick={handleClearSearch}>
-                            &times;
-                        </button>
-                    </template>
+                        <template lwc:if={searchTerm}>
+                            <button class="search-clear" type="button" title="Clear search" onclick={handleClearSearch}>
+                                &times;
+                            </button>
+                        </template>
+                    </div>
+
+                    <select
+                        class="filter-status-select"
+                        aria-label="Filter licenses by status"
+                        value={statusFilter}
+                        onchange={handleStatusFilter}>
+                        <option value="ALL">All Statuses</option>
+                        <option value="IN_USE">In Use (&gt;0 Seats)</option>
+                        <option value="AVAILABLE">Available Only</option>
+                        <option value="EXHAUSTED">Exhausted (0 Available)</option>
+                    </select>
                 </div>
 
                 <div class="category-pills" role="tablist" aria-label="Filter by category">
@@ -146,17 +159,6 @@
                         </button>
                     </template>
                 </div>
-
-                <select
-                    class="filter-status-select"
-                    aria-label="Filter licenses by status"
-                    value={statusFilter}
-                    onchange={handleStatusFilter}>
-                    <option value="ALL">All Statuses</option>
-                    <option value="IN_USE">In Use (&gt;0 Seats)</option>
-                    <option value="AVAILABLE">Available Only</option>
-                    <option value="EXHAUSTED">Exhausted (0 Available)</option>
-                </select>
             </div>
 
             <c-pe-state-wrapper
@@ -207,7 +209,12 @@
                                 <template for:each={pagedRows} for:item="r">
                                     <tr key={r.key}>
                                         <td class="td-license">
-                                            <span class="lic-name" title={r.name}>{r.name}</span>
+                                            <div class="lic-name-box">
+                                                <span class="lic-name" title={r.name}>{r.name}</span>
+                                                <template lwc:if={r.statusBadgeClass}>
+                                                    <span class={r.statusBadgeClass}>{r.orgStatus}</span>
+                                                </template>
+                                            </div>
                                             <template lwc:if={r.rowMeta}>
                                                 <span class="lic-desc" title={r.rowMeta}>{r.rowMeta}</span>
                                             </template>
@@ -219,10 +226,15 @@
 
                                         <td class="td-used">
                                             <div class="used-wrap">
-                                                <div class="used-nums">
-                                                    <span class="used-bold">{r.usedDisplay}</span>
-                                                    <span class="slash">/</span>
-                                                    <span class="used-total">{r.totalDisplay}</span>
+                                                <div class="used-header">
+                                                    <div class="used-nums">
+                                                        <span class="used-bold">{r.usedDisplay}</span>
+                                                        <span class="slash">/</span>
+                                                        <span class="used-total">{r.totalDisplay}</span>
+                                                    </div>
+                                                    <template lwc:if={r.showProgress}>
+                                                        <span class="used-pct">{r.pctUsed}%</span>
+                                                    </template>
                                                 </div>
 
                                                 <template lwc:if={r.showProgress}>
