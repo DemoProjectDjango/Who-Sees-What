@@ -15,6 +15,12 @@
  * limit of what a test can do here, not an omission.
  */
 @IsTest
+// All methods are contract tests of PEUserSearchService against the six users
+// seeded in @TestSetup: filter branches, keyset paging, sort allowlist fallback,
+// bind safety, and the header helpers. Assertions key on the seeded data, never
+// on the running user's privileges; the USER_MODE queries would return a
+// different row set to a runAs user, so runAs has nothing meaningful to add.
+@SuppressWarnings('PMD.ApexUnitTestClassShouldHaveRunAs')
 private class PEUserSearchServiceTest {
 
     private static final String SURNAME = 'Zzsearchtarget';

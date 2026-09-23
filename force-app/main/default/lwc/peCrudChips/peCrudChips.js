@@ -43,8 +43,12 @@ export default class PeCrudChips extends LightningElement {
     get ariaLabel() {
         const on = this.chips.filter((c) => c.on).map((c) => c.name);
         const base = on.length ? `Granted: ${on.join(', ')}` : 'No object access';
-        if (this.modifyAll) return `${base}. Modify All Records.`;
-        if (this.viewAll) return `${base}. View All Records.`;
+        if (this.modifyAll) {
+            return `${base}. Modify All Records.`;
+        }
+        if (this.viewAll) {
+            return `${base}. View All Records.`;
+        }
         return base;
     }
 }

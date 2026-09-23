@@ -141,7 +141,9 @@ export default class PermissionExplorer extends LightningElement {
 
   syncHeight() {
     const el = this.template.querySelector(".explorer");
-    if (!el) return;
+    if (!el) {
+      return;
+    }
 
     const top = el.getBoundingClientRect().top;
     // The floor matters: below it the cards would be crushed, and letting
@@ -153,7 +155,9 @@ export default class PermissionExplorer extends LightningElement {
 
     // renderedCallback fires on every reactive change; writing the same
     // value back would invalidate layout on each one.
-    if (this._appliedHeight === height) return;
+    if (this._appliedHeight === height) {
+      return;
+    }
     this._appliedHeight = height;
     el.style.setProperty("--pe-explorer-h", height + "px");
   }
@@ -163,7 +167,7 @@ export default class PermissionExplorer extends LightningElement {
   async loadOrgStats() {
     try {
       this.orgStats = await getOrgStats();
-    } catch (e) {
+    } catch {
       // The KPI bar is furniture, not a requirement — a failure here
       // just means it stays hidden, not that the tool is unusable.
       this.orgStats = {};
@@ -173,23 +177,35 @@ export default class PermissionExplorer extends LightningElement {
   /** A link pasted into a support ticket should land on the exact panel. */
   async restoreFromUrl() {
     const state = readState();
-    if (!state.userId) return;
+    if (!state.userId) {
+      return;
+    }
 
     await this.loadUser(state.userId);
-    if (!state.appId) return;
-    if (!this.appList.apps.some((a) => a.developerName === state.appId)) return;
+    if (!state.appId) {
+      return;
+    }
+    if (!this.appList.apps.some((a) => a.developerName === state.appId)) {
+      return;
+    }
 
     await this.loadAppObjects(state.appId);
-    if (!state.objectId) return;
+    if (!state.objectId) {
+      return;
+    }
 
     const row = this.objectRows.find((r) => r.apiName === state.objectId);
-    if (!row) return;
+    if (!row) {
+      return;
+    }
 
     // Someone following a pasted link wants the answer, not the wizard.
     this._whoOpen = false;
     this._appOpen = false;
     this._objectsOpen = true;
-    if (state.tab === "trace") this.handleExplain();
+    if (state.tab === "trace") {
+      this.handleExplain();
+    }
   }
 
   /* ------------------------------- derived ------------------------------- */
@@ -213,16 +229,22 @@ export default class PermissionExplorer extends LightningElement {
 
   /** Names the next thing to click rather than just saying the panel is empty. */
   get placeholderHeading() {
-    if (!this.selectedUserId) return "Start with Who";
-    if (!this.selectedAppId) return "Now choose Where";
+    if (!this.selectedUserId) {
+      return "Start with Who";
+    }
+    if (!this.selectedAppId) {
+      return "Now choose Where";
+    }
     return "Choose an Object or Tab";
   }
 
   get placeholderText() {
-    if (!this.selectedUserId)
+    if (!this.selectedUserId) {
       return "Choose a user from WHO on the left to begin.";
-    if (!this.selectedAppId)
+    }
+    if (!this.selectedAppId) {
       return "Choose an app from WHERE on the left to see what it reaches.";
+    }
     return "Choose an object to see its permissions, fields and the source of every grant.";
   }
 
@@ -347,8 +369,12 @@ export default class PermissionExplorer extends LightningElement {
   }
 
   progressClass(done, current) {
-    if (done) return "progress_step progress_done";
-    if (current) return "progress_step progress_current";
+    if (done) {
+      return "progress_step progress_done";
+    }
+    if (current) {
+      return "progress_step progress_current";
+    }
     return "progress_step";
   }
 
@@ -433,7 +459,9 @@ export default class PermissionExplorer extends LightningElement {
   stageClass(isOpen, isDisabled) {
     let out = "stage";
     out += isOpen ? " stage_open" : " stage_shut";
-    if (isDisabled) out += " stage_off";
+    if (isDisabled) {
+      out += " stage_off";
+    }
     return out;
   }
 
@@ -465,16 +493,26 @@ export default class PermissionExplorer extends LightningElement {
   }
 
   get appSummary() {
-    if (!this.selectedUserId) return "Select a user first";
-    if (!this.selectedAppId) return "Choose an app";
+    if (!this.selectedUserId) {
+      return "Select a user first";
+    }
+    if (!this.selectedAppId) {
+      return "Choose an app";
+    }
     return [this.selectedAppLabel, this.appTally].filter(Boolean).join(" · ");
   }
 
   get objectSummary() {
-    if (!this.selectedAppId) return "Choose an app first";
-    if (this.railState === STATE.LOADING) return "Loading…";
+    if (!this.selectedAppId) {
+      return "Choose an app first";
+    }
+    if (this.railState === STATE.LOADING) {
+      return "Loading…";
+    }
     const n = this.objectRows.length;
-    if (!n) return "No objects reachable";
+    if (!n) {
+      return "No objects reachable";
+    }
     return this.selectedObjectLabel
       ? `${this.selectedObjectLabel} · ${n} reachable`
       : `${n} objects reachable`;
@@ -482,7 +520,9 @@ export default class PermissionExplorer extends LightningElement {
 
   get appTally() {
     const apps = this.appList?.apps ?? [];
-    if (!apps.length) return "";
+    if (!apps.length) {
+      return "";
+    }
     const visible = apps.filter((a) => a.visible).length;
     return `${visible} of ${apps.length} apps visible`;
   }
@@ -598,7 +638,9 @@ export default class PermissionExplorer extends LightningElement {
 
   get groupFootnote() {
     const outdated = (this.groupList ?? []).filter((g) => g.isOutdated).length;
-    if (!outdated) return null;
+    if (!outdated) {
+      return null;
+    }
     return (
       `${outdated} group${outdated === 1 ? " is" : "s are"} still recalculating. ` +
       "Treat any permission traced to them as provisional."
@@ -724,13 +766,17 @@ export default class PermissionExplorer extends LightningElement {
       });
       // The user may have clicked a different object while this was in
       // flight; only the current selection may write to the column.
-      if (this.selectedObjectApiName !== apiName) return;
+      if (this.selectedObjectApiName !== apiName) {
+        return;
+      }
 
       this._detailCache = { ...this._detailCache, [apiName]: detail };
       this.objectDetail = detail;
       this.detailState = STATE.LOADED;
     } catch (e) {
-      if (this.selectedObjectApiName !== apiName) return;
+      if (this.selectedObjectApiName !== apiName) {
+        return;
+      }
       this.detailError = parseError(e);
       this.detailState = STATE.ERROR;
     }
@@ -813,9 +859,15 @@ export default class PermissionExplorer extends LightningElement {
       event.stopPropagation();
     }
     const stage = event.currentTarget?.dataset?.stage || event.target?.dataset?.stage;
-    if (!stage) return;
-    if (stage === STAGE.APP && this.appStageDisabled) return;
-    if (stage === STAGE.OBJECTS && this.objectStageDisabled) return;
+    if (!stage) {
+      return;
+    }
+    if (stage === STAGE.APP && this.appStageDisabled) {
+      return;
+    }
+    if (stage === STAGE.OBJECTS && this.objectStageDisabled) {
+      return;
+    }
 
     if (stage === STAGE.WHO) {
       this._whoOpen = !this._whoOpen;
@@ -846,7 +898,9 @@ export default class PermissionExplorer extends LightningElement {
   }
 
   handleDetailRetry() {
-    if (!this.selectedObjectApiName) return;
+    if (!this.selectedObjectApiName) {
+      return;
+    }
     const apiName = this.selectedObjectApiName;
     const rest = { ...this._detailCache };
     delete rest[apiName];
@@ -855,7 +909,9 @@ export default class PermissionExplorer extends LightningElement {
   }
 
   handleAppRetry() {
-    if (this.selectedUserId) this.loadUser(this.selectedUserId, true);
+    if (this.selectedUserId) {
+      this.loadUser(this.selectedUserId, true);
+    }
   }
 
   /* Open, then fetch only if this panel has never been loaded for this user.
@@ -864,19 +920,25 @@ export default class PermissionExplorer extends LightningElement {
   handleOpenLoginHistory(event) {
     this._triggerElement = event.target;
     this.activeModal = MODAL.LOGIN;
-    if (this.loginState === STATE.EMPTY) this.loadLoginHistory();
+    if (this.loginState === STATE.EMPTY) {
+      this.loadLoginHistory();
+    }
   }
 
   handleOpenPermSets(event) {
     this._triggerElement = event.target;
     this.activeModal = MODAL.PERMSETS;
-    if (this.permSetState === STATE.EMPTY) this.loadPermSets();
+    if (this.permSetState === STATE.EMPTY) {
+      this.loadPermSets();
+    }
   }
 
   handleOpenGroups(event) {
     this._triggerElement = event.target;
     this.activeModal = MODAL.GROUPS;
-    if (this.groupState === STATE.EMPTY) this.loadGroups();
+    if (this.groupState === STATE.EMPTY) {
+      this.loadGroups();
+    }
   }
 
   handleLoginRetry() {
@@ -900,7 +962,9 @@ export default class PermissionExplorer extends LightningElement {
    * look at one object, and the inspection log is the thing we sell.
    */
   handleExplain() {
-    if (!this.objectDetail) return;
+    if (!this.objectDetail) {
+      return;
+    }
     this.traceApiName = this.selectedObjectApiName;
     this.traceLabel = this.selectedObjectLabel;
     this.traceDetail = this.objectDetail;
@@ -950,6 +1014,7 @@ export default class PermissionExplorer extends LightningElement {
     );
     this.copied = true;
     clearTimeout(this._copyTimer);
+    // eslint-disable-next-line @lwc/lwc/no-async-operation
     this._copyTimer = setTimeout(() => {
       this.copied = false;
     }, 2000);
@@ -963,7 +1028,7 @@ export default class PermissionExplorer extends LightningElement {
   writeClipboard(text) {
     try {
       navigator.clipboard?.writeText(text);
-    } catch (e) {
+    } catch {
       this.copied = false;
     }
   }

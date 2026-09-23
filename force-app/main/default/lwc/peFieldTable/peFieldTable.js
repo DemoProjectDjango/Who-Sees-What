@@ -27,7 +27,9 @@ export default class PeFieldTable extends LightningElement {
     get filtered() {
         const term = this.term.toLowerCase();
         return this._fields.filter((f) => {
-            if (term && !`${f.apiName} ${f.label}`.toLowerCase().includes(term)) return false;
+            if (term && !`${f.apiName} ${f.label}`.toLowerCase().includes(term)) {
+                return false;
+            }
             switch (this.segment) {
                 case 'readable': return f.readable;
                 case 'editable': return f.editable;

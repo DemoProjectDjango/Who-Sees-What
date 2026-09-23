@@ -9,7 +9,9 @@ export function readState() {
     const out = {};
     KEYS.forEach((k) => {
         const v = params.get(k);
-        if (v) out[k] = v;
+        if (v) {
+            out[k] = v;
+        }
     });
     return out;
 }
@@ -17,8 +19,11 @@ export function readState() {
 export function writeState(state) {
     const params = new URLSearchParams(window.location.search);
     KEYS.forEach((k) => {
-        if (state[k]) params.set(k, state[k]);
-        else params.delete(k);
+        if (state[k]) {
+            params.set(k, state[k]);
+        } else {
+            params.delete(k);
+        }
     });
     const next = `${window.location.pathname}?${params.toString()}`;
     window.history.replaceState({}, '', next);

@@ -23,6 +23,9 @@ public with sharing class PermissionExplorerException extends Exception {
      * @param retryable True when the failed inspection action can reasonably be retried.
      * @return Exception carrying the structured cause and retry state.
      */
+    // retryable is part of the typed-exception contract every caller builds;
+    // an enum/wrapper would change those call sites and the serialised payload.
+    @SuppressWarnings('PMD.AvoidBooleanMethodParameters')
     public static PermissionExplorerException build(String causeCode, String msg, Boolean retryable) {
         PermissionExplorerException e = new PermissionExplorerException(msg);
         e.causeCode = causeCode;

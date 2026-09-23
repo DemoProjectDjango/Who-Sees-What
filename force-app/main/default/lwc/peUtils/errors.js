@@ -9,11 +9,15 @@ export function parseError(error) {
         retryable: true
     };
     const raw = error?.body?.message ?? error?.message;
-    if (!raw) return fallback;
+    if (!raw) {
+        return fallback;
+    }
     try {
         const parsed = JSON.parse(raw);
-        if (parsed && parsed.cause) return parsed;
-    } catch (e) {
+        if (parsed && parsed.cause) {
+            return parsed;
+        }
+    } catch {
         // Not our structured payload — surface the real text, not a generic one.
     }
     return { ...fallback, message: raw };

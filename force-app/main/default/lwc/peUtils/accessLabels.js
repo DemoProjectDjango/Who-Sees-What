@@ -103,15 +103,25 @@ export function relativeTime(value) {
     if (!value) return 'Never signed in';
     const then = new Date(value).getTime();
     const days = Math.floor((Date.now() - then) / 86400000);
-    if (days <= 0) return 'Signed in today';
-    if (days === 1) return 'Signed in yesterday';
-    if (days < 30) return `Signed in ${days} days ago`;
-    if (days < 365) return `Signed in ${Math.floor(days / 30)} months ago`;
+    if (days <= 0) {
+        return 'Signed in today';
+    }
+    if (days === 1) {
+        return 'Signed in yesterday';
+    }
+    if (days < 30) {
+        return `Signed in ${days} days ago`;
+    }
+    if (days < 365) {
+        return `Signed in ${Math.floor(days / 30)} months ago`;
+    }
     return `Signed in ${Math.floor(days / 365)} years ago`;
 }
 
 export function asOf(datetime) {
-    if (!datetime) return '';
+    if (!datetime) {
+        return '';
+    }
     return new Date(datetime).toLocaleTimeString([], {
         hour: '2-digit', minute: '2-digit'
     });

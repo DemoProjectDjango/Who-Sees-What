@@ -4,29 +4,23 @@ const auraConfig = require('@salesforce/eslint-plugin-aura');
 const lwcConfig = require('@salesforce/eslint-config-lwc/recommended');
 const globals = require('globals');
 
-// Plain flat-config array rather than defineConfig(): the wrapper lives at
-// the 'eslint/config' subpath, which only exists in ESLint 9.23+, and Code
-// Analyzer bundles an older ESLint.
+const scopeConfigs = (configs, files) =>
+    configs.map((config) => ({
+        ...config,
+        files
+    }));
+
 module.exports = [
-    // Aura configuration
-    {
-        files: ['**/aura/**/*.js'],
-        extends: [
-            ...auraConfig.configs.recommended,
-            ...auraConfig.configs.locker
-        ]
-    },
+    // Aura
+    ...scopeConfigs(auraConfig.configs.recommended, ['**/aura/**/*.js']),
+    ...scopeConfigs(auraConfig.configs.locker, ['**/aura/**/*.js']),
 
-    // LWC configuration
-    {
-        files: ['**/lwc/**/*.js'],
-        extends: [lwcConfig]
-    },
+    // LWC
+    ...scopeConfigs(lwcConfig, ['**/lwc/**/*.js']),
 
-    // LWC configuration with override for LWC test files
+    // LWC Jest tests
     {
         files: ['**/lwc/**/*.test.js'],
-        extends: [lwcConfig],
         rules: {
             '@lwc/lwc/no-unexpected-wire-adapter-usages': 'off'
         },
@@ -37,9 +31,10 @@ module.exports = [
         }
     },
 
-    // Jest mocks configuration
+    // Jest mocks
     {
         files: ['**/jest-mocks/**/*.js'],
+        ...eslintJs.configs.recommended,
         languageOptions: {
             sourceType: 'module',
             ecmaVersion: 'latest',
@@ -48,10 +43,6 @@ module.exports = [
                 ...globals.es2021,
                 ...jestPlugin.environments.globals.globals
             }
-        },
-        plugins: {
-            eslintJs
-        },
-        extends: ['eslintJs/recommended']
+        }
     }
 ];

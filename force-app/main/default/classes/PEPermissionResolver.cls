@@ -16,7 +16,22 @@
  * That method is deliberately the only place that knowledge lives, so the
  * spike outcome changes one method rather than the class.
  */
+// Total complexity reflects one multi-pass pipeline (assignments, groups,
+// muting) that must run as a unit against a cached result; splitting the class
+// would fragment the single source of truth for effective access.
+@SuppressWarnings('PMD.CognitiveComplexity,PMD.CyclomaticComplexity')
 public with sharing class PEPermissionResolver {
+
+    /* ---------------------------------------------------------------
+     * Cache
+     * --------------------------------------------------------------- */
+
+    /**
+     * Version suffix, not decoration. `Resolved` is serialised into the session
+     * partition, so adding fields to it means already-cached instances are the
+     * wrong shape. Bumping the prefix retires them instead of reading them.
+     */
+    private static final String CACHE_PREFIX = 'resolvedV3';
 
     /* ---------------------------------------------------------------
      * Result type
@@ -59,19 +74,15 @@ public with sharing class PEPermissionResolver {
      * --------------------------------------------------------------- */
 
     /**
-     * Version suffix, not decoration. `Resolved` is serialised into the session
-     * partition, so adding fields to it means already-cached instances are the
-     * wrong shape. Bumping the prefix retires them instead of reading them.
-     */
-    private static final String CACHE_PREFIX = 'resolvedV3';
-
-    /**
      * Cached per session. Pass forceRefresh from the refresh button.
      *
      * @param userId User whose effective permissions are being inspected.
      * @param forceRefresh True when the admin explicitly refreshes and cached resolver data should be ignored.
      * @return Effective permission context for the selected user.
      */
+    // forceRefresh is the existing refresh contract (true rebuilds the cache);
+    // replacing it with a wrapper type would change every resolveUser call site.
+    @SuppressWarnings('PMD.AvoidBooleanMethodParameters')
     public static Resolved resolve(Id userId, Boolean forceRefresh) {
         String key = CACHE_PREFIX + String.valueOf(userId).right(15);
 
@@ -163,6 +174,9 @@ public with sharing class PEPermissionResolver {
      * @param userId User whose direct permission set assignments are being inspected.
      * @return Permission set group Ids assigned to the user so component and muting sets can be expanded.
      */
+    // Single pass over assignments with group bookkeeping; extracting branches
+    // would split the count/list consistency contract this method guarantees.
+    @SuppressWarnings('PMD.CognitiveComplexity,PMD.CyclomaticComplexity')
     private static Set<Id> loadAssignments(Resolved r, Id userId) {
         // Map rather than Set: the drill-down needs the group's label and
         // status, not just its Id, and one group can back several assignments.
@@ -253,6 +267,9 @@ public with sharing class PEPermissionResolver {
      * @param r Resolver result being populated with group-derived grants and muting sources.
      * @param groupIds Permission set group Ids assigned to the selected user.
      */
+    // Chunked SOQL over assigned groups is the deliberate batching strategy;
+    // the per-chunk query keeps governor limits bounded and must stay in the loop.
+    @SuppressWarnings('PMD.CognitiveComplexity,PMD.OperationWithLimitsInLoop')
     private static void loadGroupComponents(Resolved r, Set<Id> groupIds) {
         if (groupIds.isEmpty()) {
             return;
@@ -328,6 +345,9 @@ public with sharing class PEPermissionResolver {
      * @param r Resolver result whose muting source labels may need completion.
      * @param groupIds Permission set group Ids assigned to the selected user.
      */
+    // Same chunked batching as loadGroupComponents; the label-completion loop
+    // queries within the call to keep muting source fills under governor limits.
+    @SuppressWarnings('PMD.OperationWithLimitsInLoop')
     private static void loadMutingSets(Resolved r, Set<Id> groupIds) {
         if (groupIds.isEmpty() || r.mutingParents.isEmpty()) {
             return;
@@ -380,6 +400,10 @@ public with sharing class PEPermissionResolver {
      * @param mutedByParent Permission mute flags keyed by muting permission set Id.
      * @return Grant row that explains whether the permission applies and which sources caused the result.
      */
+    // applyGrant is the single tested decision point: OR grants, subtract muting.
+    // The 5 parameters mirror the contract every caller already passes, and the
+    // nested source lookups are the muting flow itself, not accidental nesting.
+    @SuppressWarnings('PMD.ExcessiveParameterList,PMD.CognitiveComplexity,PMD.AvoidDeeplyNestedIfStmts')
     public static PEDto.Grant applyGrant(
         String permName,
         String permLabel,

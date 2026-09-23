@@ -110,6 +110,9 @@ public with sharing class PEDto {
          * @param message Admin-facing explanation of the failed inspection section.
          * @param retryable True when the UI should present the failure as worth retrying.
          */
+        // The retryable flag is part of the serialised ErrorInfo contract the
+        // client error boundary renders; a wrapper type would change every call site.
+        @SuppressWarnings('PMD.AvoidBooleanMethodParameters')
         public ErrorInfo(String cause, String message, Boolean retryable) {
             this.cause = cause;
             this.message = message;
@@ -132,7 +135,14 @@ public with sharing class PEDto {
         @AuraEnabled public Boolean isFrozen = false;
     }
 
-    /** Header shown once a user is selected. */
+    /**
+     * Header shown once a user is selected.
+     *
+     * DTO intentionally aggregates the fields required by the permission
+     * explorer. Splitting it would change the existing serialized response
+     * contract.
+     */
+    @SuppressWarnings('PMD.TooManyFields')
     public class UserSummary {
         @AuraEnabled public Id userId;
         @AuraEnabled public String name;
