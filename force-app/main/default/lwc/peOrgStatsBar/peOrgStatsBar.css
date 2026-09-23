@@ -1,0 +1,40 @@
+@import 'c/peBase';
+
+:host {
+    display: block;
+    font-family: var(--pe-font);
+}
+
+.statsbar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: var(--pe-gap);
+    padding: 0 var(--pe-pad) var(--pe-pad);
+}
+
+.stat {
+    background: var(--pe-surface);
+    border: 1px solid var(--pe-line);
+    border-radius: var(--pe-radius);
+    box-shadow: var(--pe-shadow);
+    padding: 0.625rem 0.875rem;
+}
+.stat_label {
+    margin: 0;
+    font-size: var(--pe-fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--pe-ink-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.stat_value {
+    margin: 0.125rem 0 0;
+    font-family: var(--pe-display);
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: var(--pe-ink);
+    font-variant-numeric: tabular-nums;
+}

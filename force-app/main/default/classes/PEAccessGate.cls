@@ -50,12 +50,13 @@ public with sharing class PEAccessGate {
      * Target-user guard. Inactive users are out of scope; frozen users are not.
      *
      * @param userId User selected for permission inspection.
-     * @return Active user record with profile, role, license, and login context needed by admin-facing views.
+     * @return Active user record with profile, role, license, department, manager, and login context needed by admin-facing views.
      */
     public static User assertInspectable(Id userId) {
         List<User> rows = [
             SELECT Id, Name, Username, Email, IsActive, UserType, ProfileId,
-                   Profile.Name, UserRole.Name, Profile.UserLicense.Name, LastLoginDate
+                   Profile.Name, UserRole.Name, Profile.UserLicense.Name, LastLoginDate,
+                   Department, Manager.Name
             FROM User
             WHERE Id = :userId
             WITH USER_MODE

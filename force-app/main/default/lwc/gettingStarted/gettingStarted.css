@@ -1,0 +1,41 @@
+@import 'c/peBase';
+
+:host {
+    display: block;
+    min-height: 100%;
+    font-family: var(--pe-font);
+    color: var(--pe-ink);
+    background: var(--pe-ground);
+}
+
+.page {
+    max-width: 75rem;
+    margin: 0 auto;
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    gap: var(--pe-pad);
+    padding: 0.875rem 1.5rem;
+}
+
+.brand {
+    display: flex;
+    align-items: baseline;
+    gap: 0.625rem;
+}
+.wordmark {
+    font-family: var(--pe-display);
+    font-size: 1.0625rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    color: var(--pe-ink);
+}
+.producttag {
+    font-size: var(--pe-fs-xs);
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--pe-ink-muted);
+}

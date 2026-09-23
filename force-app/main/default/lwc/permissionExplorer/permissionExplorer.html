@@ -1,124 +1,246 @@
 <template>
-    <div class="explorer">
-        <header class="topbar">
-            <div class="title">
-                <span class="pe-eyebrow">Permission Explorer</span>
-                <nav class="crumbs" aria-label="Current selection">
-                    <template lwc:if={crumbs.length}>
-                        <template for:each={crumbs} for:item="c">
-                            <span key={c.key} class="crumb">
-                                <template lwc:if={c.separator}><span class="sep" aria-hidden="true">›</span></template>
-                                {c.label}
-                            </span>
-                        </template>
-                    </template>
-                    <template lwc:else>
-                        <span class="crumb crumb_placeholder">Select a user to begin</span>
-                    </template>
-                </nav>
-            </div>
+  <div class="explorer">
+    <header class="topbar">
+      <div class="brand">
+        <span class="wordmark">Who Sees What</span>
+        <span class="producttag">Access Explorer</span>
+      </div>
 
-            <div class="actions">
-                <template lwc:if={selectedUserId}>
-                    <button class="link" type="button" onclick={handleCopyLink}>Copy link</button>
-                </template>
-                <button class="link" type="button" onclick={handleRefresh}>Refresh data</button>
-            </div>
-        </header>
+      <div class="title">
+        <nav class="crumbs" aria-label="Current selection">
+          <template lwc:if={crumbs.length}>
+            <template for:each={crumbs} for:item="c">
+              <span key={c.key} class="crumb">
+                <template lwc:if={c.separator}
+                  ><span class="sep" aria-hidden="true">›</span></template
+                >
+                {c.label}
+              </span>
+            </template>
+          </template>
+          <template lwc:else>
+            <span class="crumb crumb_placeholder">Select a user to begin</span>
+          </template>
+        </nav>
+      </div>
 
-        <template lwc:if={userSummary}>
-            <c-pe-user-summary-header
+      <!-- The two claims a compliance reviewer checks before using the tool
+                 at all. They are furniture, not a notice: they never scroll away. -->
+      <div class="trust" aria-label="Tool guarantees">
+        <span class="pill pill_live">
+          <span class="pill_dot" aria-hidden="true"></span>Read only
+        </span>
+        <span class="pill">Inspection logged</span>
+      </div>
+
+      <div class="actions">
+        <template lwc:if={selectedUserId}>
+          <button
+            class="btn btn_primary"
+            type="button"
+            onclick={handleCopyLink}
+          >
+            {copyLabel}
+          </button>
+        </template>
+        <button class="btn" type="button" onclick={handleRefresh}>
+          Refresh data
+        </button>
+      </div>
+    </header>
+
+    <c-pe-org-stats-bar stats={orgStats}></c-pe-org-stats-bar>
+
+    <div class="layout">
+      <!-- Persistent 20% navigation rail. WHO, WHERE and OBJECT/TAB stay
+                 visible so the user never loses the path they are inspecting. -->
+      <aside class="navigator" aria-label="Access path">
+        <section class="nav_section nav_section_who">
+          <header class="nav_section_head">
+            <span class="nav_step" aria-hidden="true">1</span>
+            <span class="nav_heading">
+              <span class="nav_title">Who</span>
+              <span class="nav_summary">{whoSummary}</span>
+            </span>
+          </header>
+          <div class="nav_section_body">
+            <c-pe-user-column
+              selected-user-id={selectedUserId}
+              onuserselect={handleUserSelect}
+            ></c-pe-user-column>
+          </div>
+        </section>
+
+        <section class={whereSectionClass}>
+          <header class="nav_section_head">
+            <span class="nav_step" aria-hidden="true">2</span>
+            <span class="nav_heading">
+              <span class="nav_title">Where</span>
+              <span class="nav_summary">{appSummary}</span>
+            </span>
+            <template lwc:if={showEstimateMark}>
+              <span class="nav_mark" title={appEstimateNote}>Estimated</span>
+            </template>
+          </header>
+          <div class="nav_section_body nav_section_body_compact">
+            <c-pe-app-column
+              app-list={appList}
+              selected-app-id={selectedAppId}
+              state={appState}
+              error={appError}
+              stale-since={resolvedAt}
+              onappselect={handleAppSelect}
+              onretry={handleAppRetry}
+            ></c-pe-app-column>
+          </div>
+        </section>
+
+        <section class={objectSectionClass}>
+          <header class="nav_section_head">
+            <span class="nav_step" aria-hidden="true">3</span>
+            <span class="nav_heading">
+              <span class="nav_title">Object / Tab</span>
+              <span class="nav_summary">{objectSummary}</span>
+            </span>
+          </header>
+          <div class="nav_section_body">
+            <c-pe-object-list
+              app-label={selectedAppLabel}
+              rows={objectRows}
+              state={railState}
+              error={railError}
+              selected-api-name={selectedObjectApiName}
+              onobjectselect={handleObjectSelect}
+              onretry={handleRailRetry}
+            ></c-pe-object-list>
+          </div>
+        </section>
+      </aside>
+
+      <!-- The remaining ~80% is the real inspection workspace. -->
+      <main class={workspaceClass}>
+        <section class="workspace_main">
+          <template lwc:if={selectedObjectApiName}>
+            <c-pe-what-column
+              object-label={selectedObjectLabel}
+              object-api-name={selectedObjectApiName}
+              tab-visibility={selectedObjectTabVisibility}
+              detail={objectDetail}
+              state={detailState}
+              error={detailError}
+              onexplain={handleExplain}
+              onretry={handleDetailRetry}
+            ></c-pe-what-column>
+          </template>
+          <template lwc:else>
+            <div class="placeholder">
+              <div class="placeholder_icon" aria-hidden="true">→</div>
+              <p class="phead">{placeholderHeading}</p>
+              <p class="pbody">{placeholderText}</p>
+              <ol class="placeholder_steps" aria-label="Inspection steps">
+                <li class={whoProgressClass}>Select a user</li>
+                <li class={appProgressClass}>Select an app</li>
+                <li class={objectProgressClass}>Select an object or tab</li>
+              </ol>
+            </div>
+          </template>
+        </section>
+
+        <template lwc:if={hasWorkspaceContext}>
+          <aside class="workspace_context" aria-label="Inspection context">
+            <p class="context_label">Context</p>
+            <template lwc:if={selectedObjectApiName}>
+              <c-pe-granted-by-panel
+                detail={objectDetail}
+              ></c-pe-granted-by-panel>
+            </template>
+            <template lwc:if={userSummary}>
+              <c-pe-user-summary-header
                 summary={userSummary}
                 onopenloginhistory={handleOpenLoginHistory}
                 onopenpermsets={handleOpenPermSets}
-                onopengroups={handleOpenGroups}></c-pe-user-summary-header>
+                onopengroups={handleOpenGroups}
+              ></c-pe-user-summary-header>
+            </template>
+          </aside>
         </template>
-
-        <div class="columns">
-            <div class="col col_user">
-                <c-pe-user-column
-                    selected-user-id={selectedUserId}
-                    onuserselect={handleUserSelect}></c-pe-user-column>
-            </div>
-            <div class="col col_app">
-                <!-- Until a user is picked there is nothing to show here, so the
-                     space goes to setup steps and the tool's stated limits rather
-                     than an empty panel. -->
-                <template lwc:if={selectedUserId}>
-                    <c-pe-app-column
-                        app-list={appList}
-                        selected-app-id={selectedAppId}
-                        state={appState}
-                        error={appError}
-                        stale-since={resolvedAt}
-                        onappselect={handleAppSelect}
-                        onretry={handleAppRetry}></c-pe-app-column>
-                </template>
-                <template lwc:else>
-                    <c-pe-getting-started></c-pe-getting-started>
-                </template>
-            </div>
-        </div>
-
-        <!-- One discriminator, not four booleans: two modals open at once is a
-             state this component should not be able to represent. -->
-        <template lwc:if={isAppModal}>
-            <c-pe-modal
-                user-name={userSummary.name}
-                app-name={selectedAppLabel}
-                onclose={handleModalClose}>
-                <c-pe-object-table
-                    rows={objectRows}
-                    state={railState}
-                    error={railError}
-                    onloaddetail={handleLoadDetail}
-                    onretry={handleRailRetry}></c-pe-object-table>
-            </c-pe-modal>
-        </template>
-
-        <template lwc:elseif={isLoginModal}>
-            <c-pe-modal
-                user-name={userSummary.name}
-                heading="Login history"
-                onclose={handleModalClose}>
-                <c-pe-login-history-modal
-                    result={loginHistory}
-                    state={loginState}
-                    error={loginError}
-                    onretry={handleLoginRetry}></c-pe-login-history-modal>
-            </c-pe-modal>
-        </template>
-
-        <template lwc:elseif={isPermSetModal}>
-            <c-pe-modal
-                user-name={userSummary.name}
-                heading="Permission sets"
-                onclose={handleModalClose}>
-                <c-pe-user-list-modal
-                    items={permSetItems}
-                    state={permSetState}
-                    error={permSetError}
-                    empty-headline="No permission sets assigned directly"
-                    empty-detail="This user's access comes from their profile, or from permission set groups."
-                    footnote={permSetFootnote}
-                    onretry={handlePermSetRetry}></c-pe-user-list-modal>
-            </c-pe-modal>
-        </template>
-
-        <template lwc:elseif={isGroupModal}>
-            <c-pe-modal
-                user-name={userSummary.name}
-                heading="Permission set groups"
-                onclose={handleModalClose}>
-                <c-pe-user-list-modal
-                    items={groupItems}
-                    state={groupState}
-                    error={groupError}
-                    empty-headline="No permission set groups assigned"
-                    empty-detail="Permission sets may still be assigned to this user directly."
-                    footnote={groupFootnote}
-                    onretry={handleGroupRetry}></c-pe-user-list-modal>
-            </c-pe-modal>
-        </template>
+      </main>
     </div>
+
+    <!-- One discriminator, not four booleans: two modals open at once is a
+             state this component should not be able to represent.
+
+             The trace is a modal rather than a fourth column: it is the artefact
+             someone pastes into a ticket, and it has to be readable on its own
+             terms. Everything else is now inline. -->
+    <template lwc:if={isTraceModal}>
+      <c-pe-modal
+        user-name={userSummary.name}
+        heading="Access trace"
+        onclose={handleTraceClose}
+      >
+        <c-pe-access-trace
+          user-name={userSummary.name}
+          app-label={selectedAppLabel}
+          object-label={traceLabel}
+          object-api-name={traceApiName}
+          detail={traceDetail}
+          share-link={traceShareLink}
+          copied={traceCopied}
+          oncopylink={handleCopyTraceLink}
+        ></c-pe-access-trace>
+      </c-pe-modal>
+    </template>
+
+    <template lwc:elseif={isLoginModal}>
+      <c-pe-modal
+        user-name={userSummary.name}
+        heading="Login history"
+        onclose={handleModalClose}
+      >
+        <c-pe-login-history-modal
+          result={loginHistory}
+          state={loginState}
+          error={loginError}
+          onretry={handleLoginRetry}
+        ></c-pe-login-history-modal>
+      </c-pe-modal>
+    </template>
+
+    <template lwc:elseif={isPermSetModal}>
+      <c-pe-modal
+        user-name={userSummary.name}
+        heading="Permission sets"
+        onclose={handleModalClose}
+      >
+        <c-pe-user-list-modal
+          items={permSetItems}
+          state={permSetState}
+          error={permSetError}
+          empty-headline="No permission sets assigned directly"
+          empty-detail="This user's access comes from their profile, or from permission set groups."
+          footnote={permSetFootnote}
+          onretry={handlePermSetRetry}
+        ></c-pe-user-list-modal>
+      </c-pe-modal>
+    </template>
+
+    <template lwc:elseif={isGroupModal}>
+      <c-pe-modal
+        user-name={userSummary.name}
+        heading="Permission set groups"
+        onclose={handleModalClose}
+      >
+        <c-pe-user-list-modal
+          items={groupItems}
+          state={groupState}
+          error={groupError}
+          empty-headline="No permission set groups assigned"
+          empty-detail="Permission sets may still be assigned to this user directly."
+          footnote={groupFootnote}
+          onretry={handleGroupRetry}
+        ></c-pe-user-list-modal>
+      </c-pe-modal>
+    </template>
+  </div>
 </template>

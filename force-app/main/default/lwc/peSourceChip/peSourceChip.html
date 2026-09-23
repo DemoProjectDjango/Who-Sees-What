@@ -9,9 +9,8 @@
             </span>
 
             <template lwc:if={primaryLinked}>
-                <a class="open" href={primaryUrl} target="_blank"
-                   rel="noopener noreferrer" aria-label={primaryOpenAria}
-                   onclick={stopRowClick}>
+                <a class="open" href={primaryUrl} target="_blank" rel="noopener noreferrer"
+                   aria-label={primaryOpenAria}>
                     <span class="open_text">{primaryOpenLabel}</span>
                     <span class="open_icon" aria-hidden="true">&#8599;</span>
                 </a>
@@ -38,9 +37,8 @@
                              ragged and the admin is not left guessing. -->
                         <span class="action">
                             <template lwc:if={s.linked}>
-                                <a class="open" href={s.url} target="_blank"
-                                   rel="noopener noreferrer" aria-label={s.openAria}
-                                   onclick={stopRowClick}>
+                                <a class="open" href={s.url} target="_blank" rel="noopener noreferrer"
+                                   aria-label={s.openAria}>
                                     <span class="open_text">{s.openLabel}</span>
                                     <span class="open_icon" aria-hidden="true">&#8599;</span>
                                 </a>

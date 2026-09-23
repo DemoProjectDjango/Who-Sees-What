@@ -1,13 +1,22 @@
 import { LightningElement, api } from 'lwc';
-import { STATE, sourceKindLabel } from 'c/peUtils';
+import { STATE } from 'c/peUtils';
 
 /**
- * Column 2. Not paginated: even a large org has tens of apps, not thousands,
- * and the list is already in memory from resolveUser. A pager here would show
- * one page in every real org while making the show-hidden toggle awkward.
+ * Column 2. A dropdown, not a scrolling list.
+ *
+ * It used to be a listbox sharing the column with the object list below it
+ * (38% / 62%, each with its own scroller) — on a wide-app org, or once
+ * content grew past its share, the app list overflowed and painted over the
+ * object list instead of scrolling. A dropdown has a fixed, small footprint
+ * no matter how many apps exist, so the object list always gets the column's
+ * full remaining height once an app is chosen, and there is nothing left to
+ * overlap.
+ *
+ * Not paginated: even a large org has tens of apps, not thousands, and the
+ * list is already in memory from resolveUser.
  *
  * "Why can't they see the app?" is asked as often as "what can they see?", so
- * hidden apps are behind a toggle rather than omitted.
+ * hidden apps are behind a toggle rather than left out of the dropdown.
  */
 export default class PeAppColumn extends LightningElement {
     @api selectedAppId;
@@ -52,22 +61,17 @@ export default class PeAppColumn extends LightningElement {
         return 'That is a valid outcome, not an error. Turn on "Show all apps" to see what is hidden and why.';
     }
 
-    get listItems() {
+    /**
+     * One option per app. A dropdown option can't carry the badge and
+     * secondary line a list row could, so a hidden app says so inline
+     * instead of via a separate badge.
+     */
+    get dropdownItems() {
         return this.visibleApps.map((a) => ({
             id: a.developerName,
-            label: a.label,
-            secondary: a.developerName,
-            badge: a.visible ? null : 'Hidden',
-            meta: this.metaFor(a),
-            sources: a.sources?.length ? a.sources : null
+            label: a.visible ? a.label : `${a.label} — hidden`,
+            isSelected: a.developerName === this.selectedAppId
         }));
-    }
-
-    metaFor(app) {
-        const parts = [app.appType];
-        if (app.visibilityEstimated) parts.push('visibility estimated');
-        else if (!app.sources?.length && app.visible) parts.push('source unknown');
-        return parts.filter(Boolean).join(' · ');
     }
 
     handleToggle(event) {
@@ -75,8 +79,10 @@ export default class PeAppColumn extends LightningElement {
     }
 
     handleSelect(event) {
+        const appId = event.target.value;
+        if (!appId) return;
         this.dispatchEvent(new CustomEvent('appselect', {
-            detail: { appId: event.detail.id }
+            detail: { appId }
         }));
     }
 

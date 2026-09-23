@@ -5,37 +5,38 @@
     align-items: center;
     gap: var(--pe-gap);
     flex-wrap: wrap;
-    padding: 0 0 var(--pe-gap);
+    padding: 0 0 0.625rem;
 }
 .search {
-    width: 12rem;
-    height: 1.75rem;
-    padding: 0 0.5rem;
+    width: 13rem;
+    height: 2rem;
+    padding: 0 0.625rem;
     font-size: var(--pe-fs-sm);
     color: var(--pe-ink);
     background: var(--pe-surface);
     border: 1px solid var(--pe-line-strong);
-    border-radius: var(--pe-radius);
+    border-radius: var(--pe-radius-sm);
     box-sizing: border-box;
 }
 .search:focus { outline: 2px solid var(--pe-accent); outline-offset: -1px; }
 
-.segments { display: flex; gap: 2px; }
+.segments { display: flex; gap: 3px; }
 .seg {
     font-size: var(--pe-fs-xs);
+    font-weight: 500;
     color: var(--pe-ink-muted);
     background: none;
     border: 1px solid transparent;
-    border-radius: var(--pe-radius);
-    padding: 0.1875rem 0.5rem;
+    border-radius: var(--pe-radius-pill);
+    padding: 0.3125rem 0.6875rem;
     cursor: pointer;
     white-space: nowrap;
 }
 .seg:hover { background: var(--pe-surface-hover); }
 .seg_on {
-    color: var(--pe-ink);
-    background: var(--pe-surface);
-    border-color: var(--pe-line-strong);
+    color: #ffffff;
+    background: var(--pe-ink);
+    border-color: var(--pe-ink);
     font-weight: 600;
 }
 .seg:focus-visible { outline: 2px solid var(--pe-accent); outline-offset: 1px; }
@@ -45,17 +46,18 @@
     border-radius: var(--pe-radius);
     background: var(--pe-surface);
     overflow: hidden;
+    box-shadow: var(--pe-shadow);
 }
 
 .row {
     display: grid;
-    grid-template-columns: minmax(0, 1.6fr) 5rem 3.5rem 3.5rem minmax(0, 1.4fr);
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.4fr) 4rem 4rem minmax(0, 1.7fr);
     gap: var(--pe-gap);
     align-items: center;
-    padding: 0.1875rem 0.5rem;
-    border-bottom: 1px solid var(--pe-line);
+    padding: 0.375rem 0.75rem;
+    border-bottom: 1px solid #f2efe9;
     font-size: var(--pe-fs-sm);
-    min-height: 1.5rem;
+    min-height: 1.875rem;
 }
 .row:last-child { border-bottom: none; }
 .row:hover:not(.row_head) { background: var(--pe-surface-hover); }
@@ -63,24 +65,38 @@
 .row_head {
     font-size: var(--pe-fs-xs);
     font-weight: 700;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--pe-ink-faint);
+    color: var(--pe-ink-muted);
     background: var(--pe-surface-sunken);
+    border-bottom: 1px solid var(--pe-line);
 }
 
-.name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Label first, API name second. The label is what the admin was asked about;
+   the API name is what they will paste into a query. Both, always. */
+.name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--pe-ink); font-weight: 500; }
+.api { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--pe-ink-muted); }
 .type { color: var(--pe-ink-muted); font-size: var(--pe-fs-xs); }
 
+/* Four states, each with a word beside it. A dot alone would fail the colour
+   test and, worse, would not survive being printed into an audit pack. */
 .flag { font-weight: 600; white-space: nowrap; }
-.flag_on { color: var(--pe-grant); }
-.flag_off { color: var(--pe-ink-faint); font-weight: 400; }
+.flag_on { color: var(--pe-grant-ink); }
+.flag_off { color: var(--pe-deny-ink); font-weight: 500; }
 
-.src { min-width: 0; }
+.src { min-width: 0; color: var(--pe-ink-muted); }
+
+/* "FLS not applicable" is a state, not an affordance. The dotted underline made
+   twenty rows look like twenty links that do nothing when clicked, so it is now
+   a quiet chip that reads as a label. */
 .na {
+    display: inline-block;
+    padding: 0.0625rem 0.4375rem;
     font-size: var(--pe-fs-xs);
-    color: var(--pe-caution);
-    border-bottom: 1px dotted var(--pe-caution);
+    color: var(--pe-ink-muted);
+    background: var(--pe-surface-sunken);
+    border: 1px solid var(--pe-line);
+    border-radius: var(--pe-radius-pill);
     cursor: help;
 }
 .none { font-size: var(--pe-fs-sm); color: var(--pe-ink-faint); font-style: italic; }
@@ -89,17 +105,57 @@
     display: flex;
     align-items: center;
     gap: var(--pe-pad);
-    padding: 0.375rem 0 0;
+    padding: 0.5rem 0 0;
 }
-.tally { font-size: var(--pe-fs-xs); color: var(--pe-ink-faint); font-variant-numeric: tabular-nums; }
+.tally {
+    font-family: var(--pe-mono);
+    font-size: var(--pe-fs-xs);
+    color: var(--pe-ink-faint);
+    font-variant-numeric: tabular-nums;
+}
 .more {
     font-size: var(--pe-fs-xs);
     font-weight: 600;
     color: var(--pe-accent);
-    background: none;
+    background: var(--pe-surface);
     border: 1px solid var(--pe-line-strong);
-    border-radius: var(--pe-radius);
-    padding: 0.125rem 0.5rem;
+    border-radius: var(--pe-radius-sm);
+    padding: 0.25rem 0.625rem;
     cursor: pointer;
 }
-.more:hover { background: var(--pe-surface-hover); }
+.more:hover { background: var(--pe-accent-soft); border-color: var(--pe-accent); }
+.more:focus-visible { outline: 2px solid var(--pe-accent); outline-offset: 1px; }
+
+.legend {
+    display: flex;
+    align-items: center;
+    gap: 1.125rem;
+    flex-wrap: wrap;
+    margin: 0.625rem 0 0;
+    padding: 0.625rem 0.75rem;
+    list-style: none;
+    background: var(--pe-surface-sunken);
+    border: 1px solid var(--pe-line);
+    border-radius: var(--pe-radius-sm);
+}
+.lkey {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4375rem;
+    font-size: var(--pe-fs-xs);
+    color: var(--pe-ink-muted);
+}
+.ldot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--pe-radius-pill);
+}
+.ldot_grant { background: var(--pe-grant); }
+.ldot_deny  { background: var(--pe-deny); }
+.ldot_mute  { background: var(--pe-caution); }
+.ldot_na    { background: var(--pe-na); }
+.lnote {
+    margin-left: auto;
+    font-size: var(--pe-fs-xs);
+    color: var(--pe-ink-faint);
+}

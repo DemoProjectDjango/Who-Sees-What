@@ -13,8 +13,7 @@
                     <li key={it.key} class="row">
                         <div class="main">
                             <template lwc:if={it.linkable}>
-                                <a class="label" href={it.url}
-                                   target="_blank" rel="noopener noreferrer">{it.label}</a>
+                                <button class="label" type="button" data-url={it.url} onclick={handleOpenSetup}>{it.label}</button>
                             </template>
                             <template lwc:else>
                                 <span class="label label_dim">{it.label}</span>

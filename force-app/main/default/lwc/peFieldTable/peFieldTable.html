@@ -13,7 +13,7 @@
     <div class="table" role="table" aria-label="Field permissions">
         <div class="row row_head" role="row">
             <span role="columnheader">Field</span>
-            <span role="columnheader">Type</span>
+            <span role="columnheader">API name</span>
             <span role="columnheader">Read</span>
             <span role="columnheader">Edit</span>
             <span role="columnheader">Granted by</span>
@@ -21,8 +21,8 @@
 
         <template for:each={visibleRows} for:item="f">
             <div key={f.apiName} class="row" role="row">
-                <span class="pe-mono name" role="cell" title={f.apiName}>{f.apiName}</span>
-                <span class="type" role="cell">{f.dataType}</span>
+                <span class="name" role="cell" title={f.dataType}>{f.label}</span>
+                <span class="api pe-mono" role="cell" title={f.apiName}>{f.apiName}</span>
                 <span class={f.readClass} role="cell">{f.readText}</span>
                 <span class={f.editClass} role="cell">{f.editText}</span>
                 <span class="src" role="cell">
@@ -48,4 +48,14 @@
             <button class="more" type="button" onclick={showMore}>Show more</button>
         </template>
     </div>
+
+    <!-- Four states, named. A colour key alone would not survive being printed
+         into an audit pack, which is where these tables end up. -->
+    <ul class="legend" aria-label="What the field states mean">
+        <li class="lkey"><span class="ldot ldot_grant" aria-hidden="true"></span>Granted</li>
+        <li class="lkey"><span class="ldot ldot_deny" aria-hidden="true"></span>Not granted</li>
+        <li class="lkey"><span class="ldot ldot_mute" aria-hidden="true"></span>Removed by muting</li>
+        <li class="lkey"><span class="ldot ldot_na" aria-hidden="true"></span>FLS not applicable</li>
+        <li class="lnote pe-mono">resolved in user mode &middot; no callouts</li>
+    </ul>
 </template>

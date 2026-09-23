@@ -198,6 +198,75 @@ public with sharing class PermissionExplorerController {
     }
 
     /* ---------------------------------------------------------------
+     * License Inspector
+     * --------------------------------------------------------------- */
+
+    /**
+     * Lists every user license, permission set license, package license and
+     * usage-based entitlement in the org with total, used, and free seat
+     * counts for the License Inspector tab.
+     *
+     * Not cacheable. The tab has its own explicit Refresh action — a
+     * cacheable method can be served from Lightning's client-side storable
+     * action cache even after this class is redeployed, which would make
+     * that Refresh button lie about actually refreshing anything.
+     *
+     * @return License rows sorted by name.
+     */
+    @AuraEnabled
+    public static String getLicenses() {
+        try {
+            PEAccessGate.assertAuthorised();
+            return JSON.serialize(PELicenseInspectorService.getLicenses());
+        } catch (Exception e) {
+            throw toAura(e);
+        }
+    }
+
+    /* ---------------------------------------------------------------
+     * Org stats bar
+     * --------------------------------------------------------------- */
+
+    /**
+     * Org-wide counts for the KPI bar atop Permission Explorer. Not
+     * cacheable, same reasoning as getLicenses — cheap to compute, and a
+     * stale cached count after config changes is worse than a repeat query.
+     *
+     * @return Six independently-optional org counts.
+     */
+    @AuraEnabled
+    public static PEDto.OrgStats getOrgStats() {
+        try {
+            PEAccessGate.assertAuthorised();
+            return PEOrgStatsService.getStats();
+        } catch (Exception e) {
+            throw toAura(e);
+        }
+    }
+
+    /**
+     * Lists the users currently holding a given license, for the
+     * "view users" drill-down on the License Inspector table.
+     *
+     * @param licenseId Id of the license row selected in the table.
+     * @param licenseType Discriminator returned alongside licenseId by getLicenses.
+     * @return Users assigned that license.
+     */
+    @AuraEnabled
+    public static String getLicenseUsers(Id licenseId, String licenseType) {
+        try {
+            PEAccessGate.assertAuthorisedAndLog(
+                'VIEW_LICENSE_USERS', null, licenseType + ':' + licenseId
+            );
+            return JSON.serialize(
+                PELicenseInspectorService.getLicenseUsers(licenseId, licenseType)
+            );
+        } catch (Exception e) {
+            throw toAura(e);
+        }
+    }
+
+    /* ---------------------------------------------------------------
      * Refresh
      * --------------------------------------------------------------- */
 
@@ -226,6 +295,8 @@ public with sharing class PermissionExplorerController {
         s.name              = u.Name;
         s.username          = u.Username;
         s.email             = u.Email;
+        s.department        = u.Department;
+        s.managerName       = u.Manager != null ? u.Manager.Name : null;
         s.profileId         = u.ProfileId;
         s.profileName       = u.Profile != null ? u.Profile.Name : null;
         s.roleName          = u.UserRole != null ? u.UserRole.Name : null;

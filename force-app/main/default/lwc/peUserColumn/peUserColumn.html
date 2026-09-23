@@ -1,7 +1,6 @@
 <template>
-    <section class="column" aria-labelledby="col1-heading">
+    <section class="column" aria-label="Select a user">
         <header class="head">
-            <h2 id="col1-heading" class="pe-eyebrow">User</h2>
             <c-pe-search-input
                 placeholder="Name, username, alias or email"
                 aria-label="Search active users"
@@ -58,6 +57,7 @@
             </c-pe-listbox>
         </c-pe-state-wrapper>
 
+        <template lwc:if={showPager}>
         <c-pe-paginator
             shown={shownCount}
             page-number={pageNumber}
@@ -68,5 +68,6 @@
             onback={handleBack}
             onnext={handleNext}>
         </c-pe-paginator>
+        </template>
     </section>
 </template>

@@ -1,5 +1,5 @@
 import { LightningElement, api } from 'lwc';
-import { STATE } from 'c/peUtils';
+import { STATE, openInNewTab } from 'c/peUtils';
 
 /**
  * A list of things that live in Setup, each openable in a new tab.
@@ -25,5 +25,11 @@ export default class PeUserListModal extends LightningElement {
 
     handleRetry() {
         this.dispatchEvent(new CustomEvent('retry'));
+    }
+
+    /** A <button>, not an <a>, so Lightning's own navigation shell has
+        nothing to intercept — see peUtils/accessLabels.js. */
+    handleOpenSetup(event) {
+        openInNewTab(event.currentTarget.dataset.url);
     }
 }

@@ -1,5 +1,11 @@
 @import 'c/peBase';
 
+:host {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
 .listbox {
     margin: 0;
     padding: 0;
@@ -11,7 +17,7 @@
 
 .row {
     display: block;
-    padding: 0.3125rem var(--pe-pad);
+    padding: 0.5rem var(--pe-pad);
     border-bottom: 1px solid var(--pe-line);
     cursor: pointer;
     background: transparent;
@@ -19,7 +25,13 @@
 }
 .row:hover { background: var(--pe-surface-hover); }
 .row_active { background: var(--pe-surface-hover); }
-.row_selected { background: var(--pe-surface-select); }
+
+/* Selection is a tint plus a spine, never a border: a border reflows the row
+   by a pixel and the whole list shivers as you arrow down it. */
+.row_selected {
+    background: var(--pe-surface-select);
+    box-shadow: inset 3px 0 0 0 var(--pe-accent);
+}
 
 .line1 {
     display: flex;
@@ -39,14 +51,17 @@
     flex: 0 0 auto;
     font-size: var(--pe-fs-xs);
     font-weight: 700;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: var(--pe-caution);
-    border: 1px solid var(--pe-caution);
-    border-radius: 2px;
-    padding: 0 0.25rem;
+    color: var(--pe-caution-ink);
+    background: var(--pe-caution-bg);
+    border: 1px solid var(--pe-caution-line);
+    border-radius: var(--pe-radius-sm);
+    padding: 0.0625rem 0.3125rem;
 }
 .line2 {
+    font-family: var(--pe-mono);
+    font-size: var(--pe-fs-sm);
     color: var(--pe-ink-muted);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -56,7 +71,7 @@
     display: flex;
     align-items: center;
     gap: var(--pe-gap);
-    margin-top: 0.1875rem;
+    margin-top: 0.25rem;
     min-width: 0;
 }
 .line3:empty { display: none; }

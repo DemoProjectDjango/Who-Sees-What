@@ -1,0 +1,90 @@
+<template>
+    <section class="what" aria-labelledby="col3-heading">
+        <header class="whathead">
+            <div class="headrow">
+                <div class="ident">
+                    <span class="oicon" aria-hidden="true">&#9634;</span>
+                    <div class="objname">
+                        <h2 id="col3-heading" class="olabel">{objectLabel}</h2>
+                        <span class="ometa">API Name <span class="pe-mono">{objectApiName}</span> | Type {objectTypeLabel}</span>
+                    </div>
+                </div>
+
+                <div class="viewtools">
+                    <template for:each={views} for:item="v">
+                        <button key={v.key} class={v.class} type="button"
+                                aria-pressed={v.selectedStr} data-key={v.key}
+                                onclick={handleView}>{v.label}</button>
+                    </template>
+                    <button class="explain" type="button" disabled={explainDisabled}
+                            onclick={handleExplain}>Explain this access</button>
+                </div>
+            </div>
+
+            <template lwc:if={loaded}>
+                <div class="badges">
+                    <div class="badge">
+                        <p class="badge_label">Tab Visibility</p>
+                        <span class={tabVisibilityClass}>{tabVisibilityLabel}</span>
+                    </div>
+                    <div class="badge">
+                        <p class="badge_label">Object Access</p>
+                        <span class="bpill bpill_on">{objectAccessLabel}</span>
+                    </div>
+                    <div class="badge">
+                        <p class="badge_label">Standard Fields</p>
+                        <span class="bpill bpill_on">{standardFieldsLabel}</span>
+                    </div>
+                    <div class="badge">
+                        <p class="badge_label">Custom Fields</p>
+                        <span class="bpill bpill_on">{customFieldsLabel}</span>
+                    </div>
+                    <div class="badge">
+                        <p class="badge_label">Record Actions</p>
+                        <span class="bpill bpill_on">{recordActionsLabel}</span>
+                    </div>
+                </div>
+            </template>
+
+            <template lwc:if={hasGrants}>
+                <div class="stripwrap">
+                    <p class="stripcaption">Object Permissions (CRUD)</p>
+                    <c-pe-crud-strip grants={detail.objectPermissions}></c-pe-crud-strip>
+                </div>
+            </template>
+        </header>
+
+        <div class="whatbody">
+            <c-pe-state-wrapper
+                state={state}
+                error={error}
+                empty-headline="Nothing to show"
+                empty-detail="This object returned no field or permission data."
+                skeleton-rows="8"
+                onretry={handleRetry}>
+
+                <template lwc:if={showFields}>
+                    <c-pe-field-table fields={detail.fields}></c-pe-field-table>
+                </template>
+
+                <template lwc:if={showRecordTypes}>
+                    <c-pe-not-analysed
+                        headline="Record type access is not analysed"
+                        detail="Per-permission-set record type visibility is only available through Profile and PermissionSet metadata, which needs a callout. The list below is what exists on the object, not what this user can see."
+                        source="Profile / PermissionSet metadata — recordTypeVisibilities"></c-pe-not-analysed>
+                    <template lwc:if={hasRecordTypes}>
+                        <div class="rtable">
+                            <template for:each={recordTypeRows} for:item="rt">
+                                <div key={rt.developerName} class="rt-row">
+                                    <span class="rt-label" title={rt.label}>{rt.label}</span>
+                                    <span class="rt-api pe-mono" title={rt.developerName}>{rt.developerName}</span>
+                                    <span class={rt.stateClass}>{rt.stateText}</span>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </template>
+            </c-pe-state-wrapper>
+        </div>
+    </section>
+</template>

@@ -8,6 +8,26 @@ export default class PeUserSummaryHeader extends LightningElement {
     get roleText()     { return this.summary.roleName ?? 'No role'; }
     get licenseText()  { return this.summary.licenseName ?? '—'; }
     get lastLoginText(){ return relativeTime(this.summary.lastLogin); }
+    get emailText()     { return this.summary.email ?? null; }
+    get departmentText(){ return this.summary.department ?? null; }
+    get managerText()   { return this.summary.managerName ?? null; }
+    get hasEmail()      { return !!this.emailText; }
+    get hasDepartment() { return !!this.departmentText; }
+    get hasManager()    { return !!this.managerText; }
+
+    get initials() {
+        const name = (this.summary.name ?? '').trim();
+        if (!name) return '?';
+        const parts = name.split(/\s+/);
+        const first = parts[0]?.[0] ?? '';
+        const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
+        return (first + last).toUpperCase() || '?';
+    }
+
+    get statusLabel() { return this.summary.isFrozen ? 'Frozen' : 'Active'; }
+    get statusClass() {
+        return this.summary.isFrozen ? 'status status_frozen' : 'status status_active';
+    }
 
     get permSetCount() { return this.summary.permSetCount ?? 0; }
     get groupCount()   { return this.summary.permSetGroupCount ?? 0; }
