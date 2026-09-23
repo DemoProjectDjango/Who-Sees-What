@@ -4,6 +4,9 @@ import { relativeTime } from 'c/peUtils';
 export default class PeUserSummaryHeader extends LightningElement {
     @api summary = {};
 
+    copied = false;
+    _copyTimer;
+
     get profileText()  { return this.summary.profileName ?? '—'; }
     get roleText()     { return this.summary.roleName ?? 'No role'; }
     get licenseText()  { return this.summary.licenseName ?? '—'; }
@@ -14,6 +17,36 @@ export default class PeUserSummaryHeader extends LightningElement {
     get hasEmail()      { return !!this.emailText; }
     get hasDepartment() { return !!this.departmentText; }
     get hasManager()    { return !!this.managerText; }
+
+    get copyTitle() {
+        return this.copied ? 'Copied to clipboard!' : 'Copy email address';
+    }
+
+    async handleCopyEmail(event) {
+        event.stopPropagation();
+        if (!this.emailText) return;
+        try {
+            if (navigator?.clipboard?.writeText) {
+                await navigator.clipboard.writeText(this.emailText);
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = this.emailText;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+            }
+            this.copied = true;
+            clearTimeout(this._copyTimer);
+            this._copyTimer = setTimeout(() => {
+                this.copied = false;
+            }, 2000);
+        } catch (e) {
+            console.warn('Copy email failed', e);
+        }
+    }
 
     get initials() {
         const name = (this.summary.name ?? '').trim();

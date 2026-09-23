@@ -2,8 +2,15 @@
   <div class="explorer">
     <header class="topbar">
       <div class="brand">
-        <span class="wordmark">Who Sees What</span>
-        <span class="producttag">Access Explorer</span>
+        <div class="brand_icon_box" aria-hidden="true">
+          <svg class="brand_icon_svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+        <div class="brand_titles">
+          <h1 class="wordmark">Who Sees What</h1>
+          <span class="producttag">Access Explorer</span>
+        </div>
       </div>
 
       <div class="title">
@@ -11,9 +18,9 @@
           <template lwc:if={crumbs.length}>
             <template for:each={crumbs} for:item="c">
               <span key={c.key} class="crumb">
-                <template lwc:if={c.separator}
-                  ><span class="sep" aria-hidden="true">›</span></template
-                >
+                <template lwc:if={c.separator}>
+                  <span class="sep" aria-hidden="true">&rsaquo;</span>
+                </template>
                 {c.label}
               </span>
             </template>
@@ -24,26 +31,26 @@
         </nav>
       </div>
 
-      <!-- The two claims a compliance reviewer checks before using the tool
-                 at all. They are furniture, not a notice: they never scroll away. -->
       <div class="trust" aria-label="Tool guarantees">
         <span class="pill pill_live">
           <span class="pill_dot" aria-hidden="true"></span>Read only
         </span>
-        <span class="pill">Inspection logged</span>
+        <span class="pill">
+          <span class="pill_dot pill_dot_neutral" aria-hidden="true"></span>Inspection logged
+        </span>
       </div>
 
       <div class="actions">
         <template lwc:if={selectedUserId}>
           <button
-            class="btn btn_primary"
+            class="slds-button slds-button_brand btn btn_primary"
             type="button"
             onclick={handleCopyLink}
           >
             {copyLabel}
           </button>
         </template>
-        <button class="btn" type="button" onclick={handleRefresh}>
+        <button class="slds-button slds-button_neutral btn" type="button" onclick={handleRefresh}>
           Refresh data
         </button>
       </div>
@@ -52,72 +59,118 @@
     <c-pe-org-stats-bar stats={orgStats}></c-pe-org-stats-bar>
 
     <div class="layout">
-      <!-- Persistent 20% navigation rail. WHO, WHERE and OBJECT/TAB stay
-                 visible so the user never loses the path they are inspecting. -->
+      <!-- 28% navigation rail with ample room for dropdowns, search, filters & lists -->
       <aside class="navigator" aria-label="Access path">
-        <section class="nav_section nav_section_who">
-          <header class="nav_section_head">
-            <span class="nav_step" aria-hidden="true">1</span>
-            <span class="nav_heading">
+        <!-- Stage 1: Who -->
+        <section class={whoSectionClass}>
+          <header class={whoHeadClass} onclick={handleStageToggle} onkeydown={handleStageKeyDown} data-stage="who" role="button" aria-expanded={whoOpenStr} tabindex="0" title={whoToggleTitle}>
+            <span class={whoBadgeClass} aria-hidden="true">
+              <template lwc:if={isWhoDone}>
+                <svg viewBox="0 0 24 24" class="check_icon" fill="none" stroke="currentColor" stroke-width="3">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </template>
+              <template lwc:else>1</template>
+            </span>
+            <div class="nav_heading">
               <span class="nav_title">Who</span>
-              <span class="nav_summary">{whoSummary}</span>
-            </span>
+              <span class="nav_summary" title={whoSummary}>{whoSummary}</span>
+            </div>
+            <div class="stage_dropdown_btn" title={whoToggleTitle} aria-label={whoToggleTitle}>
+              <svg class={whoChevronClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
           </header>
-          <div class="nav_section_body">
-            <c-pe-user-column
-              selected-user-id={selectedUserId}
-              onuserselect={handleUserSelect}
-            ></c-pe-user-column>
-          </div>
+          <template lwc:if={whoOpen}>
+            <div class="nav_section_body">
+              <c-pe-user-column
+                selected-user-id={selectedUserId}
+                onuserselect={handleUserSelect}
+              ></c-pe-user-column>
+            </div>
+          </template>
         </section>
 
+        <!-- Stage 2: Where -->
         <section class={whereSectionClass}>
-          <header class="nav_section_head">
-            <span class="nav_step" aria-hidden="true">2</span>
-            <span class="nav_heading">
-              <span class="nav_title">Where</span>
-              <span class="nav_summary">{appSummary}</span>
+          <header class={whereHeadClass} onclick={handleStageToggle} onkeydown={handleStageKeyDown} data-stage="app" role="button" aria-expanded={appOpenStr} tabindex="0" title={appToggleTitle}>
+            <span class={appBadgeClass} aria-hidden="true">
+              <template lwc:if={isAppDone}>
+                <svg viewBox="0 0 24 24" class="check_icon" fill="none" stroke="currentColor" stroke-width="3">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </template>
+              <template lwc:else>2</template>
             </span>
-            <template lwc:if={showEstimateMark}>
-              <span class="nav_mark" title={appEstimateNote}>Estimated</span>
-            </template>
+            <div class="nav_heading">
+              <div class="nav_title_row">
+                <span class="nav_title">Where</span>
+                <template lwc:if={showEstimateMark}>
+                  <span class="nav_mark" title={appEstimateNote}>Estimated</span>
+                </template>
+              </div>
+              <span class="nav_summary" title={appSummary}>{appSummary}</span>
+            </div>
+            <div class="stage_dropdown_btn" title={appToggleTitle} aria-label={appToggleTitle}>
+              <svg class={appChevronClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
           </header>
-          <div class="nav_section_body nav_section_body_compact">
-            <c-pe-app-column
-              app-list={appList}
-              selected-app-id={selectedAppId}
-              state={appState}
-              error={appError}
-              stale-since={resolvedAt}
-              onappselect={handleAppSelect}
-              onretry={handleAppRetry}
-            ></c-pe-app-column>
-          </div>
+          <template lwc:if={appOpen}>
+            <div class="nav_section_body nav_section_body_compact">
+              <c-pe-app-column
+                app-list={appList}
+                selected-app-id={selectedAppId}
+                state={appState}
+                error={appError}
+                stale-since={resolvedAt}
+                onappselect={handleAppSelect}
+                onretry={handleAppRetry}
+              ></c-pe-app-column>
+            </div>
+          </template>
         </section>
 
+        <!-- Stage 3: Object / Tab -->
         <section class={objectSectionClass}>
-          <header class="nav_section_head">
-            <span class="nav_step" aria-hidden="true">3</span>
-            <span class="nav_heading">
-              <span class="nav_title">Object / Tab</span>
-              <span class="nav_summary">{objectSummary}</span>
+          <header class={objectHeadClass} onclick={handleStageToggle} onkeydown={handleStageKeyDown} data-stage="objects" role="button" aria-expanded={objectsOpenStr} tabindex="0" title={objectToggleTitle}>
+            <span class={objectBadgeClass} aria-hidden="true">
+              <template lwc:if={isObjectDone}>
+                <svg viewBox="0 0 24 24" class="check_icon" fill="none" stroke="currentColor" stroke-width="3">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </template>
+              <template lwc:else>3</template>
             </span>
+            <div class="nav_heading">
+              <span class="nav_title">Object / Tab</span>
+              <span class="nav_summary" title={objectSummary}>{objectSummary}</span>
+            </div>
+            <div class="stage_dropdown_btn" title={objectToggleTitle} aria-label={objectToggleTitle}>
+              <svg class={objectChevronClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
           </header>
-          <div class="nav_section_body">
-            <c-pe-object-list
-              app-label={selectedAppLabel}
-              rows={objectRows}
-              state={railState}
-              error={railError}
-              selected-api-name={selectedObjectApiName}
-              onobjectselect={handleObjectSelect}
-              onretry={handleRailRetry}
-            ></c-pe-object-list>
-          </div>
+          <template lwc:if={objectsOpen}>
+            <div class="nav_section_body">
+              <c-pe-object-list
+                app-label={selectedAppLabel}
+                rows={objectRows}
+                state={railState}
+                error={railError}
+                selected-api-name={selectedObjectApiName}
+                onobjectselect={handleObjectSelect}
+                onretry={handleRailRetry}
+              ></c-pe-object-list>
+            </div>
+          </template>
         </section>
       </aside>
 
-      <!-- The remaining ~80% is the real inspection workspace. -->
+      <!-- Inspection workspace -->
       <main class={workspaceClass}>
         <section class="workspace_main">
           <template lwc:if={selectedObjectApiName}>
@@ -134,14 +187,31 @@
           </template>
           <template lwc:else>
             <div class="placeholder">
-              <div class="placeholder_icon" aria-hidden="true">→</div>
-              <p class="phead">{placeholderHeading}</p>
+              <div class="placeholder_icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.75">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h2 class="phead">{placeholderHeading}</h2>
               <p class="pbody">{placeholderText}</p>
-              <ol class="placeholder_steps" aria-label="Inspection steps">
-                <li class={whoProgressClass}>Select a user</li>
-                <li class={appProgressClass}>Select an app</li>
-                <li class={objectProgressClass}>Select an object or tab</li>
-              </ol>
+              
+              <div class="checklist_card">
+                <p class="checklist_title">Access Inspection Steps</p>
+                <ol class="placeholder_steps" aria-label="Inspection steps">
+                  <li class={whoProgressClass}>
+                    <span class="step_badge">1</span>
+                    <span class="step_text">Select a user</span>
+                  </li>
+                  <li class={appProgressClass}>
+                    <span class="step_badge">2</span>
+                    <span class="step_text">Select an app</span>
+                  </li>
+                  <li class={objectProgressClass}>
+                    <span class="step_badge">3</span>
+                    <span class="step_text">Select an object or tab</span>
+                  </li>
+                </ol>
+              </div>
             </div>
           </template>
         </section>
@@ -167,12 +237,7 @@
       </main>
     </div>
 
-    <!-- One discriminator, not four booleans: two modals open at once is a
-             state this component should not be able to represent.
-
-             The trace is a modal rather than a fourth column: it is the artefact
-             someone pastes into a ticket, and it has to be readable on its own
-             terms. Everything else is now inline. -->
+    <!-- Modals -->
     <template lwc:if={isTraceModal}>
       <c-pe-modal
         user-name={userSummary.name}

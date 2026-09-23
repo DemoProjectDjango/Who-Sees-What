@@ -1,41 +1,72 @@
 <template>
     <section class="column" aria-label="Select a user">
         <header class="head">
-            <c-pe-search-input
-                placeholder="Name, username, alias or email"
-                aria-label="Search active users"
-                onsearch={handleSearch}></c-pe-search-input>
+            <div class="search-box">
+                <c-pe-search-input
+                    placeholder="Search name, username, alias or email..."
+                    aria-label="Search active users"
+                    onsearch={handleSearch}></c-pe-search-input>
+            </div>
 
-            <div class="controls">
-                <select class="select" aria-label="Sort users" onchange={handleSort}>
-                    <option value="LastLoginDate">Recently active</option>
-                    <option value="Name">Name</option>
-                </select>
-                <button class="filter-btn" type="button" aria-expanded={filtersOpenStr}
-                        onclick={toggleFilters}>
-                    Filters<template lwc:if={activeFilterCount}> ({activeFilterCount})</template>
-                </button>
+            <div class="controls-bar">
+                <div class="sort-control">
+                    <span class="control-label" id="sort-label">Sort:</span>
+                    <select class="select sort-select" aria-labelledby="sort-label" onchange={handleSort}>
+                        <option value="LastLoginDate">Recently active</option>
+                        <option value="Name">Name</option>
+                    </select>
+                </div>
+
+                <div class="filter-actions">
+                    <button class={filterBtnClass} type="button" aria-expanded={filtersOpenStr}
+                            onclick={toggleFilters} title="Toggle user filters">
+                        <svg class="filter-icon" viewBox="0 0 52 52" aria-hidden="true">
+                            <path fill="currentColor" d="M48.2 4H3.8C1.7 4 0.6 6.3 1.9 7.8L20 28.5V47c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V28.5L50.1 7.8c1.3-1.5.2-3.8-1.9-3.8z"/>
+                        </svg>
+                        <span>Filters</span>
+                        <template lwc:if={activeFilterCount}>
+                            <span class="filter-badge">{activeFilterCount}</span>
+                        </template>
+                    </button>
+
+                    <template lwc:if={hasActiveFilters}>
+                        <button class="clear-btn" type="button" onclick={handleClearFilters} title="Clear applied filters">
+                            Clear
+                        </button>
+                    </template>
+                </div>
             </div>
 
             <template lwc:if={filtersOpen}>
-                <div class="filters">
-                    <label class="flabel">Profile
-                        <select class="select" data-key="profileId" onchange={handleFilter}>
-                            <option value="">Any profile</option>
+                <div class="filters-drawer">
+                    <div class="filter-item">
+                        <label class="flabel" for="profile-select">Profile</label>
+                        <select id="profile-select" class="select drawer-select" data-key="profileId" onchange={handleFilter}>
+                            <option value="">All Profiles</option>
                             <template for:each={profileOptions} for:item="o">
                                 <option key={o.value} value={o.value}>{o.label}</option>
                             </template>
                         </select>
-                    </label>
-                    <label class="flabel">Role
-                        <select class="select" data-key="roleId" onchange={handleFilter}>
-                            <option value="">Any role</option>
+                    </div>
+
+                    <div class="filter-item">
+                        <label class="flabel" for="role-select">Role</label>
+                        <select id="role-select" class="select drawer-select" data-key="roleId" onchange={handleFilter}>
+                            <option value="">All Roles</option>
                             <template for:each={roleOptions} for:item="o">
                                 <option key={o.value} value={o.value}>{o.label}</option>
                             </template>
                         </select>
-                    </label>
-                    <p class="note">Only active users can be inspected.</p>
+                    </div>
+
+                    <div class="drawer-footer">
+                        <p class="note">Only active users can be inspected.</p>
+                        <template lwc:if={hasActiveFilters}>
+                            <button class="reset-link" type="button" onclick={handleClearFilters}>
+                                Reset filters
+                            </button>
+                        </template>
+                    </div>
                 </div>
             </template>
         </header>
@@ -58,16 +89,16 @@
         </c-pe-state-wrapper>
 
         <template lwc:if={showPager}>
-        <c-pe-paginator
-            shown={shownCount}
-            page-number={pageNumber}
-            has-more={hasMore}
-            can-go-back={canGoBack}
-            loading={isLoading}
-            cap-reached={capReached}
-            onback={handleBack}
-            onnext={handleNext}>
-        </c-pe-paginator>
+            <c-pe-paginator
+                shown={shownCount}
+                page-number={pageNumber}
+                has-more={hasMore}
+                can-go-back={canGoBack}
+                loading={isLoading}
+                cap-reached={capReached}
+                onback={handleBack}
+                onnext={handleNext}>
+            </c-pe-paginator>
         </template>
     </section>
 </template>

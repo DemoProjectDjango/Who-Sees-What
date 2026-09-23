@@ -14,33 +14,43 @@
                 data-id={row.id}
                 onclick={handleClick}>
 
-                <div class="line1">
-                    <span class="primary">{row.label}</span>
-                    <template lwc:if={row.badge}>
-                        <span class="badge">{row.badge}</span>
-                    </template>
-                </div>
+                <div class="row_flex">
+                    <div class="row_avatar" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" class="avatar_svg" fill="currentColor">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                    </div>
 
-                <template lwc:if={row.secondary}>
-                    <div class="line2 pe-mono">{row.secondary}</div>
-                </template>
+                    <div class="row_main">
+                        <div class="line1">
+                            <span class="primary">{row.label}</span>
+                            <template lwc:if={row.badge}>
+                                <span class="badge">{row.badge}</span>
+                            </template>
+                        </div>
 
-                <div class="line3">
-                    <template lwc:if={row.showCrud}>
-                        <c-pe-crud-chips
-                            can-read={row.canRead}
-                            can-create={row.canCreate}
-                            can-edit={row.canEdit}
-                            can-delete={row.canDelete}
-                            view-all={row.viewAll}
-                            modify-all={row.modifyAll}></c-pe-crud-chips>
-                    </template>
-                    <template lwc:if={row.sources}>
-                        <c-pe-source-chip sources={row.sources}></c-pe-source-chip>
-                    </template>
-                    <template lwc:if={row.meta}>
-                        <span class="meta">{row.meta}</span>
-                    </template>
+                        <template lwc:if={row.secondary}>
+                            <div class="line2 pe-mono" title={row.secondary}>{row.secondary}</div>
+                        </template>
+
+                        <div class="line3">
+                            <template lwc:if={row.showCrud}>
+                                <c-pe-crud-chips
+                                    can-read={row.canRead}
+                                    can-create={row.canCreate}
+                                    can-edit={row.canEdit}
+                                    can-delete={row.canDelete}
+                                    view-all={row.viewAll}
+                                    modify-all={row.modifyAll}></c-pe-crud-chips>
+                            </template>
+                            <template lwc:if={row.sources}>
+                                <c-pe-source-chip sources={row.sources}></c-pe-source-chip>
+                            </template>
+                            <template lwc:if={row.meta}>
+                                <span class="meta">{row.meta}</span>
+                            </template>
+                        </div>
+                    </div>
                 </div>
             </li>
         </template>

@@ -17,10 +17,9 @@ import {
 
 /* Floor for the pinned viewport height, and the breathing room left under the
    component so its bottom border is not flush against the window edge. */
-const MIN_EXPLORER_H = 544;
+const MIN_EXPLORER_H = 620;
 
-/* The three left-rail stages. One is open at a time; the others collapse to a
-   summary row carrying their selection. */
+/* The three left-rail stages. */
 const STAGE = { WHO: "who", APP: "app", OBJECTS: "objects" };
 const VIEWPORT_GUTTER = 12;
 
@@ -83,9 +82,10 @@ export default class PermissionExplorer extends LightningElement {
   activeModal = MODAL.NONE;
   resolvedAt;
 
-  /* Which left-rail stage is expanded. Advanced automatically as selections
-       are made, but the user can reopen any completed stage by hand. */
-  openStage = STAGE.WHO;
+  /* Left-rail stages open/closed states. Users can toggle each section independently. */
+  _whoOpen = true;
+  _appOpen = false;
+  _objectsOpen = false;
 
   /* The access trace. Fed from the row that opened it rather than refetched:
        the detail is already in hand, and a second GET_OBJECT_DETAIL would write
@@ -185,9 +185,10 @@ export default class PermissionExplorer extends LightningElement {
     const row = this.objectRows.find((r) => r.apiName === state.objectId);
     if (!row) return;
 
-    await this.loadObjectDetail(row.apiName, row.label);
     // Someone following a pasted link wants the answer, not the wizard.
-    this.openStage = STAGE.OBJECTS;
+    this._whoOpen = false;
+    this._appOpen = false;
+    this._objectsOpen = true;
     if (state.tab === "trace") this.handleExplain();
   }
 
@@ -258,18 +259,81 @@ export default class PermissionExplorer extends LightningElement {
     return this.selectedObjectRow?.tabVisibility;
   }
 
-  /* The navigator is persistent now. These classes communicate progress
-       without hiding any stage. */
+  get whoSectionClass() {
+    return [
+      "nav_section",
+      "nav_section_who",
+      this.whoOpen ? "nav_section_open" : "nav_section_shut",
+      this.selectedUserId ? "nav_section_done" : ""
+    ].filter(Boolean).join(" ");
+  }
+
   get whereSectionClass() {
-    return this.selectedUserId
-      ? "nav_section nav_section_where nav_section_ready"
-      : "nav_section nav_section_where nav_section_waiting";
+    return [
+      "nav_section",
+      "nav_section_where",
+      this.appStageDisabled
+        ? "nav_section_waiting"
+        : (this.appOpen ? "nav_section_open" : "nav_section_shut"),
+      this.selectedAppId ? "nav_section_done" : ""
+    ].filter(Boolean).join(" ");
   }
 
   get objectSectionClass() {
-    return this.selectedAppId
-      ? "nav_section nav_section_objects nav_section_ready"
-      : "nav_section nav_section_objects nav_section_waiting";
+    return [
+      "nav_section",
+      "nav_section_objects",
+      this.objectStageDisabled
+        ? "nav_section_waiting"
+        : (this.objectsOpen ? "nav_section_open" : "nav_section_shut"),
+      this.selectedObjectApiName ? "nav_section_done" : ""
+    ].filter(Boolean).join(" ");
+  }
+
+  get isWhoDone() {
+    return Boolean(this.selectedUserId && !this.whoOpen);
+  }
+
+  get isAppDone() {
+    return Boolean(this.selectedAppId && !this.appOpen);
+  }
+
+  get isObjectDone() {
+    return Boolean(this.selectedObjectApiName && !this.objectsOpen);
+  }
+
+  get whoBadgeClass() {
+    return this.isWhoDone
+      ? "nav_step nav_step_done"
+      : (this.whoOpen ? "nav_step nav_step_active" : "nav_step");
+  }
+
+  get appBadgeClass() {
+    return this.isAppDone
+      ? "nav_step nav_step_done"
+      : (this.appOpen
+          ? "nav_step nav_step_active"
+          : (this.appStageDisabled ? "nav_step nav_step_disabled" : "nav_step"));
+  }
+
+  get objectBadgeClass() {
+    return this.isObjectDone
+      ? "nav_step nav_step_done"
+      : (this.objectsOpen
+          ? "nav_step nav_step_active"
+          : (this.objectStageDisabled ? "nav_step nav_step_disabled" : "nav_step"));
+  }
+
+  get whoActionLabel() {
+    return this.whoOpen ? (this.selectedUserId ? "Done" : "") : "Change";
+  }
+
+  get appActionLabel() {
+    return this.appOpen ? (this.selectedAppId ? "Done" : "") : "Change";
+  }
+
+  get objectActionLabel() {
+    return this.objectsOpen ? (this.selectedObjectApiName ? "Done" : "") : "Change";
   }
 
   get hasWorkspaceContext() {
@@ -309,23 +373,61 @@ export default class PermissionExplorer extends LightningElement {
   /* ----------------------- left-rail stage state ----------------------- */
 
   get whoOpen() {
-    return this.openStage === STAGE.WHO;
+    return this._whoOpen;
   }
   get appOpen() {
-    return this.openStage === STAGE.APP;
+    return this._appOpen;
   }
   get objectsOpen() {
-    return this.openStage === STAGE.OBJECTS;
+    return this._objectsOpen;
   }
 
   get whoOpenStr() {
-    return String(this.whoOpen);
+    return String(this._whoOpen);
   }
   get appOpenStr() {
-    return String(this.appOpen);
+    return String(this._appOpen);
   }
   get objectsOpenStr() {
-    return String(this.objectsOpen);
+    return String(this._objectsOpen);
+  }
+
+  get whoChevronClass() {
+    return this._whoOpen ? "stage_chevron stage_chevron_open" : "stage_chevron";
+  }
+  get appChevronClass() {
+    return this._appOpen ? "stage_chevron stage_chevron_open" : "stage_chevron";
+  }
+  get objectChevronClass() {
+    return this._objectsOpen ? "stage_chevron stage_chevron_open" : "stage_chevron";
+  }
+
+  get whoToggleTitle() {
+    return this._whoOpen ? "Click to collapse Who" : "Click to expand Who";
+  }
+  get appToggleTitle() {
+    if (this.appStageDisabled) return "Select a user first to unlock";
+    return this._appOpen ? "Click to collapse Where" : "Click to expand Where";
+  }
+  get objectToggleTitle() {
+    if (this.objectStageDisabled) return "Select an application first to unlock";
+    return this._objectsOpen ? "Click to collapse Object / Tab" : "Click to expand Object / Tab";
+  }
+
+  get whoHeadClass() {
+    return "nav_section_head clickable_head";
+  }
+  get whereHeadClass() {
+    return [
+      "nav_section_head",
+      this.appStageDisabled ? "head_disabled" : "clickable_head"
+    ].join(" ");
+  }
+  get objectHeadClass() {
+    return [
+      "nav_section_head",
+      this.objectStageDisabled ? "head_disabled" : "clickable_head"
+    ].join(" ");
   }
 
   stageClass(isOpen, isDisabled) {
@@ -522,14 +624,15 @@ export default class PermissionExplorer extends LightningElement {
       this.appState = this.appList.apps.length
         ? STATE.LOADED
         : STATE.LOADED_EMPTY;
-      this.openStage = STAGE.APP;
+      this._whoOpen = false;
+      this._appOpen = true;
     } catch (e) {
       this.appError = parseError(e);
       this.appState = STATE.ERROR;
       this.userSummary = undefined;
       // A failed resolve leaves nothing to choose an app from, so the
       // rail stays where the user can act: on the user list.
-      this.openStage = STAGE.WHO;
+      this._whoOpen = true;
     }
     this.syncUrl();
   }
@@ -570,11 +673,12 @@ export default class PermissionExplorer extends LightningElement {
       this.railState = this.objectRows.length
         ? STATE.LOADED
         : STATE.LOADED_EMPTY;
-      this.openStage = STAGE.OBJECTS;
+      this._appOpen = false;
+      this._objectsOpen = true;
     } catch (e) {
       this.railError = parseError(e);
       this.railState = STATE.ERROR;
-      this.openStage = STAGE.OBJECTS;
+      this._objectsOpen = true;
     }
     this.syncUrl();
   }
@@ -705,11 +809,28 @@ export default class PermissionExplorer extends LightningElement {
        Only an actual change of selection cascades — see loadUser /
        loadAppObjects. */
   handleStageToggle(event) {
-    const stage = event.currentTarget.dataset.stage;
-    if (!stage || stage === this.openStage) return;
+    if (event && event.stopPropagation) {
+      event.stopPropagation();
+    }
+    const stage = event.currentTarget?.dataset?.stage || event.target?.dataset?.stage;
+    if (!stage) return;
     if (stage === STAGE.APP && this.appStageDisabled) return;
     if (stage === STAGE.OBJECTS && this.objectStageDisabled) return;
-    this.openStage = stage;
+
+    if (stage === STAGE.WHO) {
+      this._whoOpen = !this._whoOpen;
+    } else if (stage === STAGE.APP) {
+      this._appOpen = !this._appOpen;
+    } else if (stage === STAGE.OBJECTS) {
+      this._objectsOpen = !this._objectsOpen;
+    }
+  }
+
+  handleStageKeyDown(event) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      this.handleStageToggle(event);
+    }
   }
 
   handleUserSelect(event) {

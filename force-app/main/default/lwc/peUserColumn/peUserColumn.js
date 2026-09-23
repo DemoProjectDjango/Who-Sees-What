@@ -59,6 +59,14 @@ export default class PeUserColumn extends LightningElement {
             .filter(Boolean).length;
     }
 
+    get hasActiveFilters() {
+        return this.activeFilterCount > 0;
+    }
+
+    get filterBtnClass() {
+        return `filter-btn ${this.filtersOpen ? 'filter-btn_active' : ''} ${this.hasActiveFilters ? 'filter-btn_applied' : ''}`.trim();
+    }
+
     get emptyHeadline() {
         return this.filters.term ? 'No active users match that search' : 'No active users to show';
     }
@@ -133,6 +141,10 @@ export default class PeUserColumn extends LightningElement {
 
     toggleFilters() {
         this.filtersOpen = !this.filtersOpen;
+    }
+
+    handleClearFilters() {
+        this.applyFilterChange({ profileId: null, roleId: null, userType: null });
     }
 
     handleNext() {
