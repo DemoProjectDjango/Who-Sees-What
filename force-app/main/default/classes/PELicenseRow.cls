@@ -4,27 +4,34 @@
  * contract does not change.
  */
 public class PELicenseRow {
-    /** The license Id in Salesforce. */
+    /** Identifier of the license record. */
     @AuraEnabled public Id licenseId { get; set; }
-    /** The category of license, such as user, permission set, package, or usage-based. */
+
+    /** License category discriminator used by inspector workflows. */
     @AuraEnabled public String licenseType { get; set; }
-    /** Display name of the license. */
+
+    /** Display name for the license. */
     @AuraEnabled public String name { get; set; }
-    /** Health/status label rendered in the inventory row. */
+
+    /** Current license status, when available. */
     @AuraEnabled public String status { get; set; }
-    /** Total seat count for the license. */
+
+    /** Allocated capacity, or the allowed amount for a usage entitlement. */
     @AuraEnabled public Integer total { get; set; }
-    /** Seats currently in use for the license. */
+
+    /** Consumed capacity, or current usage for an entitlement. */
     @AuraEnabled public Integer used { get; set; }
-    /** Seats still available for the license. */
+
+    /** Remaining capacity, or null when the license is unlimited. */
     @AuraEnabled public Integer free { get; set; }
-    /** Whether the license has no seat limit. */
-    // Serialised LWC contract: the Boolean auto-property's setter trips this
-    // rule, but the field name and shape are fixed by the wire response.
+
+    /** Whether the license has no finite capacity limit. */
     @SuppressWarnings('PMD.AvoidBooleanMethodParameters')
     @AuraEnabled public Boolean isUnlimited { get; set; }
-    /** License expiration date, when one applies. */
+
+    /** Expiration timestamp, when available. */
     @AuraEnabled public Datetime expirationDate { get; set; }
-    /** Billing or reporting frequency label for the license. */
+
+    /** Reporting frequency for a usage entitlement. */
     @AuraEnabled public String frequency { get; set; }
 }

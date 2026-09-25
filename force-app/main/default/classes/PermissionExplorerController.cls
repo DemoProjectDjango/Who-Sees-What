@@ -7,8 +7,6 @@
  * gated by PEAccessGate and recorded by PEInspectionAuditLogger. That combination
  * is the security model, and it is documented as such for review.
  */
-// Total complexity is a facade sum: ten thin @AuraEnabled delegates, each with
-// a try/catch, is the class's contract. Splitting it would scatter the gate.
 @SuppressWarnings('PMD.CognitiveComplexity,PMD.CyclomaticComplexity')
 public with sharing class PermissionExplorerController {
 
@@ -45,10 +43,8 @@ public with sharing class PermissionExplorerController {
      * @param pageSize Requested number of rows for the user column.
      * @return Paged active-user search results for choosing a permission inspection subject.
      */
-    // Seven positional args are the @AuraEnabled wire contract the LWC already
-    // calls; wrapping them would change the client contract for no safety gain.
-    @SuppressWarnings('PMD.ExcessiveParameterList')
     @AuraEnabled
+    @SuppressWarnings('PMD.ExcessiveParameterList')
     public static PEDto.PagedResult searchUsers(
         String term, Id profileId, Id roleId, String userType,
         String sortField, String cursor, Integer pageSize
@@ -81,10 +77,8 @@ public with sharing class PermissionExplorerController {
      * @param forceRefresh True when the admin clicked refresh and wants resolver caches rebuilt.
      * @return User header and app visibility payload for the selected user.
      */
-    // forceRefresh is the existing refresh-contract flag: true rebuilds the
-    // resolver cache, false reads it. An enum would change the LWC call.
-    @SuppressWarnings('PMD.AvoidBooleanMethodParameters')
     @AuraEnabled
+    @SuppressWarnings('PMD.AvoidBooleanMethodParameters')
     public static PEDto.UserContext resolveUser(Id userId, Boolean forceRefresh) {
         try {
             PEAccessGate.assertAuthorisedAndLog('RESOLVE_USER', userId, null);

@@ -4,17 +4,19 @@
  * contract does not change.
  */
 public class PELicenseUserRow {
-    /** The assigned user's Salesforce Id. */
+    /** Identifier of the assigned user. */
     @AuraEnabled public Id userId { get; set; }
+
     /** Display name of the assigned user. */
     @AuraEnabled public String name { get; set; }
-    /** Username of the assigned user. */
+
+    /** Login username of the assigned user. */
     @AuraEnabled public String username { get; set; }
-    /** Profile name of the assigned user. */
+
+    /** Profile name of the assigned user, when available. */
     @AuraEnabled public String profileName { get; set; }
+
     /** Whether the assigned user is active. */
-    // Serialised LWC contract: the Boolean auto-property's setter trips this
-    // rule, but the field name and shape are fixed by the wire response.
     @SuppressWarnings('PMD.AvoidBooleanMethodParameters')
     @AuraEnabled public Boolean isActive { get; set; }
 }

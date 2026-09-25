@@ -4,10 +4,7 @@
             <header class="license-header">
                 <div class="brand-header-left">
                     <div class="brand-icon-box" aria-hidden="true">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-                        </svg>
+                        <img src={projectLogo} alt="Who Sees What Logo" class="brand-logo-img" />
                     </div>
 
                     <div>
@@ -239,8 +236,9 @@
 
                                                 <template lwc:if={r.showProgress}>
                                                     <div class="bar-track" aria-label={r.progressAriaLabel}>
-                                                        <!-- code-analyzer-suppress(pmd:AvoidInlineStyles) Bar width is the per-row usage percentage bound from data; static CSS cannot render it. -->
+                                                        <!-- code-analyzer-suppress(pmd:AvoidInlineStyles) -->
                                                         <span class={r.barClass} style={r.barStyle}></span>
+                                                        <!-- code-analyzer-unsuppress(pmd:AvoidInlineStyles) -->
                                                     </div>
                                                 </template>
 

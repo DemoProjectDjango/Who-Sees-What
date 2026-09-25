@@ -130,13 +130,13 @@
 }
 
 .line2 {
-    font-family: var(--pe-mono);
-    font-size: var(--pe-fs-xs);
-    color: var(--pe-ink-muted);
+    font-family: var(--pe-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+    font-size: var(--pe-fs-sm, 0.8125rem);
+    color: var(--pe-ink-muted, #444444);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    margin-top: 0.0625rem;
+    margin-top: 0.125rem;
 }
 
 .line3 {

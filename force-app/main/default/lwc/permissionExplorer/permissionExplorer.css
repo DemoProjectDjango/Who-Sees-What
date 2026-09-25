@@ -49,15 +49,17 @@
   width: 2.25rem;
   height: 2.25rem;
   border-radius: var(--pe-radius);
-  background: var(--pe-accent);
-  color: #ffffff;
-  box-shadow: 0 1px 3px rgba(1, 118, 211, 0.3);
+  background: transparent;
   flex: 0 0 auto;
+  overflow: hidden;
 }
 
-.brand_icon_svg {
-  width: 1.35rem;
-  height: 1.35rem;
+.brand_logo_img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
 }
 
 .brand_titles {

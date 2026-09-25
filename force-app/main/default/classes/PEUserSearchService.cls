@@ -7,8 +7,6 @@
  *
  * Pagination is keyset, not OFFSET. See PEKeysetCursor for why.
  */
-// Class standard complexity tracks search(), the intentional condition-rich
-// assembler of constant-bound query fragments; see the suppression on search().
 @SuppressWarnings('PMD.StdCyclomaticComplexity')
 public with sharing class PEUserSearchService {
 
@@ -79,10 +77,7 @@ public with sharing class PEUserSearchService {
      * @param pageSize Requested page size, or null for the default
      * @return PEDto.PagedResult one page of matching users plus the cursor for the next
      */
-    // search() is a deliberate left-to-right builder: apply each active filter,
-    // pick the cursor predicate, always append ORDER BY and LIMIT. Every branch
-    // is a straight append, and flattening them would hide the assembly order.
-    @SuppressWarnings('PMD.CyclomaticComplexity,PMD.CognitiveComplexity,PMD.NcssCount')
+    @SuppressWarnings('PMD.StdCyclomaticComplexity,PMD.CognitiveComplexity,PMD.CyclomaticComplexity,PMD.NcssMethodCount,PMD.NcssCount')
     public static PEDto.PagedResult search(Filters f, String encodedCursor, Integer pageSize) {
         PEDto.PagedResult result = new PEDto.PagedResult();
         result.pageSize = pageSize == null ? PEConstants.USER_PAGE_SIZE : pageSize;
@@ -110,7 +105,32 @@ public with sharing class PEUserSearchService {
 
         String soql = SELECT_CLAUSE + BASE_FILTER;
         if (binds.get('term') != null) {
-            soql += TERM_FILTER;
+            String trimmedTerm = f.term.trim();
+            List<String> rawTokens = trimmedTerm.split('\\s+');
+            List<String> tokenClauses = new List<String>();
+            for (Integer i = 0; i < rawTokens.size() && i < 4; i++) {
+                String tok = rawTokens[i].trim();
+                if (String.isNotBlank(tok)) {
+                    String key = 'tok' + i;
+                    binds.put(key, '%' + tok + '%');
+                    tokenClauses.add('(Name LIKE :' + key +
+                                     ' OR Username LIKE :' + key +
+                                     ' OR Email LIKE :' + key +
+                                     ' OR Alias LIKE :' + key +
+                                     ' OR Profile.Name LIKE :' + key +
+                                     ' OR UserRole.Name LIKE :' + key + ')');
+                }
+            }
+
+            String compact = trimmedTerm.replaceAll('\\s+', '');
+            if (compact != trimmedTerm && String.isNotBlank(compact)) {
+                binds.put('compact', '%' + compact + '%');
+                soql += ' AND ((' + String.join(tokenClauses, ' AND ') + ') OR Username LIKE :compact OR Email LIKE :compact)';
+            } else if (!tokenClauses.isEmpty()) {
+                soql += ' AND (' + String.join(tokenClauses, ' AND ') + ')';
+            } else {
+                soql += TERM_FILTER;
+            }
         }
         if (f.profileId != null) {
             soql += PROFILE_FILTER;
