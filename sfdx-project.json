@@ -4,8 +4,8 @@
       "path": "force-app",
       "default": true,
       "package": "Who Sees What",
-      "versionName": "Beta 4",
-      "versionNumber": "0.4.0.NEXT",
+      "versionName": "Beta 5",
+      "versionNumber": "0.5.0.NEXT",
       "ancestorVersion": "HIGHEST",
       "versionDescription": "Who Sees What - User Access, Field Security & Record Visibility Explorer. Inspect what a user can see and do across apps, objects, and fields, and what granted it."
     }
@@ -24,6 +24,7 @@
     "Who Sees What@0.2.0-5": "04tOW00000GrRYkYAN",
     "Who Sees What@0.2.0-6": "04tOW00000GqxSfYAJ",
     "Who Sees What@0.3.0-1": "04tOW00000Gs9l8YAB",
-    "Who Sees What@0.4.0-1": "04tOW00000JV2sKYAT"
+    "Who Sees What@0.4.0-1": "04tOW00000JV2sKYAT",
+    "Who Sees What@0.5.0-1": "04tOW00000JbggTYAR"
   }
 }
