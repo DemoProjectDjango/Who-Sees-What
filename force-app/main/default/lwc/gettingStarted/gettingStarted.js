@@ -201,6 +201,7 @@ export default class GettingStarted extends NavigationMixin(LightningElement) {
         const markCopied = () => {
             this.copiedField = key;
             clearTimeout(this.copiedFieldTimeout);
+            // eslint-disable-next-line @lwc/lwc/no-async-operation -- Intentional UI timing operation.
             this.copiedFieldTimeout = setTimeout(() => {
                 this.copiedField = '';
             }, 2000);
@@ -247,6 +248,7 @@ export default class GettingStarted extends NavigationMixin(LightningElement) {
     setCopied() {
         this.copied = true;
         clearTimeout(this.copyTimeout);
+        // eslint-disable-next-line @lwc/lwc/no-async-operation -- Intentional UI timing operation.
         this.copyTimeout = setTimeout(() => {
             this.copied = false;
         }, 2000);
@@ -263,7 +265,7 @@ export default class GettingStarted extends NavigationMixin(LightningElement) {
             document.execCommand('copy');
             document.body.removeChild(input);
             this.setCopied();
-        } catch (e) {
+        } catch {
             // copy fallback complete
         }
     }
@@ -288,7 +290,7 @@ export default class GettingStarted extends NavigationMixin(LightningElement) {
                     apiName: 'Permission_Explorer'
                 }
             });
-        } catch (e) {
+        } catch {
             window.location.assign('/lightning/n/Permission_Explorer');
         }
     }
@@ -301,7 +303,7 @@ export default class GettingStarted extends NavigationMixin(LightningElement) {
                     apiName: 'License_Inspector'
                 }
             });
-        } catch (e) {
+        } catch {
             window.location.assign('/lightning/n/License_Inspector');
         }
     }

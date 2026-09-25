@@ -166,7 +166,7 @@ export default class PermissionExplorer extends LightningElement {
   async loadOrgStats() {
     try {
       this.orgStats = await getOrgStats();
-    } catch (e) {
+    } catch {
       // The KPI bar is furniture, not a requirement — a failure here
       // just means it stays hidden, not that the tool is unusable.
       this.orgStats = {};
@@ -953,6 +953,7 @@ export default class PermissionExplorer extends LightningElement {
     );
     this.copied = true;
     clearTimeout(this._copyTimer);
+    // eslint-disable-next-line @lwc/lwc/no-async-operation -- Intentional UI timing operation.
     this._copyTimer = setTimeout(() => {
       this.copied = false;
     }, 2000);
@@ -966,7 +967,7 @@ export default class PermissionExplorer extends LightningElement {
   writeClipboard(text) {
     try {
       navigator.clipboard?.writeText(text);
-    } catch (e) {
+    } catch {
       this.copied = false;
     }
   }

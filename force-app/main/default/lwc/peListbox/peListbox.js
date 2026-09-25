@@ -103,6 +103,7 @@ export default class PeListbox extends LightningElement {
             this.activeIndex = match;
             this.scrollActiveIntoView();
         }
+        // eslint-disable-next-line @lwc/lwc/no-async-operation -- Intentional UI timing operation.
         this._typeaheadTimer = setTimeout(() => { this._typeahead = ''; }, 600);
     }
 

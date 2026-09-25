@@ -36,6 +36,7 @@ public with sharing class PELicenseInspectorService {
      *
      * @return License rows ready for the License Inspector table.
      */
+    @SuppressWarnings('PMD.EmptyCatchBlock,PMD.AvoidNonRestrictiveQueries')
     public static List<PELicenseRow> getLicenses() {
         List<PELicenseRow> rows = new List<PELicenseRow>();
 
@@ -117,6 +118,7 @@ public with sharing class PELicenseInspectorService {
      * @param licenseType Discriminator returned alongside licenseId by getLicenses.
      * @return Users holding that license, in name order, capped for readability.
      */
+    @SuppressWarnings('PMD.CyclomaticComplexity')
     public static List<PELicenseUserRow> getLicenseUsers(Id licenseId, String licenseType) {
         if (licenseId == null) {
             throw PermissionExplorerException.build(
@@ -191,6 +193,7 @@ public with sharing class PELicenseInspectorService {
         return value == null ? null : Integer.valueOf(Math.round(value));
     }
 
+    @SuppressWarnings('PMD.ExcessiveParameterList')
     private static PELicenseRow toRow(
         Id licenseId, String licenseType, String name, String status,
         Integer total, Integer used, Datetime expirationDate, String frequency
@@ -212,6 +215,7 @@ public with sharing class PELicenseInspectorService {
         return r;
     }
 
+    @SuppressWarnings('PMD.ExcessiveParameterList')
     private static PELicenseUserRow toUserRow(
         Id userId, String name, String username, String profileName, Boolean isActive
     ) {

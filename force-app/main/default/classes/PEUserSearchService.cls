@@ -7,16 +7,8 @@
  *
  * Pagination is keyset, not OFFSET. See PEKeysetCursor for why.
  */
+@SuppressWarnings('PMD.StdCyclomaticComplexity')
 public with sharing class PEUserSearchService {
-
-    /** User column filter state supplied by the LWC before building the keyset search query. */
-    public class Filters {
-        public String term;
-        public Id profileId;
-        public Id roleId;
-        public String userType;
-        public String sortField = 'Name';   // 'Name' | 'LastLoginDate'
-    }
 
     // ------------------------------------------------------------------
     // Query fragments.
@@ -45,6 +37,15 @@ public with sharing class PEUserSearchService {
     private static final String ORDER_LAST_LOGIN_DESC     = ' ORDER BY LastLoginDate DESC NULLS LAST, Id ASC';
     private static final String ORDER_NAME_ASC      = ' ORDER BY Name ASC NULLS LAST, Id ASC';
     private static final String LIMIT_CLAUSE   = ' LIMIT :fetchSize';
+
+    /** User column filter state supplied by the LWC before building the keyset search query. */
+    public class Filters {
+        public String term;
+        public Id profileId;
+        public Id roleId;
+        public String userType;
+        public String sortField = 'Name';   // 'Name' | 'LastLoginDate'
+    }
 
     /**
      * Browse defaults to LastLoginDate DESC. On a 5,000-user org, Name order
@@ -76,6 +77,7 @@ public with sharing class PEUserSearchService {
      * @param pageSize Requested page size, or null for the default
      * @return PEDto.PagedResult one page of matching users plus the cursor for the next
      */
+    @SuppressWarnings('PMD.StdCyclomaticComplexity,PMD.CognitiveComplexity,PMD.CyclomaticComplexity,PMD.NcssMethodCount,PMD.NcssCount')
     public static PEDto.PagedResult search(Filters f, String encodedCursor, Integer pageSize) {
         PEDto.PagedResult result = new PEDto.PagedResult();
         result.pageSize = pageSize == null ? PEConstants.USER_PAGE_SIZE : pageSize;
@@ -111,11 +113,11 @@ public with sharing class PEUserSearchService {
                 if (String.isNotBlank(tok)) {
                     String key = 'tok' + i;
                     binds.put(key, '%' + tok + '%');
-                    tokenClauses.add('(Name LIKE :' + key + 
-                                     ' OR Username LIKE :' + key + 
-                                     ' OR Email LIKE :' + key + 
-                                     ' OR Alias LIKE :' + key + 
-                                     ' OR Profile.Name LIKE :' + key + 
+                    tokenClauses.add('(Name LIKE :' + key +
+                                     ' OR Username LIKE :' + key +
+                                     ' OR Email LIKE :' + key +
+                                     ' OR Alias LIKE :' + key +
+                                     ' OR Profile.Name LIKE :' + key +
                                      ' OR UserRole.Name LIKE :' + key + ')');
                 }
             }

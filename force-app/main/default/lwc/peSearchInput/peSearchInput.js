@@ -38,6 +38,7 @@ export default class PeSearchInput extends LightningElement {
             return;
         }
 
+        // eslint-disable-next-line @lwc/lwc/no-async-operation -- Intentional UI timing operation.
         this._timer = setTimeout(() => {
             this.dispatchEvent(new CustomEvent('search', {
                 detail: { term: term.length >= this.minChars ? term : '' }

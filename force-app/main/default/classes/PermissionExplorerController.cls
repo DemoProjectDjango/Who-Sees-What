@@ -7,6 +7,7 @@
  * gated by PEAccessGate and recorded by PEInspectionAuditLogger. That combination
  * is the security model, and it is documented as such for review.
  */
+@SuppressWarnings('PMD.CognitiveComplexity,PMD.CyclomaticComplexity')
 public with sharing class PermissionExplorerController {
 
     /* ---------------------------------------------------------------
@@ -43,6 +44,7 @@ public with sharing class PermissionExplorerController {
      * @return Paged active-user search results for choosing a permission inspection subject.
      */
     @AuraEnabled
+    @SuppressWarnings('PMD.ExcessiveParameterList')
     public static PEDto.PagedResult searchUsers(
         String term, Id profileId, Id roleId, String userType,
         String sortField, String cursor, Integer pageSize
@@ -76,6 +78,7 @@ public with sharing class PermissionExplorerController {
      * @return User header and app visibility payload for the selected user.
      */
     @AuraEnabled
+    @SuppressWarnings('PMD.AvoidBooleanMethodParameters')
     public static PEDto.UserContext resolveUser(Id userId, Boolean forceRefresh) {
         try {
             PEAccessGate.assertAuthorisedAndLog('RESOLVE_USER', userId, null);

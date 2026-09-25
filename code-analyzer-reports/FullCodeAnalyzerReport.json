@@ -12,8 +12,8 @@
     "code-analyzer": "0.52.0",
     "retire-js": "0.38.0",
     "regex": "0.39.0",
-    "pmd": "0.45.0",
     "cpd": "0.45.0",
+    "pmd": "0.45.0",
     "sfge": "0.24.0"
   },
   "violations": []

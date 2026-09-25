@@ -40,6 +40,7 @@ export default class PeUserSummaryHeader extends LightningElement {
             }
             this.copied = true;
             clearTimeout(this._copyTimer);
+            // eslint-disable-next-line @lwc/lwc/no-async-operation -- Intentional UI timing operation.
             this._copyTimer = setTimeout(() => {
                 this.copied = false;
             }, 2000);
