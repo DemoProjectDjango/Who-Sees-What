@@ -109,14 +109,14 @@
 
 .fact dt {
     margin: 0;
-    font-size: var(--pe-fs-xs);
-    color: var(--pe-ink-muted);
+    font-size: var(--pe-fs-sm, 0.8125rem);
+    color: var(--pe-ink-muted, #5c5c5c);
     flex: 0 0 auto;
 }
 
 .fact dd {
     margin: 0;
-    font-size: var(--pe-fs-xs);
+    font-size: var(--pe-fs-sm, 0.8125rem);
     font-weight: 600;
     color: var(--pe-ink);
     text-align: right;
@@ -127,25 +127,25 @@
 
 .fact-email {
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.5rem;
 }
 
 .email-dd {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 0.25rem;
+    gap: 0.35rem;
     flex: 1 1 auto;
     min-width: 0;
 }
 
 .email-text {
     font-family: var(--pe-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
-    font-size: 0.65rem;
-    font-weight: 500;
-    letter-spacing: -0.015em;
+    font-size: var(--pe-fs-sm, 0.8125rem);
+    font-weight: 600;
+    letter-spacing: -0.01em;
     color: var(--pe-ink);
-    line-height: 1.25;
+    line-height: 1.35;
     word-break: break-all;
     text-align: right;
 }

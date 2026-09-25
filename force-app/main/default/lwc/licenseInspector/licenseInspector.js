@@ -1,6 +1,7 @@
 import { LightningElement } from 'lwc';
 import getLicenses from '@salesforce/apex/PermissionExplorerController.getLicenses';
 import getLicenseUsers from '@salesforce/apex/PermissionExplorerController.getLicenseUsers';
+import WHO_SEES_WHAT_LOGO from '@salesforce/resourceUrl/whoSeesWhatLogo';
 import { STATE, parseError } from 'c/peUtils';
 
 const PAGE_SIZE = 12;
@@ -20,6 +21,7 @@ const CATEGORY_BADGE_CLASS = {
 };
 
 export default class LicenseInspector extends LightningElement {
+    projectLogo = WHO_SEES_WHAT_LOGO;
     state = STATE.LOADING;
     error;
     licenses = [];
@@ -139,7 +141,6 @@ export default class LicenseInspector extends LightningElement {
         const isUsageEntitlement = license.licenseType === 'UsageEntitlement';
         const key = `${license.licenseType}:${license.licenseId}`;
 
-        // eslint-disable-next-line no-void
         void this.previewVersion;
 
         const cachedUsers = this._userCache.get(key);
@@ -527,6 +528,10 @@ export default class LicenseInspector extends LightningElement {
         return this.state === STATE.LOADED && this.sortedRows.length === 0;
     }
 
+    get exportDisabled() {
+        return this.state !== STATE.LOADED || !this.sortedRows || this.sortedRows.length === 0;
+    }
+
     get paginationSummary() {
         const total = this.sortedRows.length;
 
@@ -630,10 +635,6 @@ export default class LicenseInspector extends LightningElement {
         }
     }
 
-    get exportDisabled() {
-        return !this.hasLicenses || this.sortedRows.length === 0;
-    }
-
     get summary() {
         let seats = 0;
         let free = 0;
@@ -662,6 +663,10 @@ export default class LicenseInspector extends LightningElement {
 
     handleExport() {
         const rows = this.sortedRows;
+        if (!rows || rows.length === 0) {
+            return;
+        }
+
         const header = [
             'License Name',
             'Category',
@@ -675,47 +680,106 @@ export default class LicenseInspector extends LightningElement {
             'Assigned Users'
         ];
 
-        const lines = [header.join(',')];
+        const lines = [header.map((val) => this.csvCell(val)).join(',')];
 
         for (const row of rows) {
-            const assignedUsers = Array.isArray(row.assignedUsers)
-                ? row.assignedUsers.map((user) => user.name).join('; ')
-                : '';
+            const cached = this._userCache.get(row.key);
+            let assignedUsers = '';
+            if (Array.isArray(cached) && cached.length > 0) {
+                assignedUsers = cached.map((user) => user?.name || user?.username || '').filter(Boolean).join('; ');
+            } else if (Array.isArray(row.assignedUsers) && row.assignedUsers.length > 0) {
+                assignedUsers = row.assignedUsers.map((user) => user?.name || user?.username || '').filter(Boolean).join('; ');
+            }
 
             const cells = [
                 row.name,
                 row.typeLabel,
                 row.orgStatus ?? '',
-                row.used,
-                row.unlimited ? 'Unlimited' : row.total,
-                row.unlimited ? 'Unlimited' : row.free,
-                row.unlimited ? '' : row.pctUsed,
+                row.used ?? 0,
+                row.unlimited ? 'Unlimited' : (row.total ?? ''),
+                row.unlimited ? 'Unlimited' : (row.free ?? ''),
+                row.unlimited ? '' : (row.pctUsed !== undefined && row.pctUsed !== null ? `${row.pctUsed}%` : ''),
                 row.expirationDisplay ?? '',
                 row.frequency ?? '',
                 assignedUsers
-            ].map(this.csvCell);
+            ].map((val) => this.csvCell(val));
 
             lines.push(cells.join(','));
         }
 
         const csv = lines.join('\r\n');
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
         const stamp = new Date().toISOString().slice(0, 10);
+        const filename = `license-inspector-${stamp}.csv`;
 
-        anchor.href = url;
-        anchor.download = `license-inspector-${stamp}.csv`;
-        document.body.appendChild(anchor);
-        anchor.click();
-        document.body.removeChild(anchor);
-        URL.revokeObjectURL(url);
+        this.downloadCsv(csv, filename);
+    }
+
+    downloadCsv(csvContent, filename) {
+        const bomCsv = '\uFEFF' + csvContent;
+        let downloaded = false;
+
+        // Strategy 1: Data URI (most reliable in Salesforce Locker Service / LWS)
+        try {
+            const encodedUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(bomCsv);
+            const anchor = document.createElement('a');
+            anchor.setAttribute('href', encodedUri);
+            anchor.setAttribute('download', filename);
+            anchor.setAttribute('target', '_self');
+            anchor.style.display = 'none';
+
+            const container = this.template || document.body;
+            container.appendChild(anchor);
+            anchor.click();
+
+            setTimeout(() => {
+                try {
+                    if (anchor.parentNode) {
+                        anchor.parentNode.removeChild(anchor);
+                    }
+                } catch (e) {}
+            }, 500);
+
+            downloaded = true;
+        } catch (dataErr) {
+            console.warn('Data URI export failed, attempting Blob fallback:', dataErr);
+        }
+
+        // Strategy 2: Blob URL (if Data URI failed for any reason)
+        if (!downloaded && window.Blob && window.URL && window.URL.createObjectURL) {
+            try {
+                const blob = new Blob([bomCsv], { type: 'text/csv;charset=utf-8;' });
+                const blobUrl = URL.createObjectURL(blob);
+                const anchor = document.createElement('a');
+                anchor.setAttribute('href', blobUrl);
+                anchor.setAttribute('download', filename);
+                anchor.setAttribute('target', '_self');
+                anchor.style.display = 'none';
+
+                const container = this.template || document.body;
+                container.appendChild(anchor);
+                anchor.click();
+
+                setTimeout(() => {
+                    try {
+                        if (anchor.parentNode) {
+                            anchor.parentNode.removeChild(anchor);
+                        }
+                    } catch (e) {}
+                    URL.revokeObjectURL(blobUrl);
+                }, 2000);
+            } catch (blobErr) {
+                console.error('All CSV download strategies failed:', blobErr);
+            }
+        }
     }
 
     csvCell(value) {
-        const valueString = String(value ?? '');
+        if (value === null || value === undefined) {
+            return '""';
+        }
+        const valueString = String(value);
 
-        return /[",\n]/.test(valueString)
+        return /[",\r\n]/.test(valueString)
             ? `"${valueString.replace(/"/g, '""')}"`
             : valueString;
     }
@@ -759,7 +823,7 @@ export default class LicenseInspector extends LightningElement {
             const list = Array.isArray(res) ? res : [];
 
             this._userCache.set(row.key, list);
-        } catch {
+        } catch (e) {
             this._previewErrors.add(row.key);
         } finally {
             this._previewLoading.delete(row.key);

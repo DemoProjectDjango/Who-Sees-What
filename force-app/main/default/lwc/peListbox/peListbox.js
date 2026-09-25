@@ -52,17 +52,13 @@ export default class PeListbox extends LightningElement {
     handleClick(event) {
         const id = event.currentTarget.dataset.id;
         const index = this.items.findIndex((i) => i.id === id);
-        if (index >= 0) {
-            this.activeIndex = index;
-        }
+        if (index >= 0) this.activeIndex = index;
         this.select(id);
     }
 
     handleKeyDown(event) {
         const last = (this.items?.length ?? 0) - 1;
-        if (last < 0) {
-            return;
-        }
+        if (last < 0) return;
 
         switch (event.key) {
             case 'ArrowDown':
@@ -107,7 +103,6 @@ export default class PeListbox extends LightningElement {
             this.activeIndex = match;
             this.scrollActiveIntoView();
         }
-        // eslint-disable-next-line @lwc/lwc/no-async-operation
         this._typeaheadTimer = setTimeout(() => { this._typeahead = ''; }, 600);
     }
 
@@ -117,18 +112,14 @@ export default class PeListbox extends LightningElement {
 
     scrollActiveIntoView() {
         const el = this.template.querySelector(`[id="${this.activeDescendantId}"]`);
-        if (el) {
-            el.scrollIntoView({ block: 'nearest' });
-        }
+        if (el) el.scrollIntoView({ block: 'nearest' });
     }
 
     /** Lets the parent restore focus after the modal closes. */
     @api
     focusRow(id) {
         const index = this.items.findIndex((i) => i.id === id);
-        if (index >= 0) {
-            this.activeIndex = index;
-        }
+        if (index >= 0) this.activeIndex = index;
         this.template.querySelector('.listbox')?.focus();
     }
 }

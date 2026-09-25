@@ -1,12 +1,717 @@
 <template>
-    <div class="page">
-        <header class="topbar">
-            <div class="brand">
-                <span class="wordmark">Who Sees What</span>
-                <span class="producttag">Getting Started</span>
+    <div class="gs-wrapper">
+        <!-- Top Header -->
+        <header class="gs-header">
+            <div class="brand-left">
+                <div class="brand-icon-box" aria-hidden="true">
+                    <img src={projectLogo} alt="Who Sees What Logo" class="brand-logo-img" />
+                </div>
+
+                <div class="brand-titles">
+                    <div class="brand-eyebrow">
+                        <span>WHO SEES WHAT</span>
+                        <span class="eyebrow-sep">/</span>
+                        <span class="eyebrow-sub">ADMINISTRATOR & USER GUIDE</span>
+                    </div>
+                    <h1 class="header-title">Getting Started</h1>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button class="btn btn-secondary" type="button" onclick={handleOpenLicenseInspector}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                    </svg>
+                    License Inspector
+                </button>
+
+                <button class="btn btn-primary" type="button" onclick={handleOpenPermExplorer}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    Launch Permission Explorer
+                </button>
             </div>
         </header>
 
-        <c-pe-getting-started></c-pe-getting-started>
+        <!-- Two Column Layout: Sidebar on Left, Content on Right -->
+        <div class="gs-layout">
+            <!-- Left Sidebar Navigation -->
+            <nav class="gs-sidebar" aria-label="Documentation Topics">
+                <div class="sidebar-header">
+                    <span class="sidebar-title">GUIDE TOPICS</span>
+                    <span class="sidebar-count">{topicCountLabel}</span>
+                </div>
+
+                <ul class="sidebar-list">
+                    <template for:each={topicList} for:item="t">
+                        <li key={t.id}>
+                            <button
+                                class={t.itemClass}
+                                type="button"
+                                data-id={t.id}
+                                onclick={handleSelectTopic}
+                                aria-current={t.ariaCurrent}>
+                                <div class="topic-dot-wrap">
+                                    <span class="topic-num">{t.num}</span>
+                                </div>
+                                <div class="topic-info">
+                                    <div class="topic-title-row">
+                                        <span class="topic-title">{t.title}</span>
+                                        <template lwc:if={t.badge}>
+                                            <span class={t.badgeClass}>{t.badge}</span>
+                                        </template>
+                                    </div>
+                                    <span class="topic-desc">{t.desc}</span>
+                                </div>
+                            </button>
+                        </li>
+                    </template>
+                </ul>
+            </nav>
+
+            <!-- Right Content Panel -->
+            <main class="gs-content" role="region" aria-live="polite">
+                <!-- ========================================================
+                     TOPIC 1: INITIAL SETUP CHECKLIST (DEFAULT)
+                     ======================================================== -->
+                <template lwc:if={isSetupTopic}>
+                    <article class="content-pane">
+                        <div class="content-header">
+                            <div class="topic-eyebrow">STEP-BY-STEP ONBOARDING</div>
+                            <h2 class="content-title">Initial Setup Checklist</h2>
+                            <p class="content-subtitle">
+                                Complete these two administrative steps to enable access and begin inspecting user permissions across your org.
+                            </p>
+                        </div>
+
+                        <!-- Step 1 Detail -->
+                        <div class="content-card">
+                            <div class="card-step-header">
+                                <span class="card-step-num">Step 1</span>
+                                <span class="card-step-badge badge-orange">Required</span>
+                            </div>
+                            <h3 class="card-h3">Assign the Administrator Permission Set</h3>
+                            <p class="card-p">
+                                Assign the <code class="inline-code">PermissionCheckerPermissionSet</code> to System Administrators and Security Auditors who need to inspect user permissions.
+                            </p>
+
+                            <!-- Copy Code Box -->
+                            <div class="code-action-box">
+                                <div class="code-display">
+                                    <span class="code-val">PermissionCheckerPermissionSet</span>
+                                </div>
+                                <button class="btn-copy-code" type="button" onclick={handleCopyPermSet} title="Copy permission set name">
+                                    <template lwc:if={copied}>
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        <span>Copied!</span>
+                                    </template>
+                                    <template lwc:else>
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                        </svg>
+                                        <span>Copy API Name</span>
+                                    </template>
+                                </button>
+                            </div>
+
+                            <div class="step-nav-actions">
+                                <button class="btn-setup-link" type="button" onclick={handleOpenPermSetsSetup}>
+                                    Open Setup &rarr; Permission Sets
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <line x1="7" y1="17" x2="17" y2="7"></line>
+                                        <polyline points="7 7 17 7 17 17"></polyline>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div class="callout callout-info">
+                                <strong class="callout-title">Why is assignment deliberate and manual?</strong>
+                                <p class="callout-text">
+                                    Because this permission set grants the ability to audit every user's effective permissions, it should be an explicit administrative choice rather than an automatic default. It belongs strictly with administrators who oversee org security.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Step 2 Detail -->
+                        <div class="content-card">
+                            <div class="card-step-header">
+                                <span class="card-step-num">Step 2</span>
+                                <span class="card-step-badge badge-blue">Profile Configuration</span>
+                            </div>
+                            <h3 class="card-h3">Verify App Visibility for Profiles</h3>
+                            <p class="card-p">
+                                Check the App Launcher for <strong>Who Sees What</strong>. If the app is not visible to your profile, enable it in Setup.
+                            </p>
+
+                            <div class="path-box">
+                                <span class="path-title">Navigation Path:</span>
+                                <div class="path-flow">
+                                    <span class="path-node">Setup</span>
+                                    <span class="path-sep">&rarr;</span>
+                                    <span class="path-node">Profiles</span>
+                                    <span class="path-sep">&rarr;</span>
+                                    <span class="path-node">Your Profile</span>
+                                    <span class="path-sep">&rarr;</span>
+                                    <span class="path-node">Assigned Apps</span>
+                                    <span class="path-sep">&rarr;</span>
+                                    <span class="path-node path-highlight">Enable "Who Sees What"</span>
+                                </div>
+                            </div>
+
+                            <div class="step-nav-actions">
+                                <button class="btn-setup-link" type="button" onclick={handleOpenProfilesSetup}>
+                                    Open Setup &rarr; Profiles
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <line x1="7" y1="17" x2="17" y2="7"></line>
+                                        <polyline points="7 7 17 7 17 17"></polyline>
+                                    </svg>
+                                </button>
+                                <button class="btn-setup-link" type="button" onclick={handleOpenAppManager}>
+                                    Open App Manager
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <line x1="7" y1="17" x2="17" y2="7"></line>
+                                        <polyline points="7 7 17 7 17 17"></polyline>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div class="callout callout-neutral">
+                                <strong class="callout-title">Platform Constraint:</strong>
+                                <p class="callout-text">
+                                    In Salesforce, Lightning App assignments are stored in profile and app metadata, so app visibility cannot be assigned through a standard permission set.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Step 3 Detail -->
+                        <div class="content-card">
+                            <div class="card-step-header">
+                                <span class="card-step-num">Step 3</span>
+                                <span class="card-step-badge badge-green">Ready to Use</span>
+                            </div>
+                            <h3 class="card-h3">Start Exploring Permissions & Licenses</h3>
+                            <p class="card-p">
+                                You are all set! Open <strong>Permission Explorer</strong> to inspect specific users and objects, or open <strong>License Inspector</strong> to analyze license capacity.
+                            </p>
+
+                            <div class="action-tiles-grid">
+                                <div class="action-tile" onclick={handleOpenPermExplorer} role="button" tabindex="0">
+                                    <div class="action-tile-icon at-blue" aria-hidden="true">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                        </svg>
+                                    </div>
+                                    <div class="action-tile-body">
+                                        <span class="at-title">Permission Explorer</span>
+                                        <span class="at-sub">Inspect user access, apps, CRUD, and access traces.</span>
+                                    </div>
+                                    <span class="at-link">Launch &rarr;</span>
+                                </div>
+
+                                <div class="action-tile" onclick={handleOpenLicenseInspector} role="button" tabindex="0">
+                                    <div class="action-tile-icon at-green" aria-hidden="true">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="action-tile-body">
+                                        <span class="at-title">License Inspector</span>
+                                        <span class="at-sub">Review user, permission set, and package licenses.</span>
+                                    </div>
+                                    <span class="at-link">Launch &rarr;</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Next Topic Prompt -->
+                        <div class="pane-footer-nav">
+                            <span class="pfn-label">Next in guide:</span>
+                            <button class="pfn-btn" type="button" data-id="explorer" onclick={handleSelectTopic}>
+                                2. Permission Explorer Guide &rarr;
+                            </button>
+                        </div>
+                    </article>
+                </template>
+
+                <!-- ========================================================
+                     TOPIC 2: PERMISSION EXPLORER GUIDE
+                     ======================================================== -->
+                <template lwc:if={isExplorerTopic}>
+                    <article class="content-pane">
+                        <div class="content-header">
+                            <div class="topic-eyebrow">STEP-BY-STEP VISUAL GUIDE</div>
+                            <h2 class="content-title">Permission Explorer Guide</h2>
+                            <p class="content-subtitle">
+                                Follow these 4 essential steps in Permission Explorer to select any user, scope applications, choose objects or tabs, and inspect effective CRUD, Field-Level Security (FLS), and exact permission sources.
+                            </p>
+                        </div>
+
+                        <!-- Step 1: Select or Search User -->
+                        <div class="content-card">
+                            <div class="card-step-header">
+                                <span class="card-step-num">Step 1</span>
+                                <span class="card-step-badge badge-blue">User &amp; Profile Selection</span>
+                            </div>
+                            <h3 class="card-h3">1. Select or Search the User or Profile</h3>
+
+                            <!-- Screenshot Step 1 -->
+                            <div class="hiw-screenshot-card" onclick={handleOpenPreview} data-step="1" role="button" tabindex="0" title="Click to view full resolution screenshot">
+                                <div class="hiw-screenshot-header">
+                                    <span class="hiw-screenshot-label">Step 1 Screenshot</span>
+                                    <span class="hiw-zoom-badge">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                            <line x1="11" y1="8" x2="11" y2="14"></line>
+                                            <line x1="8" y1="11" x2="14" y2="11"></line>
+                                        </svg>
+                                        Click to Enlarge
+                                    </span>
+                                </div>
+                                <div class="hiw-screenshot-img-box">
+                                    <img src={step1Img} alt="Step 1: Select or Search the User or Profile" class="hiw-step-img" />
+                                </div>
+                            </div>
+
+                            <!-- What you will do in Step 1 -->
+                            <div class="step-guide-box">
+                                <h4 class="step-guide-heading">What you will do in this step:</h4>
+                                <ul class="step-guide-list">
+                                    <li><strong>Search any user:</strong> Type in the search box to find users instantly by display name, username, email, or profile.</li>
+                                    <li><strong>Filter &amp; sort:</strong> Filter users by assigned Profile, Role, or Active status to quickly find the user to audit.</li>
+                                    <li><strong>Select target user:</strong> Click on any user card to immediately load their identity and permissions into the audit view.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Select the Application -->
+                        <div class="content-card">
+                            <div class="card-step-header">
+                                <span class="card-step-num">Step 2</span>
+                                <span class="card-step-badge badge-blue">App Scope Filtering</span>
+                            </div>
+                            <h3 class="card-h3">2. Select the Application</h3>
+
+                            <!-- Screenshot Step 2 -->
+                            <div class="hiw-screenshot-card" onclick={handleOpenPreview} data-step="2" role="button" tabindex="0" title="Click to view full resolution screenshot">
+                                <div class="hiw-screenshot-header">
+                                    <span class="hiw-screenshot-label">Step 2 Screenshot</span>
+                                    <span class="hiw-zoom-badge">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                            <line x1="11" y1="8" x2="11" y2="14"></line>
+                                            <line x1="8" y1="11" x2="14" y2="11"></line>
+                                        </svg>
+                                        Click to Enlarge
+                                    </span>
+                                </div>
+                                <div class="hiw-screenshot-img-box">
+                                    <img src={step2Img} alt="Step 2: Select the Application" class="hiw-step-img" />
+                                </div>
+                            </div>
+
+                            <!-- What you will do in Step 2 -->
+                            <div class="step-guide-box">
+                                <h4 class="step-guide-heading">What you will do in this step:</h4>
+                                <ul class="step-guide-list">
+                                    <li><strong>Filter by application:</strong> Select any Salesforce app (e.g. Sales, Service, or custom Lightning app) to scope the view strictly to objects in that app.</li>
+                                    <li><strong>Audit org-wide objects:</strong> Choose <em>All Objects</em> to view and audit permissions across all standard and custom Salesforce objects in your org.</li>
+                                    <li><strong>Review tab counts:</strong> See the number of standard and custom navigation tabs configured for each app.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Choose the Object or Tab -->
+                        <div class="content-card">
+                            <div class="card-step-header">
+                                <span class="card-step-num">Step 3</span>
+                                <span class="card-step-badge badge-blue">Entity Exploration</span>
+                            </div>
+                            <h3 class="card-h3">3. Choose the Object or Tab</h3>
+
+                            <!-- Screenshot Step 3 -->
+                            <div class="hiw-screenshot-card" onclick={handleOpenPreview} data-step="3" role="button" tabindex="0" title="Click to view full resolution screenshot">
+                                <div class="hiw-screenshot-header">
+                                    <span class="hiw-screenshot-label">Step 3 Screenshot</span>
+                                    <span class="hiw-zoom-badge">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                            <line x1="11" y1="8" x2="11" y2="14"></line>
+                                            <line x1="8" y1="11" x2="14" y2="11"></line>
+                                        </svg>
+                                        Click to Enlarge
+                                    </span>
+                                </div>
+                                <div class="hiw-screenshot-img-box">
+                                    <img src={step3Img} alt="Step 3: Choose the Object or Tab" class="hiw-step-img" />
+                                </div>
+                            </div>
+
+                            <!-- What you will do in Step 3 -->
+                            <div class="step-guide-box">
+                                <h4 class="step-guide-heading">What you will do in this step:</h4>
+                                <ul class="step-guide-list">
+                                    <li><strong>Search objects &amp; tabs:</strong> Quickly locate any standard or custom object by typing its label or API name.</li>
+                                    <li><strong>Instant CRUD glance:</strong> Check color-coded badges (C, R, E, D, V, M) on each row to verify Create, Read, Edit, Delete, View All, and Modify All access at a glance.</li>
+                                    <li><strong>Select object to audit:</strong> Click on any object row to load its complete permissions matrix and field security in the right panel.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: View Permissions, Field-Level Security & Access Sources -->
+                        <div class="content-card">
+                            <div class="card-step-header">
+                                <span class="card-step-num">Step 4</span>
+                                <span class="card-step-badge badge-green">Permissions Matrix &amp; Audit</span>
+                            </div>
+                            <h3 class="card-h3">4. View Permissions, Field-Level Security &amp; Access Sources</h3>
+
+                            <!-- Screenshot Step 4 -->
+                            <div class="hiw-screenshot-card" onclick={handleOpenPreview} data-step="4" role="button" tabindex="0" title="Click to view full resolution screenshot">
+                                <div class="hiw-screenshot-header">
+                                    <span class="hiw-screenshot-label">Step 4 Screenshot</span>
+                                    <span class="hiw-zoom-badge">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                            <line x1="11" y1="8" x2="11" y2="14"></line>
+                                            <line x1="8" y1="11" x2="14" y2="11"></line>
+                                        </svg>
+                                        Click to Enlarge
+                                    </span>
+                                </div>
+                                <div class="hiw-screenshot-img-box">
+                                    <img src={step4Img} alt="Step 4: View Permissions, Field-Level Security & Access Sources" class="hiw-step-img" />
+                                </div>
+                            </div>
+
+                            <!-- What you will do in Step 4 -->
+                            <div class="step-guide-box">
+                                <h4 class="step-guide-heading">What you will do in this step:</h4>
+                                <ul class="step-guide-list">
+                                    <li><strong>Review object CRUD:</strong> View clear status pills for Create, Read, Edit, Delete, View All, and Modify All permissions.</li>
+                                    <li><strong>Audit Field-Level Security (FLS):</strong> Check every standard and custom field for Readable and Editable status, with filters for Read-Only, Editable, or Hidden fields.</li>
+                                    <li><strong>Trace access sources:</strong> Discover the exact Profile, Permission Set, or Group granting each right using inline source chips.</li>
+                                    <li><strong>Deep diagnostic trace:</strong> Click <em>"Explain this access"</em> to open the Access Trace modal explaining profile vs. group vs. muting calculations.</li>
+                                </ul>
+                            </div>
+
+                            <div class="step-nav-actions" style="margin-top: 1.5rem;">
+                                <button class="btn btn-primary" type="button" onclick={handleOpenPermExplorer}>
+                                    Open Permission Explorer
+                                </button>
+                                <button class="btn btn-secondary" type="button" onclick={handleOpenLicenseInspector}>
+                                    Open License Inspector
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Next Topic Prompt -->
+                        <div class="pane-footer-nav">
+                            <span class="pfn-label">Next in guide:</span>
+                            <button class="pfn-btn" type="button" data-id="licenses" onclick={handleSelectTopic}>
+                                3. License Inspector &amp; Seat Management &rarr;
+                            </button>
+                        </div>
+                    </article>
+                </template>
+
+                <!-- ========================================================
+                     TOPIC 3: LICENSE INSPECTOR
+                     ======================================================== -->
+                <template lwc:if={isLicensesTopic}>
+                    <article class="content-pane">
+                        <div class="content-header">
+                            <div class="topic-eyebrow">CAPACITY MANAGEMENT &amp; AUDIT</div>
+                            <h2 class="content-title">License Inspector Guide</h2>
+                            <p class="content-subtitle">
+                                Monitor seat allocation, track active user assignments, analyze package usage, and export audit-ready license reports in real time.
+                            </p>
+                        </div>
+
+                        <div class="content-card">
+                            <div class="card-step-header">
+                                <span class="card-step-num">Overview</span>
+                                <span class="card-step-badge badge-green">Org License Inventory</span>
+                            </div>
+                            <h3 class="card-h3">How License Inspector Works</h3>
+
+                            <!-- Screenshot License Inspector -->
+                            <div class="hiw-screenshot-card" onclick={handleOpenPreview} data-step="licenses" role="button" tabindex="0" title="Click to view full resolution screenshot">
+                                <div class="hiw-screenshot-header">
+                                    <span class="hiw-screenshot-label">License Inspector Interface Preview</span>
+                                    <span class="hiw-zoom-badge">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                            <line x1="11" y1="8" x2="11" y2="14"></line>
+                                            <line x1="8" y1="11" x2="14" y2="11"></line>
+                                        </svg>
+                                        Click to Enlarge
+                                    </span>
+                                </div>
+                                <div class="hiw-screenshot-img-box">
+                                    <img src={licInspectorImg} alt="License Inspector: Real-Time Org License Inventory" class="hiw-step-img" />
+                                </div>
+                            </div>
+
+                            <!-- What this screen does & How it works -->
+                            <div class="step-guide-box">
+                                <h4 class="step-guide-heading">What this screen does &amp; how it works:</h4>
+                                <ul class="step-guide-list">
+                                    <li><strong>Real-time KPI summary cards:</strong> View org-wide counters for total distinct <em>License Types</em>, currently <em>Assigned Seats</em> in active use, and remaining <em>Available Seats</em>.</li>
+                                    <li><strong>4 core license categories:</strong> Filter immediately across <em>User Licenses</em>, <em>Permission Set Licenses</em>, <em>Package Licenses</em>, and <em>Usage Entitlements</em> (API request limits, storefronts, credits).</li>
+                                    <li><strong>Search &amp; status filtering:</strong> Rapidly search licenses or categories by keyword, or filter by status to isolate active vs. depleted allocations.</li>
+                                    <li><strong>Live seat utilization gauges:</strong> Check <em>Used / Total</em> counts alongside visual progress bars and percentage meters to catch capacity limits early.</li>
+                                    <li><strong>Assigned user inspection:</strong> Click on any license row to view direct drill-down links to the specific users assigned to each license seat.</li>
+                                    <li><strong>Refresh &amp; Export CSV:</strong> Click <em>Refresh</em> to sync real-time data with Salesforce licensing, or click <em>Export CSV</em> to generate instant audit spreadsheets.</li>
+                                </ul>
+                            </div>
+
+                            <div class="step-nav-actions" style="margin-top: 1.5rem;">
+                                <button class="btn btn-primary" type="button" onclick={handleOpenLicenseInspector}>
+                                    Open License Inspector
+                                </button>
+                                <button class="btn btn-secondary" type="button" onclick={handleOpenPermExplorer}>
+                                    Open Permission Explorer
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Next Topic Prompt -->
+                        <div class="pane-footer-nav">
+                            <span class="pfn-label">Next in guide:</span>
+                            <button class="pfn-btn" type="button" data-id="contact" onclick={handleSelectTopic}>
+                                4. Contact Info &amp; Support &rarr;
+                            </button>
+                        </div>
+                    </article>
+                </template>
+
+                <!-- ========================================================
+                     TOPIC 4: CONTACT INFO & SUPPORT
+                     ======================================================== -->
+                <template lwc:if={isContactTopic}>
+                    <article class="content-pane">
+                        <div class="content-header">
+                            <div class="topic-eyebrow">SUPPORT &amp; INQUIRIES</div>
+                            <h2 class="content-title">Contact Info</h2>
+                            <p class="content-subtitle">
+                                Need technical assistance, custom feature requests, or consulting? Reach out directly using any channel below.
+                            </p>
+                        </div>
+
+                        <!-- Modern Cards Grid for Contact Info -->
+                        <div class="content-card">
+                            <div class="card-step-header">
+                                <span class="card-step-num">TwinStack</span>
+                                <span class="card-step-badge badge-blue">Direct Channels</span>
+                            </div>
+                            <h3 class="card-h3">Company &amp; Team Details</h3>
+                            <p class="card-p">
+                                Click copy to copy details to your clipboard, or click the action button to connect directly.
+                            </p>
+
+                            <div class="contact-cards-grid">
+                                <!-- Card 1: Website -->
+                                <div class="contact-item-card">
+                                    <div class="contact-item-icon-box" aria-hidden="true">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="contact-item-content">
+                                        <span class="contact-item-label">Website</span>
+                                        <a href="https://twinstack.net" target="_blank" rel="noopener noreferrer" class="contact-item-value">twinstack.net</a>
+                                    </div>
+                                    <div class="contact-item-actions">
+                                        <button class="contact-btn-copy" type="button" data-key="website" data-value="https://twinstack.net" onclick={handleCopyContact} title="Copy website link">
+                                            <template lwc:if={isWebsiteCopied}>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                            </template>
+                                            <template lwc:else>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                            </template>
+                                        </button>
+                                        <a href="https://twinstack.net" target="_blank" rel="noopener noreferrer" class="contact-btn-action" title="Open website">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <!-- Card 2: Company Mail -->
+                                <div class="contact-item-card">
+                                    <div class="contact-item-icon-box" aria-hidden="true">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                            <polyline points="22,6 12,13 2,6"></polyline>
+                                        </svg>
+                                    </div>
+                                    <div class="contact-item-content">
+                                        <span class="contact-item-label">Company Mail</span>
+                                        <a href="mailto:info@twinstack.net" class="contact-item-value">info@twinstack.net</a>
+                                    </div>
+                                    <div class="contact-item-actions">
+                                        <button class="contact-btn-copy" type="button" data-key="companyMail" data-value="info@twinstack.net" onclick={handleCopyContact} title="Copy email address">
+                                            <template lwc:if={isCompanyMailCopied}>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                            </template>
+                                            <template lwc:else>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                            </template>
+                                        </button>
+                                        <a href="mailto:info@twinstack.net" class="contact-btn-action" title="Send email">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <!-- Card 3: Employee Mail -->
+                                <div class="contact-item-card">
+                                    <div class="contact-item-icon-box" aria-hidden="true">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg>
+                                    </div>
+                                    <div class="contact-item-content">
+                                        <span class="contact-item-label">Employee Mail</span>
+                                        <a href="mailto:saiful@twinstack.net" class="contact-item-value">saiful@twinstack.net</a>
+                                    </div>
+                                    <div class="contact-item-actions">
+                                        <button class="contact-btn-copy" type="button" data-key="employeeMail" data-value="saiful@twinstack.net" onclick={handleCopyContact} title="Copy email address">
+                                            <template lwc:if={isEmployeeMailCopied}>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                            </template>
+                                            <template lwc:else>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                            </template>
+                                        </button>
+                                        <a href="mailto:saiful@twinstack.net" class="contact-btn-action" title="Send email">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <!-- Card 4: DM (US) -->
+                                <div class="contact-item-card">
+                                    <div class="contact-item-icon-box" aria-hidden="true">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="contact-item-content">
+                                        <span class="contact-item-label">Direct Message (US)</span>
+                                        <a href="tel:+19292037060" class="contact-item-value">+19292037060</a>
+                                    </div>
+                                    <div class="contact-item-actions">
+                                        <button class="contact-btn-copy" type="button" data-key="phone" data-value="+19292037060" onclick={handleCopyContact} title="Copy phone number">
+                                            <template lwc:if={isPhoneCopied}>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                            </template>
+                                            <template lwc:else>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                            </template>
+                                        </button>
+                                        <a href="tel:+19292037060" class="contact-btn-action" title="Call or SMS">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <!-- Card 5: WhatsApp (BD) -->
+                                <div class="contact-item-card">
+                                    <div class="contact-item-icon-box" aria-hidden="true">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="contact-item-content">
+                                        <span class="contact-item-label">WhatsApp (BD)</span>
+                                        <a href="https://wa.me/8801556777043" target="_blank" rel="noopener noreferrer" class="contact-item-value">+8801556777043</a>
+                                    </div>
+                                    <div class="contact-item-actions">
+                                        <button class="contact-btn-copy" type="button" data-key="whatsapp" data-value="+8801556777043" onclick={handleCopyContact} title="Copy WhatsApp number">
+                                            <template lwc:if={isWhatsappCopied}>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                            </template>
+                                            <template lwc:else>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                            </template>
+                                        </button>
+                                        <a href="https://wa.me/8801556777043" target="_blank" rel="noopener noreferrer" class="contact-btn-action" title="Chat on WhatsApp">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <!-- Card 6: Calendar Link -->
+                                <div class="contact-item-card">
+                                    <div class="contact-item-icon-box" aria-hidden="true">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <polyline points="12 6 12 12 16 14"></polyline>
+                                        </svg>
+                                    </div>
+                                    <div class="contact-item-content">
+                                        <span class="contact-item-label">Calendar Link</span>
+                                        <a href="https://calendar.app.google/HP3LiuNFisCt6xLo6" target="_blank" rel="noopener noreferrer" class="contact-item-value">calendar.app.google/...</a>
+                                    </div>
+                                    <div class="contact-item-actions">
+                                        <button class="contact-btn-copy" type="button" data-key="calendar" data-value="https://calendar.app.google/HP3LiuNFisCt6xLo6" onclick={handleCopyContact} title="Copy calendar link">
+                                            <template lwc:if={isCalendarCopied}>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                            </template>
+                                            <template lwc:else>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                            </template>
+                                        </button>
+                                        <a href="https://calendar.app.google/HP3LiuNFisCt6xLo6" target="_blank" rel="noopener noreferrer" class="contact-btn-action" title="Schedule appointment">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Return to Setup Prompt -->
+                        <div class="pane-footer-nav">
+                            <span class="pfn-label">End of guide:</span>
+                            <button class="pfn-btn" type="button" data-id="setup" onclick={handleSelectTopic}>
+                                &larr; Return to Initial Setup Checklist
+                            </button>
+                        </div>
+                    </article>
+                </template>
+            </main>
+        </div>
     </div>
+
+    <!-- Screenshot Full Size Lightbox Modal -->
+    <template lwc:if={previewModalOpen}>
+        <div class="hiw-lightbox-backdrop" onclick={handleClosePreview} aria-hidden="true"></div>
+        <section class="hiw-lightbox-modal" role="dialog" aria-modal="true" aria-label={previewImgTitle}>
+            <div class="hiw-lightbox-header">
+                <span class="hiw-lightbox-title">{previewImgTitle}</span>
+                <button class="hiw-lightbox-close" type="button" onclick={handleClosePreview} title="Close full size view">
+                    &times;
+                </button>
+            </div>
+            <div class="hiw-lightbox-body">
+                <img src={previewImgSrc} alt={previewImgTitle} class="hiw-lightbox-img" />
+            </div>
+        </section>
+    </template>
 </template>
