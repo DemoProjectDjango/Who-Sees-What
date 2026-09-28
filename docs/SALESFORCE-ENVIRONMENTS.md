@@ -20,6 +20,7 @@
 | Source API version | `67.0` |
 | Environment strategy | Dedicated Developer Edition org per product |
 | Vendor | Twinforce Solutions Limited |
+| AppExchange listing | <https://appexchange.salesforce.com/appxListingDetail?listingId=dc0aa216-dbed-49e5-86e0-542869f8dc26> |
 
 ---
 
@@ -97,7 +98,11 @@ sf package version list --packages "Who Sees What" --target-dev-hub WSWDevHub
 | Alias | Username | Org ID | Type | Purpose |
 | --- | --- | --- | --- | --- |
 | `WhoSeesWhat` | `ishann.tforce.3eaafb93063e@agentforce.com` | `00DgL00000ZdsQzUAJ` | Developer Edition | Package install testing / subscriber simulation |
-
+| `vscodeOrg` | `saiful@momentum-worldwide.com` | `00DAq00000AT6cTMAT` | Sandbox | **Unrelated project.** Do not deploy Who Sees What here. |
+| (no alias) | `nilufa.tforce-abyj@force.com.tfproduct` | `00DC40000055DkwMAE` | Sandbox | Dev Hub sandbox |
+| `formBuilder` | `ishann.tforce.92b28a243242@agentforce.com` | `00DFj00000HmZMfEAN` | Developer Edition | Unrelated product. Expired/unreachable. |
+| `ishanTNB` | `developertwinforce.80962c0f907d@agentforce.com` | `00DNS00000nhkQr2AI` | Developer Edition | Unrelated. Expired/unreachable. |
+| `isij-prod` | `momentum@jaffari.org` | `00Dau00008LK2LEAW` | Production | Unrelated. Refresh token expired. |
 
 ### Wrong-org deploy hazard
 

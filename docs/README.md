@@ -11,6 +11,7 @@ Documentation index for the Who Sees What managed package.
 | Changing the resolver | [PERMISSION-RESOLUTION.md](PERMISSION-RESOLUTION.md), [TESTING.md](TESTING.md) |
 | Wiring a new LWC to Apex | [API-REFERENCE.md](API-REFERENCE.md) |
 | Preparing a release | [RELEASE-PROCESS.md](RELEASE-PROCESS.md), [../CHANGELOG.md](../CHANGELOG.md) |
+| Running the whole product lifecycle | [PIPELINE.md](PIPELINE.md) |
 | Answering a security reviewer | [SECURITY-MODEL.md](SECURITY-MODEL.md) |
 | Stuck on a platform error | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
 | Wondering why something is the way it is | [adr/](adr/) |
@@ -26,6 +27,7 @@ Documentation index for the Who Sees What managed package.
 - [GLOSSARY.md](GLOSSARY.md) — domain vocabulary
 
 ### Operational
+- [PIPELINE.md](PIPELINE.md) — idea → build → security review → patch loop
 - [DEVELOPER-GUIDE.md](DEVELOPER-GUIDE.md)
 - [TESTING.md](TESTING.md)
 - [RELEASE-PROCESS.md](RELEASE-PROCESS.md)

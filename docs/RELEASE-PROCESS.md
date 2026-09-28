@@ -110,6 +110,8 @@ subscriber must do on upgrade.
 
 ## 7. AppExchange Submission
 
+Live listing: <https://appexchange.salesforce.com/appxListingDetail?listingId=dc0aa216-dbed-49e5-86e0-542869f8dc26>
+
 Required for a listed release:
 
 - [ ] Partner Program membership active

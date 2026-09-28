@@ -12,6 +12,11 @@ _Let the people who ask access questions answer them — without handing them Se
 [![Apex Coverage](https://img.shields.io/badge/apex%20coverage-88%25-brightgreen)](#testing)
 [![Code Analyzer](https://img.shields.io/badge/code%20analyzer-0%20violations-brightgreen)](#static-analysis)
 
+[![AppExchange](https://img.shields.io/badge/AppExchange-View%20Listing-00A1E0?logo=salesforce&logoColor=white)](https://appexchange.salesforce.com/appxListingDetail?listingId=dc0aa216-dbed-49e5-86e0-542869f8dc26)
+[![Demo](https://img.shields.io/badge/Demo-Watch%20on%20YouTube-FF0000?logo=youtube&logoColor=white)](https://youtu.be/-_Jabm_uPrs)
+
+**[▶ View the live listing on the Salesforce AppExchange](https://appexchange.salesforce.com/appxListingDetail?listingId=dc0aa216-dbed-49e5-86e0-542869f8dc26)** · **[▶ Watch the demo](https://youtu.be/-_Jabm_uPrs)**
+
 </div>
 
 ---
@@ -21,7 +26,7 @@ _Let the people who ask access questions answer them — without handing them Se
 - [Overview](#overview)
 - [Why This Exists](#why-this-exists)
 - [Features](#features)
-- [Screenshots](#screenshots)
+- [Demo](#demo)
 - [Architecture](#architecture)
 - [Installation](#installation)
 - [Getting Started](#getting-started)
@@ -58,6 +63,8 @@ namespace.
 | | |
 | --- | --- |
 | **Vendor** | Twinforce Solutions Limited |
+| **AppExchange listing** | <https://appexchange.salesforce.com/appxListingDetail?listingId=dc0aa216-dbed-49e5-86e0-542869f8dc26> |
+| **Demo video** | <https://youtu.be/-_Jabm_uPrs> |
 | **Package ID** | `0HoOW00000000ZV0AY` |
 | **Namespace** | `twinforce` |
 | **API Version** | 67.0 |
@@ -123,7 +130,16 @@ and an auditable one.
 
 ---
 
-## Screenshots
+## Demo
+
+**[▶ Watch the walkthrough on YouTube](https://youtu.be/-_Jabm_uPrs)**
+
+A full pass through the product: searching a user, resolving their effective permissions, walking
+WHO → WHERE → WHAT, and reading the grant attribution — including the granted-then-muted state.
+
+[![Who Sees What — demo walkthrough](https://img.youtube.com/vi/-_Jabm_uPrs/maxresdefault.jpg)](https://youtu.be/-_Jabm_uPrs)
+
+### Screenshots
 
 Getting Started walkthrough images ship as static resources (`hiwStep1`–`hiwStep4`,
 `licInspectorGuide`, `whoSeesWhatLogo`).
@@ -193,7 +209,15 @@ navigation and the release pipeline are in [`docs/diagrams/`](docs/diagrams/).
 
 ### For subscribers
 
-Install the latest promoted package version into a sandbox first:
+The supported route is the AppExchange listing:
+
+**<https://appexchange.salesforce.com/appxListingDetail?listingId=dc0aa216-dbed-49e5-86e0-542869f8dc26>**
+
+That page carries the current supported version, the listing documentation and the vendor contact.
+Use it for any production install.
+
+For beta or pre-release testing, install a specific version directly into a **sandbox or scratch org**
+(never production):
 
 ```
 https://login.salesforce.com/packaging/installPackage.apexp?p0=<04t-version-id>
@@ -458,6 +482,8 @@ and the definition of done.
 
 ## Support
 
+- **AppExchange listing** — <https://appexchange.salesforce.com/appxListingDetail?listingId=dc0aa216-dbed-49e5-86e0-542869f8dc26>
+- **Demo video** — <https://youtu.be/-_Jabm_uPrs>
 - **Issues** — <https://github.com/DemoProjectDjango/Who-Sees-What/issues>
 - **Vendor** — Twinforce Solutions Limited
 
@@ -468,4 +494,4 @@ and the definition of done.
 Proprietary. © Twinforce Solutions Limited. All rights reserved.
 
 This source is not licensed for redistribution. The compiled product is distributed exclusively as a
-managed package through the Salesforce AppExchange.
+managed package through the [Salesforce AppExchange](https://appexchange.salesforce.com/appxListingDetail?listingId=dc0aa216-dbed-49e5-86e0-542869f8dc26).
