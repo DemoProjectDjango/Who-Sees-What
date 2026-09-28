@@ -1,58 +1,471 @@
-# Salesforce DX Project
+<div align="center">
 
-Salesforce DX is a development approach that brings source-driven development, team collaboration, and continuous integration to the Salesforce Platform. Instead of working directly in an org through a web browser, you work with metadata as source files in a local DX project, track changes in version control, and deploy through automated processes.
+# Who Sees What
 
-This project template gets you started with the tools and structure you need to build Salesforce applications using source control, scratch orgs, and the Salesforce CLI.
+**User Access, Field Security & Record Visibility Explorer for Salesforce**
 
-## Prerequisites
+_Let the people who ask access questions answer them — without handing them Setup._
 
-Before you start, make sure you have:
+[![Salesforce API](https://img.shields.io/badge/Salesforce%20API-67.0-00A1E0)](https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta/api_meta/)
+[![Package](https://img.shields.io/badge/package-2GP%20managed-blue)](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_dev2gp.htm)
+[![Namespace](https://img.shields.io/badge/namespace-twinforce-5A3FC0)](#)
+[![Apex Coverage](https://img.shields.io/badge/apex%20coverage-88%25-brightgreen)](#testing)
+[![Code Analyzer](https://img.shields.io/badge/code%20analyzer-0%20violations-brightgreen)](#static-analysis)
 
-- **Salesforce CLI** - Download from [developer.salesforce.com/tools/salesforcecli](https://developer.salesforce.com/tools/salesforcecli). See [Install Salesforce CLI](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_install_cli.htm) for details.
-- **VS Code with Salesforce Extension Pack** - See [Installation Instructions](https://developer.salesforce.com/docs/platform/sfvscode-extensions/guide/install.html) for details. Includes the Agentforce Vibes extension.
-- **A development org** - Sign up for a free Developer Edition org [here](https://developer.salesforce.com/signup).
-- **Dev Hub enabled** (optional, required to create scratch orgs) - You can enable Dev Hub in your development org under Setup > Dev Hub.  See [Provide Developers Access to Salesforce DX Tools](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_setup_dx_tools.htm).
+</div>
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Why This Exists](#why-this-exists)
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [Architecture](#architecture)
+- [Installation](#installation)
+- [Getting Started](#getting-started)
+- [Project Structure](#project-structure)
+- [Development](#development)
+- [Testing](#testing)
+- [Static Analysis](#static-analysis)
+- [Packaging & Release](#packaging--release)
+- [Security & Privacy](#security--privacy)
+- [Known Limitations](#known-limitations)
+- [Roadmap](#roadmap)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [Support](#support)
+- [License](#license)
+
+---
+
+## Overview
+
+**Who Sees What** is a read-only Salesforce Lightning application that answers a single question
+precisely:
+
+> _"What can this user actually see and do — and what granted it?"_
+
+It resolves a user's effective permissions across profiles, permission sets, permission set groups
+and **muting permission sets**, then presents the result as an app-scoped walkthrough:
+**WHO** (pick a user) → **WHERE** (pick an app, then an object) → **WHAT** (object CRUD and
+field-level security, with the grant source attributed).
+
+The product is distributed as a **second-generation managed package (2GP)** under the `twinforce`
+namespace.
+
+| | |
+| --- | --- |
+| **Vendor** | Twinforce Solutions Limited |
+| **Package ID** | `0HoOW00000000ZV0AY` |
+| **Namespace** | `twinforce` |
+| **API Version** | 67.0 |
+| **Runtime** | Apex + Lightning Web Components, Platform Cache |
+| **External calls** | None. No HTTP callouts, no Named Credentials, no Metadata API callouts. |
+
+---
+
+## Why This Exists
+
+Salesforce ships a native **User Access Summary**, but it lives behind Setup. In practice that means
+every access question — from a support lead, a compliance reviewer, a regional manager — routes to
+the same one or two system administrators, who then re-derive the same answer by hand.
+
+Who Sees What breaks that bottleneck:
+
+| Native User Access Summary | Who Sees What |
+| --- | --- |
+| Requires Setup access | Runs as a Lightning app; gated by a custom permission, not by Setup |
+| Permission-centric navigation | App-scoped navigation: **App → Tabs → Objects → Fields** |
+| No shareable state | Deep links reproduce the exact view for a colleague |
+| No inspection record | Append-only audit trail in `PE_Inspection_Log__c` |
+| — | **Muting permission sets are subtracted, not ignored** |
+
+That last row matters most. A resolver that simply ORs every permission set together produces
+answers that are confidently wrong. Muting subtraction is the difference between a convenience tool
+and an auditable one.
+
+---
+
+## Features
+
+### Permission Explorer
+
+- **User search** — keyset-paginated, filterable by profile, role and user type; sortable by name or
+  last login; frozen users flagged.
+- **Effective permission resolution** — profile (as a permission set) + direct permission sets +
+  permission-set-group components − muting permission sets.
+- **App-scoped object discovery** — objects reachable from the tabs of a chosen Lightning app, plus
+  an explicit _"has access but no tab"_ section so nothing silently disappears.
+- **Object detail** — CRUD, View All / Modify All, and full field-level security with each field
+  classified as readable, editable, hidden or **not applicable** (formula, auto-number, system audit
+  field, master-detail key).
+- **Grant attribution** — every permission traces back to the exact profile, permission set,
+  permission set group or muting set that produced it.
+- **Access trace** — an explain-this-access view for a single permission.
+- **Outdated permission set groups** — flagged when `PermissionSetGroup.Status != Updated`, because
+  a stale group means the displayed answer is not yet the live answer.
+
+### License Inspector
+
+- User licenses, permission set licenses, package licenses and usage entitlements in one table.
+- Drill from any license into the users consuming it.
+
+### Org Stats
+
+- At-a-glance counts of users, profiles, permission sets and permission set groups.
+
+### Audit
+
+- Every inspection writes an append-only `PE_Inspection_Log__c` row: who inspected whom, when, via
+  which action. The packaged permission set grants create and read — never edit or delete.
+
+---
+
+## Screenshots
+
+Getting Started walkthrough images ship as static resources (`hiwStep1`–`hiwStep4`,
+`licInspectorGuide`, `whoSeesWhatLogo`).
+
+> **Release requirement.** Any screenshot used in AppExchange listings or security-review documents
+> must use fictional data. Real usernames, emails and phone numbers are a review blocker. See
+> [`docs/SECURITY-MODEL.md`](docs/SECURITY-MODEL.md).
+
+---
+
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph UI["Lightning Web Components"]
+        PE[permissionExplorer]
+        LI[licenseInspector]
+        GS[gettingStarted]
+    end
+
+    subgraph API["Apex API Layer"]
+        CTRL[PermissionExplorerController]
+        GATE[PEAccessGate]
+    end
+
+    subgraph SVC["Domain Services"]
+        RES[PEPermissionResolver]
+        AQS[PEAccessQueryService]
+        AVS[PEAppVisibilityService]
+        USS[PEUserSearchService]
+        UDS[PEUserDetailService]
+        LIS[PELicenseInspectorService]
+        OSS[PEOrgStatsService]
+    end
+
+    subgraph INF["Infrastructure"]
+        CACHE[PECacheManager]
+        CAT[PEMetadataCatalog]
+        LOG[PEInspectionAuditLogger]
+    end
+
+    PE & LI & GS --> CTRL
+    CTRL --> GATE --> LOG
+    CTRL --> RES & AQS & AVS & USS & UDS & LIS & OSS
+    RES --> CACHE
+    AQS --> CAT
+    SVC --> DB[(Salesforce Platform<br/>SOQL, WITH USER_MODE)]
+    LOG --> LOGOBJ[(PE_Inspection_Log__c)]
+```
+
+Full C4 context/container/component views, sequence diagrams, the ERD, the state machine for staged
+navigation and the release pipeline are in [`docs/diagrams/`](docs/diagrams/).
+
+**Design principles**
+
+1. **Authorisation in Apex, never only in the UI.** Every entry point calls `PEAccessGate`.
+2. **Read-only by construction.** The only DML in the product is the append-only audit insert.
+3. **No external calls.** Deliberately scoped out to keep AppExchange security review tractable.
+4. **Cache is an optimisation, never a source of truth.** `PECacheManager` degrades to an in-request
+   map when Platform Cache is unavailable.
+5. **Governor limits are budgeted, not hoped for.** `PESoqlChunker` batches `IN :ids` clauses and
+   asserts query budget before fan-out.
+
+---
+
+## Installation
+
+### For subscribers
+
+Install the latest promoted package version into a sandbox first:
+
+```
+https://login.salesforce.com/packaging/installPackage.apexp?p0=<04t-version-id>
+```
+
+Then:
+
+1. Assign the **PermissionCheckerPermissionSet** permission set to each administrator who may
+   inspect other users.
+2. Allocate Platform Cache to the **PermissionExplorer** partition (2 MB org, 1 MB session
+   recommended; the app works without it, just slower).
+3. Open the **Who Sees What** Lightning app.
+
+### For developers
+
+```powershell
+git clone https://github.com/DemoProjectDjango/Who-Sees-What.git
+cd Who-Sees-What
+npm install
+
+sf config set target-org=wsw-dev
+sf config set target-dev-hub=WSWDevHub
+
+sf project deploy start --target-org wsw-dev
+sf org assign permset --name PermissionCheckerPermissionSet --target-org wsw-dev
+sf org open --target-org wsw-dev
+```
+
+See [`docs/SALESFORCE-ENVIRONMENTS.md`](docs/SALESFORCE-ENVIRONMENTS.md) for the full org inventory
+and the wrong-org deploy hazard.
+
+---
+
+## Getting Started
+
+1. Open the **Who Sees What** app.
+2. **Getting Started** tab — guided walkthrough.
+3. **Permission Explorer** tab — search a user, pick an app, pick an object, read the field table.
+4. **License Inspector** tab — license consumption and the users behind each number.
+
+Copy the browser URL at any point; it encodes the selected user, app and object, so a colleague
+lands on exactly the view you were looking at.
+
+---
 
 ## Project Structure
 
-Your DX project follows this structure:
+```
+.
+├── config/                       Scratch org definitions
+├── docs/                         Architecture, ADRs, diagrams, operational guides
+│   ├── adr/                      Architecture Decision Records
+│   └── diagrams/                 Mermaid source for all diagrams
+├── destructive-p3/               Destructive change manifests
+├── force-app/main/default/
+│   ├── applications/             Who_Sees_What Lightning app
+│   ├── cachePartitions/          PermissionExplorer Platform Cache partition
+│   ├── classes/                  Apex (PE* services, controller, DTOs, tests)
+│   ├── customPermissions/        Use_Permission_Explorer
+│   ├── lwc/                      Lightning Web Components
+│   ├── objects/                  PE_Inspection_Log__c
+│   ├── permissionsets/           PermissionCheckerPermissionSet
+│   ├── staticresources/          Logo and walkthrough imagery
+│   └── tabs/                     Permission Explorer, License Inspector, Getting Started
+├── scripts/                      Anonymous Apex and SOQL scratchpads
+├── code-analyzer.yml             Salesforce Code Analyzer configuration
+├── eslint.config.js              LWC lint rules
+├── jest.config.js                sfdx-lwc-jest configuration
+└── sfdx-project.json             Package directories, namespace, version
+```
 
-- **`force-app/main/default/`** - Your metadata source files live in this default package directory. You can configure additional package directories in the `sfdx-project.json` file.
-- **`config/`** - Scratch org definitions and project settings
-- **`scripts/`** - Automation scripts for common tasks
-- **`sfdx-project.json`** - Project manifest that defines package directories, namespace, API version, and other project-level settings
+### Apex class map
 
-See [Salesforce DX Project Configuration](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_ws_config.htm).
+| Class | Responsibility |
+| --- | --- |
+| `PermissionExplorerController` | Sole `@AuraEnabled` surface. Gate, delegate, map to DTOs. |
+| `PEAccessGate` | Custom-permission authorisation + audit in one call; target-user guard. |
+| `PEPermissionResolver` | Effective permission resolution including muting subtraction. |
+| `PEAccessQueryService` | App-scoped object rows, object detail, FLS rows, grant attribution. |
+| `PEAppVisibilityService` | Visible Lightning apps for a user. |
+| `PEUserSearchService` | Keyset-paginated, filtered user search. |
+| `PEUserDetailService` | Login history, assigned permission sets and groups. |
+| `PELicenseInspectorService` | License inventory and per-license user drill-down. |
+| `PEOrgStatsService` | Org-level counts. |
+| `PEMetadataCatalog` | Describe/tab metadata with request-scoped memoisation. |
+| `PEFlsClassifier` | Classifies fields that FLS cannot meaningfully apply to. |
+| `PECacheManager` | Platform Cache wrapper with version token and safe fallback. |
+| `PEKeysetCursor` | Opaque, validated pagination cursor. |
+| `PESoqlChunker` | `IN :ids` batching and query-budget assertion. |
+| `PEInspectionAuditLogger` | Buffered append-only audit writes. |
+| `PEConstants`, `PEDto`, `PELicenseRow`, `PELicenseUserRow` | Constants and transport types. |
+| `PermissionExplorerException` | Typed, user-facing, retryable-aware errors. |
 
-## Get Started
+---
 
-Ready to start developing? The [Get Started with Salesforce DX](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_get_started_dx.htm) guide walks you through your first project, from creating a scratch org to creating a simple Apex class or LWC to deploying your code to a sandbox.
+## Development
 
-## Common Salesforce CLI Commands
+### Prerequisites
 
-Here are common CLI commands that you'll use the most:
+- Node.js 18 or later
+- Salesforce CLI (`sf`) — latest
+- VS Code with the Salesforce Extension Pack
+- Access to the `WSWDevHub` Dev Hub
 
-- `sf org login web`: Authorize an org
-- `sf org open`: Open your org in a browser
-- `sf org create scratch`: Create a scratch org
-- `sf project deploy start`: Deploy metadata to your org
-- `sf project retrieve start`: Retrieve metadata from your org
-- `sf template generate <artifact>`: Scaffold new components, such as Apex classes and triggers, LWC components, Lightning apps, and more
-- `sf apex <command>`: Run Apex tests, run anonymous Apex blocks, and view logs
-- `sf data <command>`: Work with test data
-- `sf alias <command>`: Manage org aliases
-- `sf config <command>`: Configure CLI settings
+### Commands
 
-## Use Agentforce Vibes to Build Lightning Apps
+```powershell
+npm install                  # install dev dependencies
+npm run lint                 # ESLint over LWC JavaScript
+npm run prettier             # format all supported file types
+npm run prettier:verify      # check formatting without writing
+npm run test:unit            # Jest unit tests for LWC
+npm run test:unit:coverage   # Jest with coverage
+npm run scan                 # Code Analyzer: AppExchange + Security rulesets
+npm run scan:all             # Code Analyzer: Recommended ruleset, detail view
+```
 
-Transform your ideas into custom Lightning apps that extend CRM workflows directly in Lightning Experience. Through natural conversations with Agentforce Vibes, implement custom objects and fields, complex business logic, and dynamic UI components. See [Build a Lightning App Using Agentforce Vibes](https://developer.salesforce.com/docs/platform/einstein-for-devs/guide/lexapp-overview.html).
+A Husky `pre-commit` hook runs `lint-staged`: Prettier on changed files, ESLint on changed LWC
+JavaScript, and related Jest tests.
 
-## Additional Resources
+### Conventions
 
-- [Agentforce Vibes Developer Guide](https://developer.salesforce.com/docs/platform/einstein-for-devs/guide/einstein-overview.html)
-- [Salesforce CLI Installation Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_intro.htm)
-- [Salesforce DX Developer Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/)
-- [Salesforce CLI Command Reference](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/)
-- [Salesforce CLI Plugin Development Guide](https://developer.salesforce.com/docs/platform/salesforce-cli-plugin/guide/conceptual-overview.html)
-- [Salesforce VS Code Extensions Documentation](https://developer.salesforce.com/tools/vscode/)
+- **Complete file replacements over partial diffs.** LWC bundles must be delivered whole — all four
+  files including `.js-meta.xml` — or deployment fails with _"named in package.xml, but was not
+  found"_.
+- **UTF-8 without BOM.** On Windows, `[System.IO.File]::WriteAllText` with a no-BOM encoding is the
+  reliable write path.
+- **Bump `CACHE_PREFIX`** in `PEPermissionResolver` whenever the shape of a cached object changes.
 
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`docs/DEVELOPER-GUIDE.md`](docs/DEVELOPER-GUIDE.md).
+
+---
+
+## Testing
+
+| Layer | Tool | Command |
+| --- | --- | --- |
+| Apex | Salesforce test framework | `sf apex run test --target-org wsw-dev --code-coverage --result-format human` |
+| LWC | Jest (`sfdx-lwc-jest`) | `npm run test:unit` |
+
+Current packaged state: **88% Apex coverage, 74 packaged tests passing.**
+
+Apex test classes: `PermissionExplorerTest`, `PermissionExplorerControllerTest`,
+`PermissionExplorerFlowTest`, `PEPermissionResolverTest`, `PEUserSearchServiceTest`,
+`PEUserDetailServiceTest`.
+
+See [`docs/TESTING.md`](docs/TESTING.md) — including the muting-permission-set correctness matrix
+that must pass before any release claims audit defensibility.
+
+---
+
+## Static Analysis
+
+```powershell
+npm run scan
+```
+
+Uses `code-analyzer.yml`: PMD over Apex only, ESLint engine disabled (LWC JavaScript is linted by the
+project's own ESLint configuration instead), SFGE thread timeout raised to 300 s.
+
+Do **not** run `--rule-selector all`; it inflates findings with rules that do not apply to a managed
+package and obscures real issues.
+
+Latest recorded results: Checkmarx scan `a0OKX000001JPnJ2AW` — 0 security, 0 quality issues.
+Code Analyzer — 0 violations on the AppExchange and Security rulesets.
+
+---
+
+## Packaging & Release
+
+```powershell
+sf package version create --package "Who Sees What" --installation-key-bypass --wait 60 --code-coverage --target-dev-hub WSWDevHub
+sf package version list --packages "Who Sees What" --target-dev-hub WSWDevHub
+sf package version promote --package "Who Sees What@0.5.0-1" --target-dev-hub WSWDevHub
+```
+
+`sfdx-project.json` pins `ancestorVersion: HIGHEST`, which enforces an upgradable lineage — a
+package version cannot be created if it would break installed subscribers.
+
+Full procedure, ancestry rules and pre-release checklist: [`docs/RELEASE-PROCESS.md`](docs/RELEASE-PROCESS.md).
+Version history: [`CHANGELOG.md`](CHANGELOG.md).
+
+---
+
+## Security & Privacy
+
+- **Authorisation.** Every Apex entry point calls `PEAccessGate.assertAuthorised()` or
+  `assertAuthorisedAndLog()`. The gate checks the packaged `Use_Permission_Explorer` custom
+  permission via `FeatureManagement.checkPermission` and is deliberately uncached, so it cannot
+  outlive the context that produced it.
+- **Sharing and CRUD/FLS.** All classes are `with sharing`. User-facing queries use
+  `WITH USER_MODE`.
+- **Data egress.** None. No callouts, no Named Credentials, no Metadata API callouts.
+- **Audit.** `PE_Inspection_Log__c` is append-only — create and read granted, edit and delete
+  withheld — so an inspection cannot occur without leaving a record.
+- **Secrets.** Never commit credentials, tokens, SFDX auth URLs or connected-app secrets. See
+  §9 of [`docs/SALESFORCE-ENVIRONMENTS.md`](docs/SALESFORCE-ENVIRONMENTS.md).
+
+Report a vulnerability privately — see [`SECURITY.md`](SECURITY.md). Do not open a public issue.
+
+Full threat model: [`docs/SECURITY-MODEL.md`](docs/SECURITY-MODEL.md).
+
+---
+
+## Known Limitations
+
+These are platform constraints, not defects. Each was verified independently before being accepted.
+
+| Limitation | Cause |
+| --- | --- |
+| Per-user **record type** visibility is not shown | `Profile.recordTypeVisibilities` and `PermissionSet.recordTypeVisibilities` are Metadata API only; not exposed to SOQL or Apex Schema. |
+| Per-user **page layout** assignment is not shown | Layout assignment is Profile × RecordType only; no permission set participates, and `Schema.Layout` does not exist in Apex. |
+| Per-permission-set **app visibility** is not shown | No queryable sObject exists for it. |
+| **Standard object tab** visibility is not shown | `PermissionSetTabSetting` stores custom tabs only. |
+
+The record type catalogue currently rendered from the queryable `RecordType` object is org-wide, not
+per-user, and is labelled as such.
+
+---
+
+## Roadmap
+
+| Version | Scope |
+| --- | --- |
+| **0.5** (current) | UI redesign, staged WHO/WHERE/WHAT navigation, access trace, license inspector. |
+| **0.6** | Record type and page layout visibility via Apex Metadata API (`Metadata.Operations.retrieve`). Inspection Log viewer and export. |
+| **Later** | Compare Two Users · What-If Simulator · Record Access Diagnosis |
+
+Feature ordering is driven by fit with the delegation USP. `Record Access Diagnosis` is deliberately
+late: querying `UserRecordAccess` for another user requires **View All Data**, which conflicts with
+the product's core promise.
+
+---
+
+## Documentation
+
+| Document | Contents |
+| --- | --- |
+| [`docs/README.md`](docs/README.md) | Documentation index |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Layers, boundaries, quality attributes |
+| [`docs/PERMISSION-RESOLUTION.md`](docs/PERMISSION-RESOLUTION.md) | The resolution algorithm, including muting |
+| [`docs/DATA-MODEL.md`](docs/DATA-MODEL.md) | Custom object, DTOs, platform objects consumed |
+| [`docs/SECURITY-MODEL.md`](docs/SECURITY-MODEL.md) | Threat model and review posture |
+| [`docs/API-REFERENCE.md`](docs/API-REFERENCE.md) | `@AuraEnabled` surface |
+| [`docs/DEVELOPER-GUIDE.md`](docs/DEVELOPER-GUIDE.md) | Environment setup and daily workflow |
+| [`docs/TESTING.md`](docs/TESTING.md) | Test strategy and the muting correctness matrix |
+| [`docs/RELEASE-PROCESS.md`](docs/RELEASE-PROCESS.md) | 2GP packaging and promotion |
+| [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) | Platform gotchas already paid for once |
+| [`docs/GLOSSARY.md`](docs/GLOSSARY.md) | Domain vocabulary |
+| [`docs/SALESFORCE-ENVIRONMENTS.md`](docs/SALESFORCE-ENVIRONMENTS.md) | Org and repository inventory |
+| [`docs/adr/`](docs/adr/) | Architecture Decision Records |
+| [`docs/diagrams/`](docs/diagrams/) | All diagrams (Mermaid source) |
+
+---
+
+## Contributing
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for branch naming, commit conventions, the review checklist
+and the definition of done.
+
+---
+
+## Support
+
+- **Issues** — <https://github.com/DemoProjectDjango/Who-Sees-What/issues>
+- **Vendor** — Twinforce Solutions Limited
+
+---
+
+## License
+
+Proprietary. © Twinforce Solutions Limited. All rights reserved.
+
+This source is not licensed for redistribution. The compiled product is distributed exclusively as a
+managed package through the Salesforce AppExchange.

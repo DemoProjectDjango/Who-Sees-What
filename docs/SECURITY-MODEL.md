@@ -1,0 +1,185 @@
+# Security Model
+
+**Audience:** AppExchange security reviewers, subscriber security teams, engineers changing anything
+that touches authorisation.
+
+---
+
+## 1. Summary
+
+Who Sees What reads other users' permission metadata. That is exactly the pattern a security
+reviewer scrutinises, so the design answers the question before it is asked:
+
+1. Access is gated by an **explicit packaged custom permission**, checked **in Apex**.
+2. Every inspection writes an **append-only audit row** the inspector cannot alter.
+3. The product makes **no external calls** of any kind.
+4. The product performs **no writes** other than that audit row.
+
+---
+
+## 2. Trust Boundaries
+
+```mermaid
+flowchart TB
+    subgraph Browser["Subscriber browser — untrusted"]
+        LWC[Lightning Web Components]
+    end
+    subgraph Platform["Salesforce platform — trusted runtime"]
+        subgraph Pkg["Managed package, namespace twinforce"]
+            CTRL[PermissionExplorerController]
+            GATE[[PEAccessGate<br/>TRUST BOUNDARY]]
+            SVC[Domain services]
+            LOG[PEInspectionAuditLogger]
+        end
+        DATA[(Subscriber org data<br/>read via WITH USER_MODE)]
+        AUDIT[(PE_Inspection_Log__c<br/>append only)]
+    end
+    EXT[External systems]
+
+    LWC -->|@AuraEnabled| CTRL
+    CTRL --> GATE
+    GATE -->|authorised| SVC
+    GATE -->|denied| LWC
+    GATE --> LOG --> AUDIT
+    SVC --> DATA
+    Pkg -. "no callouts, no Named Credentials,<br/>no Metadata API, no egress" .-x EXT
+```
+
+The **only** trust boundary that matters is `PEAccessGate`. UI state is never treated as an
+authorisation decision.
+
+---
+
+## 3. Authorisation
+
+### The gate
+
+```apex
+public static Boolean isAuthorised() {
+    return FeatureManagement.checkPermission(PEConstants.CUSTOM_PERMISSION);
+}
+```
+
+- Custom permission: `Use_Permission_Explorer`, packaged.
+- Granted by: `PermissionCheckerPermissionSet`, packaged.
+- **Deliberately uncached.** An authorisation decision held in a mutable static outlives the context
+  that produced it — `System.runAs` changes the user but not the static. `checkPermission` is cheap
+  enough that the guarantee is worth more than the microseconds.
+
+### Enforcement points
+
+Every `@AuraEnabled` method calls one of:
+
+| Method | Behaviour |
+| --- | --- |
+| `assertAuthorised()` | Throws a typed, non-retryable exception with an admin-actionable message |
+| `assertAuthorisedAndLog(action, subjectUserId, detail)` | Gate **and** audit in one call — an inspection cannot occur without a log row |
+| `assertInspectable(userId)` | Target guard: user must exist and be active. Frozen users are inspectable; that is the point. |
+
+### Threats considered
+
+| Threat | Mitigation |
+| --- | --- |
+| Direct Apex invocation bypassing the UI | Gate is in Apex, on every method |
+| Privilege escalation via the tool | Read-only; no permission is ever granted or modified |
+| Inspecting users without accountability | `assertAuthorisedAndLog` couples the two |
+| Tampering with the audit trail | Edit and Delete withheld on `PE_Inspection_Log__c` |
+| SOQL injection via search terms | Bind variables throughout; sort fields whitelisted in `PEKeysetCursor` |
+| Cursor tampering | `PEKeysetCursor.decode` validates structure and sort field, else throws |
+| Cache poisoning across users | Cache keys include the version token and the subject user ID; keys sanitised |
+| CRUD/FLS bypass | `with sharing` on every class; `WITH USER_MODE` on user-facing queries |
+| Data exfiltration | No callouts, no Named Credentials, no external endpoints |
+
+---
+
+## 4. Injection Surface
+
+| Input | Source | Handling |
+| --- | --- | --- |
+| Search term | User typed | Bound (`:term`) in a composed-but-parameterised query |
+| `profileId`, `roleId`, `userType` | Picklist | Bound |
+| `sortField` | UI | Whitelisted: `Name`, `LastLoginDate` |
+| `encodedCursor` | Previous response | Decoded and validated; malformed input throws |
+| `objectApiName` | UI | Resolved through `Schema.getGlobalDescribe()`, never concatenated into SOQL |
+| `appDeveloperName` | UI | Bound |
+
+`PEUserSearchService` composes dynamic SOQL from **constant string fragments only** — clause
+constants concatenated in a fixed order, with all values bound. No user input reaches the query text.
+
+---
+
+## 5. Sharing and Data Access
+
+- Every Apex class is declared `with sharing`.
+- User-facing queries use `WITH USER_MODE`, so the running administrator's own CRUD/FLS applies.
+- Permission-metadata objects (`ObjectPermissions`, `FieldPermissions`, `PermissionSetAssignment`)
+  require **View Setup and Configuration** in the subscriber org. The product does not attempt to
+  bypass this, and surfaces a typed error if the reading user lacks it.
+- The product never queries `UserRecordAccess` for another user, because doing so requires
+  **View All Data** — which would defeat the product's entire premise.
+
+---
+
+## 6. Data Handling and Privacy
+
+| Category | Position |
+| --- | --- |
+| Data leaving the org | None |
+| Data stored by the package | Audit rows only: actor, subject, action, detail, timestamp |
+| PII in the package | None shipped. Subject/inspector are lookups to `User`, not copies of PII. |
+| Logging | No `System.debug` of user data on success paths |
+| Encryption | Platform-native; the package adds no key material |
+| Retention | Not enforced by the package; subscribers may apply their own |
+
+---
+
+## 7. Screenshot and Demo-Data Policy
+
+Applies to AppExchange listings, security-review documents, the Getting Started static resources and
+any public material.
+
+- **Must** use fictional users, emails, phone numbers and company names.
+- **Must not** contain real subscriber, employee or customer data.
+- Blurring is not sufficient — regenerate with seeded fictional data instead.
+
+The clean Developer Edition review org exists for this purpose. See
+[SALESFORCE-ENVIRONMENTS.md](SALESFORCE-ENVIRONMENTS.md) §7.
+
+---
+
+## 8. Static Analysis Posture
+
+| Scan | Configuration | Result |
+| --- | --- | --- |
+| Salesforce Code Analyzer | `AppExchange` + `Recommended:Security` rulesets, `code-analyzer.yml` | 0 violations |
+| Checkmarx | Scan `a0OKX000001JPnJ2AW` | 0 security, 0 quality issues |
+| ESLint | `eslint.config.js` (Salesforce LWC config) | Clean |
+
+PMD's JavaScript engine is disabled in `code-analyzer.yml`: its ECMAScript rules produce false
+positives against modern LWC patterns. LWC JavaScript is linted by ESLint instead. This is a
+documented, deliberate configuration — not a suppression of real findings.
+
+Suppressions are **not** globally disabled (`disable_suppressions: false`), and any in-code
+suppression must carry a comment explaining why.
+
+---
+
+## 9. Reporting a Vulnerability
+
+Do not open a public GitHub issue. See [`../SECURITY.md`](../SECURITY.md) for the private reporting
+channel and expected response times.
+
+---
+
+## 10. Review Checklist for Authorisation Changes
+
+Any pull request touching `PEAccessGate`, `PermissionExplorerController`, `PEKeysetCursor` or
+`PEUserSearchService` must confirm:
+
+- [ ] Every new `@AuraEnabled` method calls the gate as its first statement
+- [ ] No authorisation result is cached in a static
+- [ ] No user input is concatenated into SOQL
+- [ ] Any new sort field is added to the whitelist, not accepted dynamically
+- [ ] Any new inspection path writes an audit row
+- [ ] `npm run scan` reports zero violations
+- [ ] Apex tests cover both the authorised and unauthorised path
