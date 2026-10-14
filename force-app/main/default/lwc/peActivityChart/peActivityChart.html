@@ -1,0 +1,27 @@
+<template>
+    <template lwc:if={hasData}>
+        <div class="chart">
+            <div class="plot">
+                <template for:each={columns} for:item="col">
+                    <div key={col.key} class={col.columnClass} data-key={col.key}
+                         onmouseenter={handleEnter} onmouseleave={handleLeave}
+                         onfocusin={handleEnter} onfocusout={handleLeave}>
+
+                        <template lwc:if={col.showCard}>
+                            <div class="card">
+                                <span class="card_figure">{col.totalDisplay}</span>
+                                <span class="card_label">{col.fullLabel}</span>
+                            </div>
+                        </template>
+
+                        <div class="col_track">
+                            <div class={col.barClass} style={col.barStyle}
+                                 tabindex="0" role="img" aria-label={col.title}></div>
+                        </div>
+                        <span class="col_label">{col.label}</span>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </template>
+</template>

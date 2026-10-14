@@ -77,6 +77,74 @@
     --pe-fs-md:   0.875rem;
     --pe-fs-lg:   1rem;
     --pe-fs-xl:   1.25rem;
+
+    /* ------------------------------------------------------------------
+     * Dashboard register (--d-*)
+     *
+     * The --pe-* tokens above are tuned for dense inspection panels, where
+     * everything competes for the same narrow column. The Home dashboard has
+     * the opposite problem: it needs long quiet stretches and one loud figure,
+     * so it gets its own ink ramp and a single structural rule weight rather
+     * than reusing surface/line pairs built for tables.
+     * ------------------------------------------------------------------ */
+    --d-ink:    #16191f;   /* headings and figures */
+    --d-ink-2:  #4a5260;   /* body and labels */
+    --d-ink-3:  #767f8d;   /* axis ticks, timestamps, secondary meta */
+    --d-rule:   #dcdfe5;   /* the only border weight on the dashboard */
+    --d-field:  #f7f8fa;   /* inset panels and table headers */
+    --d-canvas: #ffffff;
+
+    /* Enterprise blue, one step darker than SLDS #0176D3 so it reads as the
+       product's own accent rather than Salesforce chrome bleeding through. */
+    --d-accent:      #1b4db1;
+    --d-accent-ink:  #12368a;
+    --d-accent-wash: #eef2fb;
+
+    /* One non-blue accent, spent only on the live edge of the audit trail:
+       today's column and the "now" marker. A second colour used anywhere else
+       would stop meaning "this is current". */
+    --d-live:        #0b7f6b;
+    --d-live-wash:   #e7f4f1;
+
+    /* Trend direction. Deliberately muted — an access dashboard reporting more
+       inspections is not reporting an incident, so neither reads as an alarm. */
+    --d-up:          #1b6b3a;
+    --d-down:        #8a6410;
+
+    /* ------------------------------------------------------------------
+     * Dashboard surface register
+     *
+     * Larger radii and a softer rule than the inspection panels use. A data
+     * table wants a tight corner and a visible grid; a dashboard wants room.
+     * Kept separate rather than retuning --pe-radius, which would change every
+     * table in the product.
+     * ------------------------------------------------------------------ */
+    --d-radius:      0.75rem;
+    --d-radius-sm:   0.5rem;
+    --d-radius-xs:   0.375rem;
+    --d-hairline:    #ebedf1;
+    --d-canvas-alt:  #f5f6f8;
+
+    /* Bar tints. The pale fill is the resting state for every column and the
+       full accent is spent on exactly one, so "which day is this" needs no
+       legend. */
+    --d-bar:         #cfdcf4;
+    --d-bar-quiet:   #e7ebf3;
+    --d-bar-peak:    #1b4db1;
+
+    --d-chip-up:     #e8f3ec;
+    --d-chip-down:   #fbf2e0;
+    --d-chip-flat:   #eef0f4;
+
+    /* Severity ramp for the posture tiles.
+
+       Muted on purpose. These signals are configuration findings, not incidents:
+       an org with three unassigned permission sets should not look like an org
+       on fire. Saturated red here would be spent every single day and stop
+       meaning anything by the second week. */
+    --d-sev-alert:   #b4432c;
+    --d-sev-watch:   #b8893a;
+    --d-sev-ok:      #4f9a7d;
 }
 
 .pe-mono {

@@ -48,7 +48,17 @@
     </fieldPermissions>
 
     <tabSettings>
+        <tab>Home</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+
+    <tabSettings>
         <tab>Permission_Explorer</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+
+    <tabSettings>
+        <tab>Data_Visibility</tab>
         <visibility>Visible</visibility>
     </tabSettings>
 

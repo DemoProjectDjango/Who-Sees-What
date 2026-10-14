@@ -1,0 +1,111 @@
+@import 'c/peBase';
+
+:host {
+    display: block;
+}
+
+.chart {
+    padding-top: 2.75rem; /* headroom for the hover card */
+}
+
+.plot {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.375rem;
+    height: 11rem;
+}
+
+.col {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.col_track {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+}
+
+.col_bar {
+    width: 100%;
+    background: var(--d-bar);
+    border-radius: var(--d-radius-sm) var(--d-radius-sm) 0.125rem 0.125rem;
+}
+
+.col_bar-zero {
+    background: var(--d-bar-quiet);
+}
+
+/* The one saturated column. Spent on the busiest day, so the shape of the
+   fortnight reads without a legend or an axis. */
+.col_bar-peak {
+    background: var(--d-bar-peak);
+}
+
+/* Today is the live edge of an audit trail. When it is also the peak the
+   outline sits on the saturated fill and still reads. */
+.col_bar-today {
+    box-shadow: inset 0 0 0 2px var(--d-live);
+}
+
+.col_bar:focus-visible {
+    outline: 2px solid var(--d-accent);
+    outline-offset: 2px;
+}
+
+.col_label {
+    margin-top: 0.5rem;
+    font-size: 0.6875rem;
+    color: var(--d-ink-3);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.col.is-active .col_label {
+    color: var(--d-ink);
+}
+
+/* Hover card, pinned above its own column. */
+.card {
+    position: absolute;
+    bottom: calc(100% - 1.25rem);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 0.0625rem;
+    padding: 0.4375rem 0.625rem;
+    background: var(--d-canvas);
+    border: 1px solid var(--d-hairline);
+    border-radius: var(--d-radius-sm);
+    box-shadow: 0 6px 16px rgba(22, 25, 31, 0.1);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.card_figure {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--d-ink);
+}
+
+.card_label {
+    font-size: 0.6875rem;
+    color: var(--d-ink-3);
+}
+
+@media (max-width: 48rem) {
+    /* Fourteen labels do not fit a phone. The bars stay, the alternating
+       labels go — the hover card still names every column. */
+    .col:nth-child(even) .col_label {
+        visibility: hidden;
+    }
+}

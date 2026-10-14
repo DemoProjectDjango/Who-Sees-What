@@ -31,7 +31,7 @@ public with sharing class PEPermissionResolver {
      * partition, so adding fields to it means already-cached instances are the
      * wrong shape. Bumping the prefix retires them instead of reading them.
      */
-    private static final String CACHE_PREFIX = 'resolvedV3';
+    private static final String CACHE_PREFIX = 'resolvedV4';
 
     /* ---------------------------------------------------------------
      * Result type
@@ -43,6 +43,32 @@ public with sharing class PEPermissionResolver {
         public Set<Id> effectiveParents = new Set<Id>();
         /** Muting sets that apply, via an assigned group. */
         public Set<Id> mutingParents = new Set<Id>();
+
+        /**
+         * Permission sets assigned to the user directly, plus the profile set.
+         *
+         * Muting is a property of a permission set group: it suppresses what
+         * that group's own components grant. It never reaches a profile or a
+         * direct assignment. Holding those Ids here is what lets `applyGrant`
+         * refuse to subtract from a source no group can touch.
+         */
+        public Set<Id> immuneParents = new Set<Id>();
+
+        /**
+         * groupId -> the muting sets that group contains.
+         *
+         * Without this, every muting set in the org looked global and a group's
+         * mute silently revoked grants that came from somewhere else entirely.
+         */
+        public Map<Id, Set<Id>> mutingSetsByGroup = new Map<Id, Set<Id>>();
+
+        /**
+         * component permission set Id -> the assigned groups it arrived through.
+         *
+         * A set can sit in two groups. It is only muted when *every* group it
+         * came through mutes the permission; one unmuted group still grants it.
+         */
+        public Map<Id, Set<Id>> groupsByComponent = new Map<Id, Set<Id>>();
         /** parentId → display source, for chip rendering without re-querying. */
         public Map<Id, PEDto.Source> sourcesById = new Map<Id, PEDto.Source>();
         /** Groups whose Status is not 'Updated' — their effective perms are not settled. */
@@ -153,6 +179,7 @@ public with sharing class PEPermissionResolver {
         PermissionSet ps = profileSets[0];
         r.profilePermSetId = ps.Id;
         r.effectiveParents.add(ps.Id);
+        r.immuneParents.add(ps.Id);
 
         String label = ps.Profile != null && ps.Profile.Name != null ? ps.Profile.Name : ps.Label;
         PEDto.Source src = new PEDto.Source(ps.Id, label, 'profile');
@@ -211,6 +238,10 @@ public with sharing class PEPermissionResolver {
                 continue;
             }
             r.effectiveParents.add(psa.PermissionSetId);
+
+            // Directly assigned: no group owns this grant, so no group's muting
+            // set can take it away.
+            r.immuneParents.add(psa.PermissionSetId);
 
             // Some assignments come back with a null parent — protected
             // permission sets from managed packages the running user cannot
@@ -287,6 +318,15 @@ public with sharing class PEPermissionResolver {
                 if (isMutingType(c.PermissionSet.Type)) {
                     r.mutingParents.add(c.PermissionSetId);
 
+                    // The association this join can see and nothing else can.
+                    // Dropping it is what made muting look org-wide.
+                    if (c.PermissionSetGroupId != null) {
+                        if (!r.mutingSetsByGroup.containsKey(c.PermissionSetGroupId)) {
+                            r.mutingSetsByGroup.put(c.PermissionSetGroupId, new Set<Id>());
+                        }
+                        r.mutingSetsByGroup.get(c.PermissionSetGroupId).add(c.PermissionSetId);
+                    }
+
                     // A muting set has no standalone Setup page — it is only
                     // reachable from inside its group, so the group Id is the
                     // only link worth offering. Captured here because this join
@@ -310,6 +350,15 @@ public with sharing class PEPermissionResolver {
                 }
 
                 r.effectiveParents.add(c.PermissionSetId);
+
+                // Which groups this component arrived through. Accumulated, not
+                // overwritten: a set in two groups survives a mute in one.
+                if (c.PermissionSetGroupId != null) {
+                    if (!r.groupsByComponent.containsKey(c.PermissionSetId)) {
+                        r.groupsByComponent.put(c.PermissionSetId, new Set<Id>());
+                    }
+                    r.groupsByComponent.get(c.PermissionSetId).add(c.PermissionSetGroupId);
+                }
 
                 PEDto.Source src = new PEDto.Source(
                     c.PermissionSetId, c.PermissionSet.Label, 'group'
@@ -386,12 +435,24 @@ public with sharing class PEPermissionResolver {
      * --------------------------------------------------------------- */
 
     /**
-     * OR the permission across effective parents, then subtract muting.
+     * OR the permission across effective parents, then subtract muting that
+     * actually reaches the parent which granted it.
      *
-     * `grantedByParent` maps parentId → whether that parent grants the
+     * `grantedByParent` maps parentId -> whether that parent grants the
      * permission. `mutedByParent` is the same over muting sets. Callers build
      * both from ObjectPermissions / FieldPermissions rows they already have,
-     * so this method does no querying — it is pure logic, and cheap to test.
+     * so this method does no querying - it is pure logic, and cheap to test.
+     *
+     * Muting is scoped to its own permission set group. A muting set suppresses
+     * what the components of *that* group grant; it cannot touch a profile, a
+     * direct assignment, or a component of a different group. Subtracting any
+     * mute from any grant - which is what this did before - reports users as
+     * lacking access they actually hold, the one direction an access audit must
+     * never get wrong.
+     *
+     * Back-compatible on purpose: a muting set with no known group (an orphan,
+     * or a synthetic fixture) still applies globally, because an unexplained
+     * mute is safer treated as real than discarded.
      *
      * @param permName Salesforce permission API name being evaluated.
      * @param permLabel Admin-facing label for the permission result.
@@ -413,30 +474,147 @@ public with sharing class PEPermissionResolver {
     ) {
         PEDto.Grant g = new PEDto.Grant(permName, permLabel);
 
+        List<Id> grantingParents = new List<Id>();
         for (Id parentId : r.effectiveParents) {
-            if (grantedByParent.get(parentId) == true) {
-                g.granted = true;
-                PEDto.Source src = r.sourcesById.get(parentId);
-                if (src != null) {
-                    g.sources.add(src);
+            if (grantedByParent != null && grantedByParent.get(parentId) == true) {
+                grantingParents.add(parentId);
+            }
+        }
+
+        // Nothing granted it, so there is nothing for muting to take away.
+        // Flagging `muted` here would invent a revocation that never happened.
+        if (grantingParents.isEmpty()) {
+            return g;
+        }
+
+        MuteScope scope = buildMuteScope(r, mutedByParent);
+
+        List<Id> survivors = new List<Id>();
+        if (!scope.hasGlobalMute) {
+            for (Id parentId : grantingParents) {
+                if (survivesMuting(r, parentId, scope.mutingGroupIds)) {
+                    survivors.add(parentId);
                 }
             }
         }
 
-        if (g.granted && mutedByParent != null) {
-            for (Id mutingId : r.mutingParents) {
-                if (mutedByParent.get(mutingId) == true) {
-                    g.granted = false;
-                    g.muted = true;
-                    PEDto.Source src = r.sourcesById.get(mutingId);
-                    if (src != null) {
-                        g.sources.add(src);
-                    }
-                    break;
-                }
-            }
+        if (!survivors.isEmpty()) {
+            g.granted = true;
+            addSources(g, r, survivors);
+            return g;
         }
 
+        // Granted somewhere, and every granting source was reachable by a mute.
+        // Both halves are shown: a revoke decision needs the grant and the mute.
+        g.granted = false;
+        g.muted   = true;
+        addSources(g, r, grantingParents);
+        addSources(g, r, scope.responsibleMutingSets);
         return g;
+    }
+
+    /** Which muting sets fired for this permission, and how far each one reaches. */
+    private class MuteScope {
+        /** Muting sets with no known group - treated as applying everywhere. */
+        Boolean hasGlobalMute = false;
+        /** Groups whose muting sets suppress this permission. */
+        Set<Id> mutingGroupIds = new Set<Id>();
+        /** Muting sets that actually fired, for source chips. */
+        List<Id> responsibleMutingSets = new List<Id>();
+    }
+
+    /**
+     * Works out which groups mute this permission, from the muting sets that fired.
+     *
+     * @param r Effective permission context for the selected user.
+     * @param mutedByParent Permission mute flags keyed by muting permission set Id.
+     * @return The reach of every muting set that mutes this permission.
+     */
+    private static MuteScope buildMuteScope(Resolved r, Map<Id, Boolean> mutedByParent) {
+        MuteScope scope = new MuteScope();
+        if (mutedByParent == null || r.mutingParents == null || r.mutingParents.isEmpty()) {
+            return scope;
+        }
+
+        Map<Id, Set<Id>> byGroup = r.mutingSetsByGroup == null
+            ? new Map<Id, Set<Id>>()
+            : r.mutingSetsByGroup;
+
+        for (Id mutingId : r.mutingParents) {
+            if (mutedByParent.get(mutingId) != true) {
+                continue;
+            }
+            scope.responsibleMutingSets.add(mutingId);
+
+            Boolean placed = false;
+            for (Id groupId : byGroup.keySet()) {
+                if (byGroup.get(groupId).contains(mutingId)) {
+                    scope.mutingGroupIds.add(groupId);
+                    placed = true;
+                }
+            }
+            if (!placed) {
+                scope.hasGlobalMute = true;
+            }
+        }
+        return scope;
+    }
+
+    /**
+     * Decides whether one granting parent keeps its grant once muting is applied.
+     *
+     * @param r Effective permission context for the selected user.
+     * @param parentId Permission set Id that granted the permission.
+     * @param mutingGroupIds Groups whose muting sets suppress this permission.
+     * @return True when the grant stands, false when a group that owns it mutes it.
+     */
+    private static Boolean survivesMuting(Resolved r, Id parentId, Set<Id> mutingGroupIds) {
+        // Profile and direct assignments: outside every group's reach.
+        if (r.immuneParents != null && r.immuneParents.contains(parentId)) {
+            return true;
+        }
+
+        Set<Id> owningGroups = r.groupsByComponent == null
+            ? null
+            : r.groupsByComponent.get(parentId);
+
+        // No group association recorded. Pre-group callers and synthetic fixtures
+        // land here, and so would a resolver pass that failed to capture the join -
+        // in which case the mute is the safer answer than silently keeping access.
+        if (owningGroups == null || owningGroups.isEmpty()) {
+            return mutingGroupIds.isEmpty();
+        }
+
+        // One unmuted group is enough. The user is assigned to both.
+        for (Id groupId : owningGroups) {
+            if (!mutingGroupIds.contains(groupId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Appends source chips for the given parents, skipping ones already credited.
+     *
+     * @param g Grant row being explained, mutated in place.
+     * @param r Effective permission context holding the source chips.
+     * @param parentIds Permission set Ids to credit on the grant.
+     */
+    private static void addSources(PEDto.Grant g, Resolved r, List<Id> parentIds) {
+        Set<Id> already = new Set<Id>();
+        for (PEDto.Source existing : g.sources) {
+            already.add(existing.parentId);
+        }
+        for (Id parentId : parentIds) {
+            if (already.contains(parentId)) {
+                continue;
+            }
+            PEDto.Source src = r.sourcesById.get(parentId);
+            if (src != null) {
+                g.sources.add(src);
+                already.add(parentId);
+            }
+        }
     }
 }

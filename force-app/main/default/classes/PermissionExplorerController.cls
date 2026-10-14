@@ -248,6 +248,175 @@ public with sharing class PermissionExplorerController {
     }
 
     /**
+     * Same counts, cache bypassed. Wired to the refresh control on Home so an
+     * admin who has just created a permission set can see it reflected without
+     * waiting out the TTL.
+     *
+     * @return Six independently-optional org counts, freshly computed.
+     */
+    @AuraEnabled
+    public static PEDto.OrgStats refreshOrgStats() {
+        try {
+            PEAccessGate.assertAuthorised();
+            return PEOrgStatsService.getStats(true);
+        } catch (Exception e) {
+            throw toAura(e);
+        }
+    }
+
+    /* ---------------------------------------------------------------
+     * Record-level reach
+     * --------------------------------------------------------------- */
+
+    /**
+     * How many records of one object the selected user can reach.
+     *
+     * Logged, unlike the posture signals: this names a specific person and asks
+     * how much data they can see, which is exactly the kind of question the
+     * audit trail exists to record.
+     *
+     * @param userId The user being inspected.
+     * @param objectApiName API name of the object to measure.
+     * @return Reach figures with an explicit basis for each one.
+     */
+    @AuraEnabled
+    public static PERecordAccessService.Reach getRecordReach(
+        Id userId, String objectApiName
+    ) {
+        try {
+            PEAccessGate.assertAuthorisedAndLog(
+                'VIEW_RECORD_REACH', userId, objectApiName
+            );
+            PEAccessGate.assertInspectable(userId);
+            return PERecordAccessService.getReach(userId, objectApiName);
+        } catch (Exception e) {
+            throw toAura(e);
+        }
+    }
+
+    /**
+     * Why the selected user reaches what they reach, grouped by share reason.
+     *
+     * @param userId The user being inspected.
+     * @param objectApiName API name of the object.
+     * @return Reason buckets, largest first.
+     */
+    @AuraEnabled
+    public static List<PERecordListService.ReasonBucket> getReasonBreakdown(
+        Id userId, String objectApiName
+    ) {
+        try {
+            PEAccessGate.assertAuthorised();
+            PEAccessGate.assertInspectable(userId);
+            return PERecordListService.getReasonBreakdown(userId, objectApiName);
+        } catch (Exception e) {
+            throw toAura(e);
+        }
+    }
+
+    /**
+     * One page of records with the selected user's access to each.
+     *
+     * Logged once per page: paging through someone's visible data is the same
+     * act as inspecting it, and a trail that records only the first page would
+     * understate what was looked at.
+     *
+     * @param userId The user being inspected.
+     * @param objectApiName API name of the object.
+     * @param mode ACCESSIBLE or ALL.
+     * @param searchTerm Free text, ALL mode only.
+     * @param sortField Field to order by.
+     * @param cursor Cursor from the previous page, or null.
+     * @return A page of records plus the next cursor.
+     */
+    @AuraEnabled
+    public static PERecordListService.RecordPage getRecordPage(
+        Id userId, String objectApiName, String mode,
+        String searchTerm, String sortField, String cursor
+    ) {
+        try {
+            PEAccessGate.assertAuthorisedAndLog(
+                'VIEW_RECORD_LIST', userId, objectApiName
+            );
+            PEAccessGate.assertInspectable(userId);
+            return PERecordListService.getPage(
+                userId, objectApiName, mode, searchTerm, sortField, cursor
+            );
+        } catch (Exception e) {
+            throw toAura(e);
+        }
+    }
+
+    /* ---------------------------------------------------------------
+     * Posture
+     * --------------------------------------------------------------- */
+
+    /**
+     * Actionable access-posture signals for the Home dashboard.
+     *
+     * Not logged. These are org-level counts about configuration, not an
+     * inspection of any person, so there is no subject to record.
+     *
+     * @return Posture signals plus licence utilisation.
+     */
+    @AuraEnabled
+    public static PEPostureService.Posture getPosture() {
+        try {
+            PEAccessGate.assertAuthorised();
+            return PEPostureService.get();
+        } catch (Exception e) {
+            throw toAura(e);
+        }
+    }
+
+    /**
+     * Same signals, cache bypassed. Wired to the refresh control on Home.
+     *
+     * @return Freshly computed posture signals.
+     */
+    @AuraEnabled
+    public static PEPostureService.Posture refreshPosture() {
+        try {
+            PEAccessGate.assertAuthorised();
+            return PEPostureService.get(true);
+        } catch (Exception e) {
+            throw toAura(e);
+        }
+    }
+
+    /* ---------------------------------------------------------------
+     * Inspection log
+     * --------------------------------------------------------------- */
+
+    /**
+     * Recent inspection history for the Home panel.
+     *
+     * Not cacheable: the whole point of an audit panel is that it reflects what
+     * just happened, and a client-cached page would show an admin a trail that
+     * predates their own last inspection.
+     *
+     * Reading the log is itself gated but deliberately NOT logged. Logging a
+     * read of the log makes the trail grow every time someone looks at it, and
+     * an audit trail that records its own observation is noise, not evidence.
+     *
+     * @param inspectorId Optional filter to one inspector.
+     * @param subjectId Optional filter to one inspected user.
+     * @param rowLimit Maximum rows to return; the service clamps this.
+     * @return A page of inspection history with header counts.
+     */
+    @AuraEnabled
+    public static PEInspectionLogService.LogPage getRecentInspections(
+        Id inspectorId, Id subjectId, Integer rowLimit
+    ) {
+        try {
+            PEAccessGate.assertAuthorised();
+            return PEInspectionLogService.getRecent(inspectorId, subjectId, rowLimit);
+        } catch (Exception e) {
+            throw toAura(e);
+        }
+    }
+
+    /**
      * Lists the users currently holding a given license, for the
      * "view users" drill-down on the License Inspector table.
      *

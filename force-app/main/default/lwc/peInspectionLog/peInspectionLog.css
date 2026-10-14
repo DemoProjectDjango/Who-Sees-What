@@ -1,0 +1,90 @@
+@import 'c/peBase';
+
+:host {
+    display: block;
+    font-family: var(--pe-font);
+}
+
+/* The table scrolls inside its own box so a long detail string never makes the
+   page scroll sideways. */
+.scroller {
+    overflow-x: auto;
+    max-height: 30rem;
+    overflow-y: auto;
+    border-top: 1px solid var(--d-hairline);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+}
+
+.table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--d-ink-2);
+    background: var(--d-canvas-alt);
+    border-bottom: 1px solid var(--d-hairline);
+    white-space: nowrap;
+}
+
+.table td {
+    padding: 0.5rem 0.75rem;
+    color: var(--d-ink);
+    border-bottom: 1px solid var(--d-hairline);
+    vertical-align: baseline;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table tbody tr:hover td {
+    background: var(--d-canvas-alt);
+}
+
+.col_when {
+    width: 7.5rem;
+}
+
+.col_detail {
+    width: 40%;
+}
+
+.cell_when {
+    white-space: nowrap;
+    color: var(--d-ink-3);
+    font-variant-numeric: tabular-nums;
+}
+
+.cell_person {
+    font-weight: 500;
+}
+
+.cell_subject.is-none {
+    color: var(--d-ink-3);
+    font-style: italic;
+}
+
+.cell_action {
+    color: var(--d-ink-2);
+    white-space: nowrap;
+}
+
+/* Monospace earns its place here: detail values are record Ids and API names,
+   where character-level comparison is the actual task. */
+.cell_detail {
+    max-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--pe-mono);
+    font-size: 0.75rem;
+    color: var(--d-ink-2);
+}

@@ -1,11 +1,24 @@
 <template>
     <template lwc:if={hasCards}>
-        <div class="statsbar">
-            <template for:each={cards} for:item="c">
-                <div key={c.key} class="stat">
-                    <p class="stat_label">{c.label}</p>
-                    <p class="stat_value">{c.display}</p>
-                </div>
+        <div class="groups">
+            <template for:each={groups} for:item="group">
+                <section key={group.key} class="group">
+                    <h3 class="group_title">{group.title}</h3>
+
+                    <ul class="figures">
+                        <template for:each={group.figures} for:item="figure">
+                            <li key={figure.key} class="figure">
+                                <div class="figure_head">
+                                    <span class="figure_label">{figure.label}</span>
+                                    <span class="figure_value">{figure.value}</span>
+                                </div>
+                                <div class="track">
+                                    <div class="track_fill" style={figure.barStyle}></div>
+                                </div>
+                            </li>
+                        </template>
+                    </ul>
+                </section>
             </template>
         </div>
     </template>

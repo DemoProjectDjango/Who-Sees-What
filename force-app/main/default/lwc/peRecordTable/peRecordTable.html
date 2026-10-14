@@ -1,0 +1,54 @@
+<template>
+    <template lwc:if={loading}>
+        <p class="state">Loading records…</p>
+    </template>
+
+    <template lwc:elseif={hasRows}>
+        <div class="wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Record</th>
+                        <th scope="col" class="col_owner">Owner</th>
+                        <template lwc:if={showReason}>
+                            <th scope="col" class="col_reason">Reason</th>
+                        </template>
+                        <th scope="col" class="col_access">Access</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template for:each={displayRows} for:item="row">
+                        <tr key={row.recordId} class={row.rowClass}>
+                            <td class="cell_label" title={row.label}>{row.label}</td>
+                            <td class="cell_owner">{row.ownerDisplay}</td>
+                            <template lwc:if={showReason}>
+                                <td class="cell_reason">{row.reasonLabel}</td>
+                            </template>
+                            <td class="cell_access">
+                                <span class={row.readClass} title="Read">R</span>
+                                <span class={row.editClass} title="Edit">W</span>
+                                <span class={row.deleteClass} title={row.deleteTitle}>D</span>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+
+        <template lwc:if={hasFlagged}>
+            <p class="flag_note">{flaggedNote}</p>
+        </template>
+
+        <template lwc:if={hasMore}>
+            <div class="more">
+                <button class="more_btn" type="button" onclick={handleMore} disabled={loadingMore}>
+                    {moreLabel}
+                </button>
+            </div>
+        </template>
+    </template>
+
+    <template lwc:else>
+        <p class="state">No records to show.</p>
+    </template>
+</template>

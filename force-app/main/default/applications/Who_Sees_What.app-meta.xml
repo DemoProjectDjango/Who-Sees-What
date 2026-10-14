@@ -12,8 +12,11 @@
     <isOmniPinnedViewEnabled>false</isOmniPinnedViewEnabled>
     <label>Who Sees What</label>
     <navType>Standard</navType>
-    <tabs>Permission_Explorer</tabs>
-    <tabs>License_Inspector</tabs>
+    <tabs>Home</tabs>
     <tabs>Getting_Started</tabs>
+    <tabs>Permission_Explorer</tabs>
+    <tabs>Data_Visibility</tabs>
+    <tabs>License_Inspector</tabs>
+
     <uiType>Lightning</uiType>
 </CustomApplication>
