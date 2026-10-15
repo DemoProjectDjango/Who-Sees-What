@@ -5,7 +5,7 @@ How grants and muting combine into an answer. This is the product's core logic; 
 
 ```mermaid
 flowchart TD
-    START([resolve userId]) --> CACHE{"Cache hit?<br/>resolvedV3:token:userId"}
+    START([resolve userId]) --> CACHE{"Cache hit?<br/>resolvedV4:token:userId"}
     CACHE -->|yes| DONE([return Resolved])
 
     CACHE -->|no| PROF["Load profile as PermissionSet<br/>WHERE ProfileId = user.ProfileId"]

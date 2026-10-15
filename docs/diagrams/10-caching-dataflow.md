@@ -14,7 +14,7 @@ flowchart TD
     TOKEN --> KEY["Build key:<br/>safeKey(prefix : token : subject)"]
     KEY --> SCOPE{"Shared across<br/>administrators?"}
 
-    SCOPE -->|yes| ORGP["Org partition<br/>resolvedV3, orgStats, licenses"]
+    SCOPE -->|yes| ORGP["Org partition<br/>resolvedV4, orgStats, licenses"]
     SCOPE -->|no| SESSP["Session partition<br/>per-user working state"]
 
     ORGP --> HIT{"Hit?"}
@@ -28,7 +28,7 @@ flowchart TD
         direction TB
         UIREF["Administrator clicks Refresh"] --> BUMP["PECacheManager.bumpVersionToken()"]
         FORCE["resolveUser(forceRefresh = true)"] --> SKIP["Bypass read, recompute, overwrite"]
-        SHAPE["Cached object's shape changed"] --> PREFIX["<b>Bump CACHE_PREFIX</b><br/>resolvedV3 → resolvedV4"]
+        SHAPE["Cached object's shape changed"] --> PREFIX["<b>Bump CACHE_PREFIX</b><br/>resolvedV4 → resolvedV5"]
         BUMP --> ALLGONE["Every key containing the old token<br/>becomes unreachable at once"]
         PREFIX --> ALLGONE
     end
@@ -48,7 +48,7 @@ flowchart TD
 | Key shape | Partition | Holds | Invalidated by |
 | --- | --- | --- | --- |
 | `orgVersionToken` | Org | The token itself | `bumpVersionToken()` |
-| `resolvedV3:<token>:<userId>` | Org | `PEPermissionResolver.Resolved` | token bump · `forceRefresh` · TTL |
+| `resolvedV4:<token>:<userId>` | Org | `PEPermissionResolver.Resolved` | token bump · `forceRefresh` · TTL |
 | `orgStats:<token>` | Org | `PEDto.OrgStats` | token bump · TTL |
 | `licenses:<token>` | Org | Serialised license rows | token bump · TTL |
 

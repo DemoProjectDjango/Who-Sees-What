@@ -34,6 +34,32 @@ Pass `--target-org wsw-dev` explicitly regardless.
 **Cause.** A UTF-8 BOM, usually from PowerShell's `Set-Content` or `Out-File`.
 **Fix.** Write with `[System.IO.File]::WriteAllText` and a `UTF8Encoding($false)` instance.
 
+### A class named `Something (1).cls` appears in `force-app`
+
+**Cause.** A browser download landed in the source folder and was committed. It has no
+`-meta.xml` sidecar and its name is not a valid Apex identifier.
+**Fix.** Delete it and commit. Nothing in Salesforce can consume it, and `sf project deploy` will
+either fail or silently skip it, which is worse — you deploy the *other* copy and wonder why your
+edit had no effect.
+
+```powershell
+git rm "force-app/main/default/classes/PEInspectionLogService (1).cls"
+```
+
+### A CSS-only or JS-only LWC bundle is rejected
+
+**Cause.** A folder under `lwc/` containing, for example, only `.css` and `.js-meta.xml`.
+Salesforce requires a `.js` and `.html` for a renderable component; a shared-stylesheet folder is
+not a component.
+**Fix.** Either give the bundle a real `.js` and `.html`, or move the stylesheet into the component
+that imports it. Check before every build:
+
+```powershell
+Get-ChildItem force-app/main/default/lwc -Directory | Where-Object {
+  -not (Test-Path "$($_.FullName)\$($_.Name).js")
+}
+```
+
 ### Static resource deploy fails
 
 **Cause.** Missing `.resource-meta.xml` sidecar, or the file exceeds practical size limits.
@@ -96,6 +122,29 @@ deserialises without error and silently loses fields.
 
 ---
 
+## Namespaces
+
+### Dynamic SOQL works unmanaged, breaks in the managed package
+
+**Cause.** Dynamic SOQL does not reliably prefix unqualified custom object or field identifiers
+with the package namespace. `SELECT Action__c FROM PE_Inspection_Log__c` compiles in the dev org
+and fails for a subscriber, where the names are `twinforce__Action__c` and
+`twinforce__PE_Inspection_Log__c`.
+**Fix.** Never write the names. Ask describe for them:
+
+```apex
+String objectName   = Schema.SObjectType.PE_Inspection_Log__c.getName();
+String actionField  = Schema.SObjectType.PE_Inspection_Log__c.fields.Action__c.getName();
+String inspectorRel = Schema.SObjectType.PE_Inspection_Log__c
+                          .fields.Inspector_User__c.getRelationshipName();
+```
+
+Describe returns the fully qualified name in both contexts. This is why
+`PEInspectionLogService` builds its query text rather than using four static SOQL variants.
+See [adr/0012-namespace-safe-dynamic-soql.md](adr/0012-namespace-safe-dynamic-soql.md).
+
+---
+
 ## Static Analysis
 
 ### Code Analyzer reports hundreds of findings
@@ -112,6 +161,22 @@ npm run scan   # AppExchange + Recommended:Security, per code-analyzer.yml
 **Cause.** PMD's ECMAScript rules mis-handle modern LWC patterns.
 **Fix.** Already handled — `code-analyzer.yml` disables the ESLint engine and empties PMD's
 JavaScript extensions. LWC JS is linted by the project's own ESLint config. Do not re-enable it.
+
+### `AvoidHardcodingId` fires in a test class
+
+**Cause.** A literal 15- or 18-character Id in test data.
+**Fix.** Generate one instead. The pattern used elsewhere in this codebase:
+
+```apex
+Id fakeId = Id.valueOf(
+    String.valueOf(User.SObjectType.getDescribe().getKeyPrefix()) +
+    '0'.repeat(12 - String.valueOf(counter).length()) + counter
+);
+```
+
+The rule sits outside the AppExchange and Security rulesets, so it does not block a review — but
+`npm run scan` is supposed to come back empty, and an expected finding trains everyone to ignore
+the output.
 
 ### PMD ApexDoc rule flags a void method
 

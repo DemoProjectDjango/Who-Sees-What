@@ -16,6 +16,10 @@ Status is one of **Proposed**, **Accepted**, **Superseded by ADR-XXXX**, **Depre
 | [0006](0006-single-auraenabled-controller.md) | One `@AuraEnabled` controller as the sole LWC-facing surface | Accepted |
 | [0007](0007-defer-record-types-to-metadata-api.md) | Defer record type and layout visibility to the Apex Metadata API | Accepted |
 | [0008](0008-2gp-shared-namespace.md) | 2GP managed package sharing the `twinforce` namespace | Accepted |
+| [0009](0009-record-reach-approximation.md) | Approximate record reach, and label the approximation | Accepted |
+| [0010](0010-inspection-log-read-path.md) | Make the inspection log readable, and do not log the read | Accepted |
+| [0011](0011-posture-signals-must-be-actionable.md) | A posture signal is a count with a remedy, or it is not a signal | Accepted |
+| [0012](0012-namespace-safe-dynamic-soql.md) | Resolve names through `Schema.SObjectType` in all dynamic SOQL | Accepted |
 
 ## Writing a new ADR
 
