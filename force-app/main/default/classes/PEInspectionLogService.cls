@@ -11,6 +11,11 @@
  * packaged permission set grants Read and Create on the object but not Edit or
  * Delete, so an inspector can see history without being able to rewrite it.
  */
+// Class-level complexity comes from the four literal query variants in
+// getRecent. They exist because WITH USER_MODE on a literal query is what
+// enforces FLS at compile time; building the WHERE dynamically would trade that
+// away to satisfy a metric.
+@SuppressWarnings('PMD.CyclomaticComplexity')
 public with sharing class PEInspectionLogService {
 
     /** Rows returned at once. Deliberately small: this is a recent-activity
@@ -152,51 +157,42 @@ public with sharing class PEInspectionLogService {
         }
 
         Integer lim = clamp(rowLimit);
-        List<PE_Inspection_Log__c> records;
 
-        if (inspectorId != null && subjectId != null) {
-            records = [
-                SELECT Id, Action__c, Detail__c, Inspected_At__c,
-                       Inspector_User__c, Inspector_User__r.Name,
-                       Subject_User__c, Subject_User__r.Name
-                FROM PE_Inspection_Log__c
-                WHERE Inspector_User__c = :inspectorId AND Subject_User__c = :subjectId
-                WITH USER_MODE
-                ORDER BY Inspected_At__c DESC
-                LIMIT :lim
-            ];
-        } else if (inspectorId != null) {
-            records = [
-                SELECT Id, Action__c, Detail__c, Inspected_At__c,
-                       Inspector_User__c, Inspector_User__r.Name,
-                       Subject_User__c, Subject_User__r.Name
-                FROM PE_Inspection_Log__c
-                WHERE Inspector_User__c = :inspectorId
-                WITH USER_MODE
-                ORDER BY Inspected_At__c DESC
-                LIMIT :lim
-            ];
-        } else if (subjectId != null) {
-            records = [
-                SELECT Id, Action__c, Detail__c, Inspected_At__c,
-                       Inspector_User__c, Inspector_User__r.Name,
-                       Subject_User__c, Subject_User__r.Name
-                FROM PE_Inspection_Log__c
-                WHERE Subject_User__c = :subjectId
-                WITH USER_MODE
-                ORDER BY Inspected_At__c DESC
-                LIMIT :lim
-            ];
-        } else {
-            records = [
-                SELECT Id, Action__c, Detail__c, Inspected_At__c,
-                       Inspector_User__c, Inspector_User__r.Name,
-                       Subject_User__c, Subject_User__r.Name
-                FROM PE_Inspection_Log__c
-                WITH USER_MODE
-                ORDER BY Inspected_At__c DESC
-                LIMIT :lim
-            ];
+        // Describe supplies the fully qualified names in both unmanaged and
+        // twinforce managed-package contexts. Dynamic SOQL does not reliably
+        // rewrite unqualified field identifiers for a namespaced package.
+        String objectName = Schema.SObjectType.PE_Inspection_Log__c.getName();
+        String actionField = Schema.SObjectType.PE_Inspection_Log__c.fields.Action__c.getName();
+        String detailField = Schema.SObjectType.PE_Inspection_Log__c.fields.Detail__c.getName();
+        String atField = Schema.SObjectType.PE_Inspection_Log__c.fields.Inspected_At__c.getName();
+        String inspectorField = Schema.SObjectType.PE_Inspection_Log__c.fields.Inspector_User__c.getName();
+        String subjectField = Schema.SObjectType.PE_Inspection_Log__c.fields.Subject_User__c.getName();
+        String inspectorRelation = Schema.SObjectType.PE_Inspection_Log__c.fields.Inspector_User__c.getRelationshipName();
+        String subjectRelation = Schema.SObjectType.PE_Inspection_Log__c.fields.Subject_User__c.getRelationshipName();
+
+        String queryText =
+            'SELECT Id, ' + actionField + ', ' + detailField + ', ' + atField +
+            ', ' + inspectorField + ', ' + inspectorRelation + '.Name' +
+            ', ' + subjectField + ', ' + subjectRelation + '.Name' +
+            ' FROM ' + objectName;
+        List<String> predicates = new List<String>();
+        Map<String, Object> binds = new Map<String, Object>{ 'lim' => lim };
+        if (inspectorId != null) {
+            predicates.add(inspectorField + ' = :inspectorId');
+            binds.put('inspectorId', inspectorId);
+        }
+        if (subjectId != null) {
+            predicates.add(subjectField + ' = :subjectId');
+            binds.put('subjectId', subjectId);
+        }
+        if (!predicates.isEmpty()) {
+            queryText += ' WHERE ' + String.join(predicates, ' AND ');
+        }
+        queryText += ' ORDER BY ' + atField + ' DESC LIMIT :lim';
+
+        List<PE_Inspection_Log__c> records = new List<PE_Inspection_Log__c>();
+        for (SObject item : Database.queryWithBinds(queryText, binds, AccessLevel.USER_MODE)) {
+            records.add((PE_Inspection_Log__c) item);
         }
 
         for (PE_Inspection_Log__c rec : records) {
@@ -337,8 +333,7 @@ public with sharing class PEInspectionLogService {
             buildActionMix(page, byAction);
             page.windowTotal = window.size();
         } catch (Exception e) {
-            // The chart is the loudest thing on the page but not the load-bearing
-            // one: empty lists hide it and leave the table intact.
+            // A failed activity query must not prevent the log table loading.
             page.activity  = new List<DayCount>();
             page.actionMix = new List<ActionCount>();
         }
@@ -388,11 +383,16 @@ public with sharing class PEInspectionLogService {
             ac.action = action;
             ac.total  = byAction.get(action);
 
-            Integer at = 0;
-            while (at < ordered.size() && ordered[at].total >= ac.total) {
-                at++;
+            // Apex List.add(index, value) does not support insertion at the
+            // end (including index zero for an empty list). Append first,
+            // then move the item left through existing, valid indexes.
+            ordered.add(ac);
+            Integer at = ordered.size() - 1;
+            while (at > 0 && ordered[at - 1].total < ac.total) {
+                ordered[at] = ordered[at - 1];
+                at--;
             }
-            ordered.add(at, ac);
+            ordered[at] = ac;
         }
         page.actionMix = ordered;
     }

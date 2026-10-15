@@ -265,4 +265,96 @@ private class PermissionExplorerControllerTest {
         }
         Test.stopTest();
     }
+
+    /* ---------------------------------------------------------------
+     * Release regression: newer @AuraEnabled entry points
+     * --------------------------------------------------------------- */
+
+    @IsTest
+    static void unauthorisedCallerCannotUseNewerEndpoints() {
+        User denied = userByAlias(UNAUTHORISED_ALIAS);
+        Id subjectId = userByAlias(AUTHORISED_ALIAS).Id;
+        Integer rejected = 0;
+
+        System.runAs(denied) {
+            rejected += expectNewEndpointDenied('getLicenses', subjectId);
+            rejected += expectNewEndpointDenied('getOrgStats', subjectId);
+            rejected += expectNewEndpointDenied('refreshOrgStats', subjectId);
+            rejected += expectNewEndpointDenied('getRecordReach', subjectId);
+            rejected += expectNewEndpointDenied('getReasonBreakdown', subjectId);
+            rejected += expectNewEndpointDenied('getRecordPage', subjectId);
+            rejected += expectNewEndpointDenied('getPosture', subjectId);
+            rejected += expectNewEndpointDenied('refreshPosture', subjectId);
+            rejected += expectNewEndpointDenied('getRecentInspections', subjectId);
+            rejected += expectNewEndpointDenied('getLicenseUsers', subjectId);
+        }
+
+        Assert.areEqual(10, rejected,
+            'Every recently added controller endpoint must enforce the app gate');
+    }
+
+    private static Integer expectNewEndpointDenied(String endpoint, Id subjectId) {
+        Boolean wasRejected = false;
+        try {
+            switch on endpoint {
+                when 'getLicenses' {
+                    PermissionExplorerController.getLicenses();
+                }
+                when 'getOrgStats' {
+                    PermissionExplorerController.getOrgStats();
+                }
+                when 'refreshOrgStats' {
+                    PermissionExplorerController.refreshOrgStats();
+                }
+                when 'getRecordReach' {
+                    PermissionExplorerController.getRecordReach(subjectId, 'Account');
+                }
+                when 'getReasonBreakdown' {
+                    PermissionExplorerController.getReasonBreakdown(subjectId, 'Account');
+                }
+                when 'getRecordPage' {
+                    PermissionExplorerController.getRecordPage(
+                        subjectId, 'Account', true, null, 'Name', null
+                    );
+                }
+                when 'getPosture' {
+                    PermissionExplorerController.getPosture();
+                }
+                when 'refreshPosture' {
+                    PermissionExplorerController.refreshPosture();
+                }
+                when 'getRecentInspections' {
+                    PermissionExplorerController.getRecentInspections(null, null, 10);
+                }
+                when 'getLicenseUsers' {
+                    PermissionExplorerController.getLicenseUsers(subjectId, 'UserLicense');
+                }
+                when else {
+                    Assert.fail('Unknown endpoint: ' + endpoint);
+                }
+            }
+        } catch (AuraHandledException expected) {
+            wasRejected = true;
+        }
+        Assert.isTrue(wasRejected, endpoint + ' should reject an unauthorised user');
+        return 1;
+    }
+
+    @IsTest
+    static void authorisedCallerCanReadNewDashboardContracts() {
+        User authorised = userByAlias(AUTHORISED_ALIAS);
+        System.runAs(authorised) {
+            Test.startTest();
+            PEDto.OrgStats stats = PermissionExplorerController.getOrgStats();
+            PEPostureService.Posture posture = PermissionExplorerController.getPosture();
+            PEInspectionLogService.LogPage activity =
+                PermissionExplorerController.getRecentInspections(null, null, 10);
+            Test.stopTest();
+
+            Assert.isNotNull(stats, 'Org stats must return a dashboard payload');
+            Assert.isNotNull(posture, 'Posture must return a dashboard payload');
+            Assert.isNotNull(activity, 'Inspection history must return a page');
+        }
+    }
+
 }

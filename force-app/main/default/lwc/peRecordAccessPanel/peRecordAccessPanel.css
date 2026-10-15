@@ -507,3 +507,36 @@
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
+
+/* -------------------------- the reachable filter -------------------------- */
+
+.filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4375rem;
+    font-size: var(--pe-fs-sm);
+    color: var(--pe-ink);
+    cursor: pointer;
+    user-select: none;
+}
+
+.filter input {
+    width: 0.875rem;
+    height: 0.875rem;
+    margin: 0;
+    cursor: pointer;
+}
+
+/* On a public object every row carries the same reason, which is a fact about
+   the object rather than the record. It is stated once here instead of fifty
+   thousand times down a column. */
+.uniform {
+    margin: 0 0 0.625rem;
+    padding: 0.4375rem 0.625rem;
+    font-size: var(--pe-fs-xs);
+    line-height: 1.5;
+    color: var(--pe-ink-muted);
+    background: var(--pe-surface-sunken);
+    border: 1px solid var(--pe-line);
+    border-radius: var(--pe-radius);
+}

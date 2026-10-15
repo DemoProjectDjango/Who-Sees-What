@@ -21,34 +21,49 @@ private class PEMutingMatrixTest {
      * --------------------------------------------------------------- */
 
     @IsTest
-    static void row1_profileOnly() {
-        PEPermissionResolver.Resolved r = newResolved();
-        Id profileSet = addProfile(r, 1);
+    static void row1ProfileOnly() {
+        System.runAs(new User(Id = UserInfo.getUserId())) {
+            PEPermissionResolver.Resolved r = newResolved();
+            Id profileSet = addProfile(r, 1);
 
-        PEDto.Grant g = run(r, granted(profileSet), noMutes());
+            PEDto.Grant g = run(r, granted(profileSet), noMutes());
 
-        assertHasIt(g, 'profile grant with no muting in play');
+            Assert.isTrue(g.granted, 'profile grant with no muting in play');
+            Assert.isFalse(g.muted, 'nothing was effectively muted: profile grant with no muting in play');
+        }
     }
 
     @IsTest
-    static void row2_directPermissionSetOnly() {
-        PEPermissionResolver.Resolved r = newResolved();
-        Id direct = addDirect(r, 2);
+    static void row2DirectPermissionSetOnly() {
+        System.runAs(new User(Id = UserInfo.getUserId())) {
+            PEPermissionResolver.Resolved r = newResolved();
+            Id direct = addDirect(r, 2);
 
-        PEDto.Grant g = run(r, granted(direct), noMutes());
+            PEDto.Grant g = run(r, granted(direct), noMutes());
 
-        assertHasIt(g, 'direct assignment with no muting in play');
+            Assert.isTrue(g.granted, 'direct assignment with no muting in play');
+            Assert.isFalse(
+                g.muted,
+                'nothing was effectively muted: direct assignment with no muting in play'
+            );
+        }
     }
 
     @IsTest
-    static void row3_groupComponentOnly() {
-        PEPermissionResolver.Resolved r = newResolved();
-        Id groupA    = fakeGroupId(1);
-        Id component = addComponent(r, 3, groupA);
+    static void row3GroupComponentOnly() {
+        System.runAs(new User(Id = UserInfo.getUserId())) {
+            PEPermissionResolver.Resolved r = newResolved();
+            Id groupA    = fakeGroupId(1);
+            Id component = addComponent(r, 3, groupA);
 
-        PEDto.Grant g = run(r, granted(component), noMutes());
+            PEDto.Grant g = run(r, granted(component), noMutes());
 
-        assertHasIt(g, 'group component grant with no muting set present');
+            Assert.isTrue(g.granted, 'group component grant with no muting set present');
+            Assert.isFalse(
+                g.muted,
+                'nothing was effectively muted: group component grant with no muting set present'
+            );
+        }
     }
 
     /* ---------------------------------------------------------------
@@ -56,19 +71,25 @@ private class PEMutingMatrixTest {
      * --------------------------------------------------------------- */
 
     @IsTest
-    static void row4_componentMutedByItsOwnGroup() {
-        PEPermissionResolver.Resolved r = newResolved();
-        Id groupA    = fakeGroupId(1);
-        Id component = addComponent(r, 3, groupA);
-        Id muting    = addMuting(r, 9, groupA);
+    static void row4ComponentMutedByItsOwnGroup() {
+        System.runAs(new User(Id = UserInfo.getUserId())) {
+            PEPermissionResolver.Resolved r = newResolved();
+            Id groupA    = fakeGroupId(1);
+            Id component = addComponent(r, 3, groupA);
+            Id muting    = addMuting(r, 9, groupA);
 
-        PEDto.Grant g = run(r, granted(component), mutes(muting));
+            PEDto.Grant g = run(r, granted(component), mutes(muting));
 
-        assertDeniedByMuting(g, 'a group muting its own component must subtract');
-        Assert.areEqual(
-            2, g.sources.size(),
-            'a revoke decision needs the granting source and the muting source'
-        );
+            Assert.isFalse(g.granted, 'a group muting its own component must subtract');
+            Assert.isTrue(
+                g.muted,
+                'the denial must be attributed to muting, not absence: a group muting its own component must subtract'
+            );
+            Assert.areEqual(
+                2, g.sources.size(),
+                'a revoke decision needs the granting source and the muting source'
+            );
+        }
     }
 
     /* ---------------------------------------------------------------
@@ -76,30 +97,36 @@ private class PEMutingMatrixTest {
      * --------------------------------------------------------------- */
 
     @IsTest
-    static void row5_unrelatedGroupMutingCannotTouchDirectAssignment() {
-        PEPermissionResolver.Resolved r = newResolved();
-        Id direct = addDirect(r, 2);
-        Id groupA = fakeGroupId(1);
-        Id muting = addMuting(r, 9, groupA);
+    static void row5UnrelatedGroupMutingCannotTouchDirectAssignment() {
+        System.runAs(new User(Id = UserInfo.getUserId())) {
+            PEPermissionResolver.Resolved r = newResolved();
+            Id direct = addDirect(r, 2);
+            Id groupA = fakeGroupId(1);
+            Id muting = addMuting(r, 9, groupA);
 
-        PEDto.Grant g = run(r, granted(direct), mutes(muting));
+            PEDto.Grant g = run(r, granted(direct), mutes(muting));
 
-        assertHasIt(
-            g,
-            'muting is scoped to its own group and cannot revoke a direct assignment'
-        );
+            Assert.isTrue(g.granted, 'muting is scoped to its own group and cannot revoke a direct assignment');
+            Assert.isFalse(
+                g.muted,
+                'nothing was effectively muted: muting is scoped to its own group and cannot revoke a direct assignment'
+            );
+        }
     }
 
     @IsTest
-    static void row6_groupMutingCannotTouchTheProfile() {
-        PEPermissionResolver.Resolved r = newResolved();
-        Id profileSet = addProfile(r, 1);
-        Id groupA     = fakeGroupId(1);
-        Id muting     = addMuting(r, 9, groupA);
+    static void row6GroupMutingCannotTouchTheProfile() {
+        System.runAs(new User(Id = UserInfo.getUserId())) {
+            PEPermissionResolver.Resolved r = newResolved();
+            Id profileSet = addProfile(r, 1);
+            Id groupA     = fakeGroupId(1);
+            Id muting     = addMuting(r, 9, groupA);
 
-        PEDto.Grant g = run(r, granted(profileSet), mutes(muting));
+            PEDto.Grant g = run(r, granted(profileSet), mutes(muting));
 
-        assertHasIt(g, 'muting does not reach the profile');
+            Assert.isTrue(g.granted, 'muting does not reach the profile');
+            Assert.isFalse(g.muted, 'nothing was effectively muted: muting does not reach the profile');
+        }
     }
 
     /* ---------------------------------------------------------------
@@ -107,46 +134,56 @@ private class PEMutingMatrixTest {
      * --------------------------------------------------------------- */
 
     @IsTest
-    static void row7_twoComponentsInOneGroupMutedOnce() {
-        PEPermissionResolver.Resolved r = newResolved();
-        Id groupA = fakeGroupId(1);
-        Id compA1 = addComponent(r, 3, groupA);
-        Id compA2 = addComponent(r, 4, groupA);
-        Id muting = addMuting(r, 9, groupA);
+    static void row7TwoComponentsInOneGroupMutedOnce() {
+        System.runAs(new User(Id = UserInfo.getUserId())) {
+            PEPermissionResolver.Resolved r = newResolved();
+            Id groupA = fakeGroupId(1);
+            Id compA1 = addComponent(r, 3, groupA);
+            Id compA2 = addComponent(r, 4, groupA);
+            Id muting = addMuting(r, 9, groupA);
 
-        Map<Id, Boolean> grants = granted(compA1);
-        grants.put(compA2, true);
+            Map<Id, Boolean> grants = granted(compA1);
+            grants.put(compA2, true);
 
-        PEDto.Grant g = run(r, grants, mutes(muting));
+            PEDto.Grant g = run(r, grants, mutes(muting));
 
-        assertDeniedByMuting(
-            g, 'one mute covers every component of the group that owns it'
-        );
+            Assert.isFalse(g.granted, 'one mute covers every component of the group that owns it');
+            Assert.isTrue(
+                g.muted,
+                'the denial must be attributed to muting, not absence: one mute covers every component of the group that owns it'
+            );
+        }
     }
 
     @IsTest
-    static void row8_mutedInGroupAButStillGrantedViaGroupB() {
-        PEPermissionResolver.Resolved r = newResolved();
-        Id groupA = fakeGroupId(1);
-        Id groupB = fakeGroupId(2);
-        Id compA  = addComponent(r, 3, groupA);
-        Id compB  = addComponent(r, 4, groupB);
-        Id muting = addMuting(r, 9, groupA);
+    static void row8MutedInGroupAButStillGrantedViaGroupB() {
+        System.runAs(new User(Id = UserInfo.getUserId())) {
+            PEPermissionResolver.Resolved r = newResolved();
+            Id groupA = fakeGroupId(1);
+            Id groupB = fakeGroupId(2);
+            Id compA  = addComponent(r, 3, groupA);
+            Id compB  = addComponent(r, 4, groupB);
+            Id muting = addMuting(r, 9, groupA);
 
-        Map<Id, Boolean> grants = granted(compA);
-        grants.put(compB, true);
+            Map<Id, Boolean> grants = granted(compA);
+            grants.put(compB, true);
 
-        PEDto.Grant g = run(r, grants, mutes(muting));
+            PEDto.Grant g = run(r, grants, mutes(muting));
 
-        assertHasIt(g, 'group B still grants it; group A muting its own copy is irrelevant');
-        Assert.areEqual(
-            1, g.sources.size(),
-            'only the surviving grant should be credited'
-        );
-        Assert.areEqual(
-            compB, g.sources[0].parentId,
-            'the muted component must not be shown as the reason the user has access'
-        );
+            Assert.isTrue(g.granted, 'group B still grants it; group A muting its own copy is irrelevant');
+            Assert.isFalse(
+                g.muted,
+                'nothing was effectively muted: group B still grants it; group A muting its own copy is irrelevant'
+            );
+            Assert.areEqual(
+                1, g.sources.size(),
+                'only the surviving grant should be credited'
+            );
+            Assert.areEqual(
+                compB, g.sources[0].parentId,
+                'the muted component must not be shown as the reason the user has access'
+            );
+        }
     }
 
     /* ---------------------------------------------------------------
@@ -154,23 +191,22 @@ private class PEMutingMatrixTest {
      * --------------------------------------------------------------- */
 
     @IsTest
-    static void row9_mutingSomethingNeverGranted() {
-        PEPermissionResolver.Resolved r = newResolved();
-        Id groupA    = fakeGroupId(1);
-        Id component = addComponent(r, 3, groupA);
-        Id muting    = addMuting(r, 9, groupA);
+    static void row9MutingSomethingNeverGranted() {
+        System.runAs(new User(Id = UserInfo.getUserId())) {
+            PEPermissionResolver.Resolved r = newResolved();
+            Id groupA    = fakeGroupId(1);
+            Id component = addComponent(r, 3, groupA);
+            Id muting    = addMuting(r, 9, groupA);
 
-        PEDto.Grant g = run(
-            r,
-            new Map<Id, Boolean>{ component => false },
-            mutes(muting)
-        );
+            PEDto.Grant g = run(
+                r,
+                new Map<Id, Boolean>{ component => false },
+                mutes(muting)
+            );
 
-        Assert.isFalse(g.granted, 'never granted, so still not granted');
-        Assert.isFalse(
-            g.muted,
-            'flagging a mute here would claim a revocation that never happened'
-        );
+            Assert.isFalse(g.granted, 'never granted, so still not granted');
+            Assert.isFalse(g.muted, 'flagging a mute here would claim a revocation that never happened');
+        }
     }
 
     /* ---------------------------------------------------------------
@@ -179,24 +215,28 @@ private class PEMutingMatrixTest {
 
     @IsTest
     static void componentInTwoGroupsMutedInBothIsRevoked() {
-        PEPermissionResolver.Resolved r = newResolved();
-        Id groupA = fakeGroupId(1);
-        Id groupB = fakeGroupId(2);
+        System.runAs(new User(Id = UserInfo.getUserId())) {
+            PEPermissionResolver.Resolved r = newResolved();
+            Id groupA = fakeGroupId(1);
+            Id groupB = fakeGroupId(2);
 
-        Id shared = addComponent(r, 3, groupA);
-        r.groupsByComponent.get(shared).add(groupB);
+            Id shared = addComponent(r, 3, groupA);
+            r.groupsByComponent.get(shared).add(groupB);
 
-        Id mutingA = addMuting(r, 9, groupA);
-        Id mutingB = addMuting(r, 10, groupB);
+            Id mutingA = addMuting(r, 9, groupA);
+            Id mutingB = addMuting(r, 10, groupB);
 
-        Map<Id, Boolean> muteFlags = mutes(mutingA);
-        muteFlags.put(mutingB, true);
+            Map<Id, Boolean> muteFlags = mutes(mutingA);
+            muteFlags.put(mutingB, true);
 
-        PEDto.Grant g = run(r, granted(shared), muteFlags);
+            PEDto.Grant g = run(r, granted(shared), muteFlags);
 
-        assertDeniedByMuting(
-            g, 'every group the set arrived through mutes it, so nothing survives'
-        );
+            Assert.isFalse(g.granted, 'every group the set arrived through mutes it, so nothing survives');
+            Assert.isTrue(
+                g.muted,
+                'the denial must be attributed to muting, not absence: every group the set arrived through mutes it, so nothing survives'
+            );
+        }
     }
 
     /* ---------------------------------------------------------------
@@ -205,21 +245,24 @@ private class PEMutingMatrixTest {
 
     @IsTest
     static void orphanMutingSetWithNoGroupStillApplies() {
-        PEPermissionResolver.Resolved r = newResolved();
-        Id component = addComponent(r, 3, fakeGroupId(1));
+        System.runAs(new User(Id = UserInfo.getUserId())) {
+            PEPermissionResolver.Resolved r = newResolved();
+            Id component = addComponent(r, 3, fakeGroupId(1));
 
-        // Registered as muting, but never associated with a group - the shape
-        // loadMutingSets() produces for an orphan it cannot place.
-        Id orphan = fakeSetId(11);
-        r.mutingParents.add(orphan);
-        r.sourcesById.put(orphan, new PEDto.Source(orphan, 'Orphan Mute', 'muting'));
+            // Registered as muting, but never associated with a group - the shape
+            // loadMutingSets() produces for an orphan it cannot place.
+            Id orphan = fakeSetId(11);
+            r.mutingParents.add(orphan);
+            r.sourcesById.put(orphan, new PEDto.Source(orphan, 'Orphan Mute', 'muting'));
 
-        PEDto.Grant g = run(r, granted(component), mutes(orphan));
+            PEDto.Grant g = run(r, granted(component), mutes(orphan));
 
-        assertDeniedByMuting(
-            g,
-            'an unexplained mute is safer treated as real than silently discarded'
-        );
+            Assert.isFalse(g.granted, 'an unexplained mute is safer treated as real than silently discarded');
+            Assert.isTrue(
+                g.muted,
+                'the denial must be attributed to muting, not absence: an unexplained mute is safer treated as real than silently discarded'
+            );
+        }
     }
 
     /* ---------------------------------------------------------------
@@ -228,36 +271,40 @@ private class PEMutingMatrixTest {
 
     @IsTest
     static void mutingSetsNeverAppearAsEffectiveParents() {
-        PEPermissionResolver.Resolved r = newResolved();
-        Id groupA = fakeGroupId(1);
-        addComponent(r, 3, groupA);
-        Id muting = addMuting(r, 9, groupA);
+        System.runAs(new User(Id = UserInfo.getUserId())) {
+            PEPermissionResolver.Resolved r = newResolved();
+            Id groupA = fakeGroupId(1);
+            addComponent(r, 3, groupA);
+            Id muting = addMuting(r, 9, groupA);
 
-        Assert.isFalse(
-            r.effectiveParents.contains(muting),
-            'a muting set grants nothing and must never be treated as a grant source'
-        );
-        Assert.isTrue(
-            r.sourcesById.containsKey(muting),
-            'every muting parent needs a source chip for the revoke explanation'
-        );
+            Assert.isFalse(
+                r.effectiveParents.contains(muting),
+                'a muting set grants nothing and must never be treated as a grant source'
+            );
+            Assert.isTrue(
+                r.sourcesById.containsKey(muting),
+                'every muting parent needs a source chip for the revoke explanation'
+            );
+        }
     }
 
     @IsTest
     static void mutingDoesNotLeakAcrossPermissions() {
-        PEPermissionResolver.Resolved r = newResolved();
-        Id groupA    = fakeGroupId(1);
-        Id component = addComponent(r, 3, groupA);
-        Id muting    = addMuting(r, 9, groupA);
+        System.runAs(new User(Id = UserInfo.getUserId())) {
+            PEPermissionResolver.Resolved r = newResolved();
+            Id groupA    = fakeGroupId(1);
+            Id component = addComponent(r, 3, groupA);
+            Id muting    = addMuting(r, 9, groupA);
 
-        PEDto.Grant edit = PEPermissionResolver.applyGrant(
-            'PermissionsEdit', 'Edit', r,
-            new Map<Id, Boolean>{ component => true },
-            new Map<Id, Boolean>{ muting => false }
-        );
+            PEDto.Grant edit = PEPermissionResolver.applyGrant(
+                'PermissionsEdit', 'Edit', r,
+                new Map<Id, Boolean>{ component => true },
+                new Map<Id, Boolean>{ muting => false }
+            );
 
-        Assert.isTrue(edit.granted, 'muting Read must not affect Edit');
-        Assert.isFalse(edit.muted, 'Edit was never muted');
+            Assert.isTrue(edit.granted, 'muting Read must not affect Edit');
+            Assert.isFalse(edit.muted, 'Edit was never muted');
+        }
     }
 
     /* ---------------------------------------------------------------
@@ -333,16 +380,6 @@ private class PEMutingMatrixTest {
 
     private static Map<Id, Boolean> noMutes() {
         return new Map<Id, Boolean>();
-    }
-
-    private static void assertHasIt(PEDto.Grant g, String why) {
-        Assert.isTrue(g.granted, why);
-        Assert.isFalse(g.muted, 'nothing was effectively muted: ' + why);
-    }
-
-    private static void assertDeniedByMuting(PEDto.Grant g, String why) {
-        Assert.isFalse(g.granted, why);
-        Assert.isTrue(g.muted, 'the denial must be attributed to muting, not absence: ' + why);
     }
 
     /**

@@ -143,3 +143,43 @@
     font-size: var(--pe-fs-sm);
     color: var(--pe-ink-muted);
 }
+
+/* A deduced reason is italic, so a reader can tell at a glance which rows are
+   explained by evidence and which by elimination. */
+.is_inferred {
+    font-style: italic;
+    color: var(--pe-ink-faint);
+}
+
+/* Subtle, native-feeling record navigation. */
+.record_link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    max-width: 100%;
+    color: #0176d3;
+    font-weight: 600;
+    text-decoration: none;
+    vertical-align: middle;
+}
+.record_link:hover, .record_link:focus-visible {
+    text-decoration: underline;
+    color: #014486;
+}
+.link_icon { opacity: 0; flex-shrink: 0; }
+.record_link:hover .link_icon, .record_link:focus-visible .link_icon { opacity: 0.8; }
+.table td { padding-top: 0.625rem; padding-bottom: 0.625rem; }
+.row:hover td { background: #f7f9fc; }
+.reason_badge {
+    display: inline-block;
+    padding: 0.16rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid #d8dde6;
+    background: #f4f6f9;
+    color: #444e5a;
+    font-size: 0.7rem;
+    font-weight: 600;
+    font-style: normal;
+}
+.reason_owner { background: #eaf7ef; border-color: #c3e8cf; color: #256b3b; }
+.reason_manual { background: #eef5ff; border-color: #cfe0f8; color: #195fa6; }

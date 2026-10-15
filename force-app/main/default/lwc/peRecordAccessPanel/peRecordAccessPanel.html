@@ -52,18 +52,10 @@
         <section class="records">
             <div class="records_head">
                 <h3 class="section_title">Records</h3>
-                <template lwc:if={modeSwitchAvailable}>
-                <div class="segmented" role="tablist" aria-label="Record list mode">
-                    <button class={accessibleTabClass} type="button" role="tab"
-                            data-mode="ACCESSIBLE" onclick={handleModeChange}>
-                        Accessible
-                    </button>
-                    <button class={allTabClass} type="button" role="tab"
-                            data-mode="ALL" onclick={handleModeChange}>
-                        All records
-                    </button>
-                </div>
-                </template>
+                <label class="filter">
+                    <input type="checkbox" checked={reachableOnly} onchange={handleFilterToggle} />
+                    <span>Only records this user can reach</span>
+                </label>
             </div>
 
             <div class="controls">
@@ -78,18 +70,27 @@
                 </select>
             </div>
 
+            <template lwc:if={uniformReason}>
+                <p class="uniform">{uniformReason}</p>
+            </template>
+
             <c-pe-record-table
+                object-api-name={reach.objectApiName}
                 rows={rows}
                 loading={listLoading}
                 has-more={hasMore}
                 loading-more={loadingMore}
-                show-reason={isAccessibleMode}
+                show-reason={showReason}
                 onloadmore={handleLoadMore}
             ></c-pe-record-table>
 
             <div class="records_foot">
                 <span class="showing">{showingLine}</span>
             </div>
+
+            <template lwc:if={floorNote}>
+                <p class="caveat">{floorNote}</p>
+            </template>
 
             <template lwc:if={hasListNotes}>
                 <template for:each={listNoteRows} for:item="n">

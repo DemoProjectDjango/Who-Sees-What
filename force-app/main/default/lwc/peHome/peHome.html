@@ -40,7 +40,10 @@
                 <section class="panel license-panel">
                     <div class="panel-heading"><div><h2>License utilization</h2><p>Capacity across licenses with fixed seat limits</p></div><button type="button" class="text-link" onclick={handleOpenLicenses}>View licenses →</button></div>
                     <template lwc:if={postureLoading}><p class="empty">Loading license seats…</p></template>
-                    <template lwc:elseif={licences}><div class="license-hero"><span class="license-number">{licences.used}</span><span class="license-of">of {licences.total} seats used</span><span class="license-percent">{licences.pct}</span></div><div class="license-track"><div class={licences.barClass} style={licences.barStyle}></div></div><div class="license-bottom"><span>{licences.free} seats available</span><span>Limited licenses only</span></div><template lwc:if={licences.unlimitedNote}><p class="note">{licences.unlimitedNote}</p></template></template>
+                    <template lwc:elseif={licences}><div class="license-hero"><span class="license-number">{licences.used}</span><span class="license-of">of {licences.total} seats used</span><span class="license-percent">{licences.pct}</span></div><div class="license-track">
+                        <!-- code-analyzer-suppress(pmd:AvoidInlineStyles) Fill width is seats used against seats owned. A fixed class cannot express an arbitrary proportion. -->
+                        <div class={licences.barClass} style={licences.barStyle}></div>
+                    </div><div class="license-bottom"><span>{licences.free} seats available</span><span>Limited licenses only</span></div><template lwc:if={licences.unlimitedNote}><p class="note">{licences.unlimitedNote}</p></template></template>
                     <template lwc:else><p class="empty">Seat utilization unavailable or no limited-seat licenses found.</p></template>
                 </section>
                 <section class="panel activity-panel">
@@ -51,7 +54,10 @@
                 </section>
                 <section class="panel inspector-panel">
                     <div class="panel-heading"><div><h2>Inspection breakdown</h2><p>Who's inspecting and what they're viewing</p></div><div class="switch" role="group" aria-label="Activity breakdown"><button type="button" class={inspectorsTabClass} data-view="inspectors" onclick={handleBreakdown}>Inspectors</button><button type="button" class={actionsTabClass} data-view="actions" onclick={handleBreakdown}>Actions</button></div></div>
-                    <template lwc:if={hasBreakdown}><ul class="ranks"><template for:each={breakdownRows} for:item="row"><li class="rank" key={row.key}><template lwc:if={row.showInitials}><span class="avatar">{row.initials}</span></template><div class="rank-content"><div class="rank-top"><span class="rank-name">{row.name}</span><span class="rank-stats">{row.total} · {row.share}</span></div><div class="rank-track"><div class="rank-fill" style={row.barStyle}></div></div></div></li></template></ul></template><template lwc:else><p class="empty">No activity breakdown is available.</p></template>
+                    <template lwc:if={hasBreakdown}><ul class="ranks"><template for:each={breakdownRows} for:item="row"><li class="rank" key={row.key}><template lwc:if={row.showInitials}><span class="avatar">{row.initials}</span></template><div class="rank-content"><div class="rank-top"><span class="rank-name">{row.name}</span><span class="rank-stats">{row.total} · {row.share}</span></div><div class="rank-track">
+                        <!-- code-analyzer-suppress(pmd:AvoidInlineStyles) Fill width is each row against the busiest row in the list, computed per page. -->
+                        <div class="rank-fill" style={row.barStyle}></div>
+                    </div></div></li></template></ul></template><template lwc:else><p class="empty">No activity breakdown is available.</p></template>
                 </section>
                 <section class="panel log-panel">
                     <div class="panel-heading"><div><h2>Recent inspections</h2><p>Latest recorded inspection events</p></div><template lwc:if={hasMoreLogRows}><button type="button" class="text-link" onclick={handleToggleLog}>{logToggleLabel} →</button></template></div>

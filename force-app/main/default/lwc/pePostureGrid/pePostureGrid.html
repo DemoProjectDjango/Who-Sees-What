@@ -19,6 +19,7 @@
 
                     <template lwc:if={row.barStyle}>
                         <div class="tile_track">
+                            <!-- code-analyzer-suppress(pmd:AvoidInlineStyles) Bar width is the signal count against its denominator, so it is data, not presentation. A fixed class cannot express an arbitrary proportion. -->
                             <div class="tile_fill" style={row.barStyle}></div>
                         </div>
                     </template>

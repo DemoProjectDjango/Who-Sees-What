@@ -181,6 +181,10 @@ public with sharing class PEPostureService {
      * @param activeUsers Active user count used as the denominator.
      * @return The privileged-user signal.
      */
+    // Four parameters because a signal needs all four to be renderable: the
+    // permission to count, the label and remedy an administrator reads, and the
+    // denominator that turns a raw count into a judgeable share.
+    @SuppressWarnings('PMD.ExcessiveParameterList')
     private static Signal privilegedUsers(
         String permissionField, String label, String remedy, Integer activeUsers
     ) {
@@ -191,22 +195,32 @@ public with sharing class PEPostureService {
         s.outOf  = activeUsers;
 
         try {
-            // Dynamic only in the field name, which is a hardcoded constant at
-            // every call site - never user input.
-            String setQuery =
-                'SELECT Id FROM PermissionSet WHERE ' + String.escapeSingleQuotes(permissionField) +
-                ' = true LIMIT ' + String.valueOf(PERM_SET_SCAN_CAP);
-
-            // AccessLevel.USER_MODE rather than WITH USER_MODE in the string:
-            // the enforcement is then a property of the call, not of text that a
-            // later edit could drop without the compiler noticing.
-            List<SObject> sets = Database.query(setQuery, AccessLevel.USER_MODE);
+            // Use static SOQL for the two supported privilege flags. This
+            // prevents identifier injection and preserves user-mode access.
+            List<PermissionSet> sets;
+            if (permissionField == 'PermissionsModifyAllData') {
+                sets = [
+                    SELECT Id FROM PermissionSet
+                    WHERE PermissionsModifyAllData = true
+                    WITH USER_MODE LIMIT :PERM_SET_SCAN_CAP
+                ];
+            } else if (permissionField == 'PermissionsViewAllData') {
+                sets = [
+                    SELECT Id FROM PermissionSet
+                    WHERE PermissionsViewAllData = true
+                    WITH USER_MODE LIMIT :PERM_SET_SCAN_CAP
+                ];
+            } else {
+                // Unsupported signal: do not silently turn it into a zero.
+                s.value = null;
+                return s;
+            }
             if (sets.isEmpty()) {
                 s.value = 0;
                 return s;
             }
 
-            Set<Id> setIds = new Map<Id, SObject>(sets).keySet();
+            Set<Id> setIds = new Map<Id, PermissionSet>(sets).keySet();
 
             AggregateResult[] ar = [
                 SELECT COUNT_DISTINCT(AssigneeId) cnt
@@ -335,6 +349,9 @@ public with sharing class PEPostureService {
      * @param alertAt Share above which the signal needs attention.
      * @return 'ok', 'watch' or 'alert'.
      */
+    // The two thresholds are the point of the method; folding them into a
+    // constant would fix every signal to one sensitivity.
+    @SuppressWarnings('PMD.ExcessiveParameterList')
     private static String severityByShare(
         Integer value, Integer outOf, Decimal watchAt, Decimal alertAt
     ) {

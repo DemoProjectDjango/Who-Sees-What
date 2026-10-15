@@ -7,7 +7,14 @@ const REASON_LABELS = {
     Team: 'Team',
     Territory: 'Territory',
     ImplicitChild: 'Parent record',
-    ImplicitParent: 'Child record'
+    ImplicitParent: 'Child record',
+    OrgWideDefault: 'Org-wide default',
+    ViewAllRecords: 'View All Records',
+    /* Deduced, not reported: not the owner, no share row, private org-wide
+       default, and yet the platform grants read. Which of role hierarchy,
+       implicit sharing or Apex sharing is not knowable from here, so the row
+       says so rather than picking one. */
+    HierarchyOrImplicit: 'Hierarchy or implicit'
 };
 
 /**
@@ -20,6 +27,7 @@ const REASON_LABELS = {
  */
 export default class PeRecordTable extends LightningElement {
     @api rows = [];
+    @api objectApiName;
     @api loading = false;
     @api hasMore = false;
     @api loadingMore = false;
@@ -28,7 +36,15 @@ export default class PeRecordTable extends LightningElement {
     get displayRows() {
         return (this.rows ?? []).map((r) => ({
             ...r,
+            recordUrl: this.objectApiName && r.recordId
+                ? `/lightning/r/${encodeURIComponent(this.objectApiName)}/${encodeURIComponent(r.recordId)}/view`
+                : (r.recordId ? `/${encodeURIComponent(r.recordId)}` : null),
+            reasonBadgeClass: `reason_badge ${r.reason === 'Owner' ? 'reason_owner' : r.reason === 'Manual' ? 'reason_manual' : 'reason_default'}`,
             reasonLabel: REASON_LABELS[r.reason] ?? r.reason ?? '—',
+            reasonClass: r.reasonInferred ? 'cell_reason is_inferred' : 'cell_reason',
+            reasonTitle: r.reasonInferred
+                ? 'Deduced: the platform reports access, but no share row explains it.'
+                : undefined,
             ownerDisplay: r.ownerName ?? '—',
             readClass: this.chipClass(r.canRead),
             editClass: this.chipClass(r.canEdit),

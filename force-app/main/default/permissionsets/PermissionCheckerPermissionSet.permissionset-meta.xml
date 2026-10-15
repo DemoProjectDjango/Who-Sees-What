@@ -48,7 +48,7 @@
     </fieldPermissions>
 
     <tabSettings>
-        <tab>Home</tab>
+        <tab>WSW_Home</tab>
         <visibility>Visible</visibility>
     </tabSettings>
 

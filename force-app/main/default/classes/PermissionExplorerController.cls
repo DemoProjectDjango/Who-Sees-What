@@ -323,15 +323,20 @@ public with sharing class PermissionExplorerController {
      *
      * @param userId The user being inspected.
      * @param objectApiName API name of the object.
-     * @param mode ACCESSIBLE or ALL.
+     * @param reachableOnly True to list only records the user reaches.
      * @param searchTerm Free text, ALL mode only.
      * @param sortField Field to order by.
      * @param cursor Cursor from the previous page, or null.
      * @return A page of records plus the next cursor.
      */
+    // Six parameters and a Boolean among them: this is the wire contract the
+    // record list calls with, and every argument is a control the admin can see
+    // on screen. Wrapping them would mean the LWC builds an object whose shape
+    // is defined nowhere.
+    @SuppressWarnings('PMD.ExcessiveParameterList,PMD.AvoidBooleanMethodParameters')
     @AuraEnabled
     public static PERecordListService.RecordPage getRecordPage(
-        Id userId, String objectApiName, String mode,
+        Id userId, String objectApiName, Boolean reachableOnly,
         String searchTerm, String sortField, String cursor
     ) {
         try {
@@ -340,7 +345,7 @@ public with sharing class PermissionExplorerController {
             );
             PEAccessGate.assertInspectable(userId);
             return PERecordListService.getPage(
-                userId, objectApiName, mode, searchTerm, sortField, cursor
+                userId, objectApiName, reachableOnly, searchTerm, sortField, cursor
             );
         } catch (Exception e) {
             throw toAura(e);

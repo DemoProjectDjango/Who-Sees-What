@@ -316,67 +316,86 @@ public with sharing class PEPermissionResolver {
                 WITH USER_MODE
             ]) {
                 if (isMutingType(c.PermissionSet.Type)) {
-                    r.mutingParents.add(c.PermissionSetId);
-
-                    // The association this join can see and nothing else can.
-                    // Dropping it is what made muting look org-wide.
-                    if (c.PermissionSetGroupId != null) {
-                        if (!r.mutingSetsByGroup.containsKey(c.PermissionSetGroupId)) {
-                            r.mutingSetsByGroup.put(c.PermissionSetGroupId, new Set<Id>());
-                        }
-                        r.mutingSetsByGroup.get(c.PermissionSetGroupId).add(c.PermissionSetId);
-                    }
-
-                    // A muting set has no standalone Setup page — it is only
-                    // reachable from inside its group, so the group Id is the
-                    // only link worth offering. Captured here because this join
-                    // is the one place that association is visible.
-                    PEDto.Source mSrc = new PEDto.Source(
-                        c.PermissionSetId, c.PermissionSet.Label, 'muting'
-                    );
-                    mSrc.groupId  = c.PermissionSetGroupId;
-                    mSrc.linkId   = c.PermissionSetGroupId;
-                    mSrc.linkable = c.PermissionSetGroupId != null;
-                    mSrc.groupLabel = c.PermissionSetGroup != null
-                        ? c.PermissionSetGroup.DeveloperName : null;
-                    r.sourcesById.put(c.PermissionSetId, mSrc);
-                    continue;
+                    recordMutingComponent(r, c);
+                } else {
+                    recordGrantingComponent(r, c);
                 }
-
-                // Count once per distinct set, not once per group membership —
-                // a set in two assigned groups is still one set.
-                if (!r.sourcesById.containsKey(c.PermissionSetId)) {
-                    r.groupDerivedCount++;
-                }
-
-                r.effectiveParents.add(c.PermissionSetId);
-
-                // Which groups this component arrived through. Accumulated, not
-                // overwritten: a set in two groups survives a mute in one.
-                if (c.PermissionSetGroupId != null) {
-                    if (!r.groupsByComponent.containsKey(c.PermissionSetId)) {
-                        r.groupsByComponent.put(c.PermissionSetId, new Set<Id>());
-                    }
-                    r.groupsByComponent.get(c.PermissionSetId).add(c.PermissionSetGroupId);
-                }
-
-                PEDto.Source src = new PEDto.Source(
-                    c.PermissionSetId, c.PermissionSet.Label, 'group'
-                );
-                src.groupLabel = c.PermissionSetGroup != null
-                    ? c.PermissionSetGroup.DeveloperName : null;
-                src.isOutdatedGroup = c.PermissionSetGroup != null
-                    && c.PermissionSetGroup.Status != 'Updated';
-
-                // The chip names the group, so the link should open the group,
-                // not the component set buried inside it.
-                src.groupId  = c.PermissionSetGroupId;
-                src.linkId   = c.PermissionSetGroupId;
-                src.linkable = c.PermissionSetGroupId != null
-                    && String.isNotBlank(c.PermissionSet.Label);
-                r.sourcesById.put(c.PermissionSetId, src);
             }
         }
+    }
+
+    /**
+     * Files a muting set found inside an assigned group.
+     *
+     * The group association this join exposes is visible nowhere else, and
+     * dropping it is what once made muting look org-wide: a mute in one group
+     * silently revoked grants that came from somewhere else entirely.
+     *
+     * @param r Resolved context being built, mutated in place.
+     * @param c Component row joining a muting set to its group.
+     */
+    private static void recordMutingComponent(Resolved r, PermissionSetGroupComponent c) {
+        r.mutingParents.add(c.PermissionSetId);
+
+        if (c.PermissionSetGroupId != null) {
+            if (!r.mutingSetsByGroup.containsKey(c.PermissionSetGroupId)) {
+                r.mutingSetsByGroup.put(c.PermissionSetGroupId, new Set<Id>());
+            }
+            r.mutingSetsByGroup.get(c.PermissionSetGroupId).add(c.PermissionSetId);
+        }
+
+        // A muting set has no standalone Setup page - it is only reachable from
+        // inside its group, so the group Id is the only link worth offering.
+        PEDto.Source mSrc = new PEDto.Source(
+            c.PermissionSetId, c.PermissionSet.Label, 'muting'
+        );
+        mSrc.groupId    = c.PermissionSetGroupId;
+        mSrc.linkId     = c.PermissionSetGroupId;
+        mSrc.linkable   = c.PermissionSetGroupId != null;
+        mSrc.groupLabel = c.PermissionSetGroup != null
+            ? c.PermissionSetGroup.DeveloperName : null;
+        r.sourcesById.put(c.PermissionSetId, mSrc);
+    }
+
+    /**
+     * Files a granting component set found inside an assigned group.
+     *
+     * @param r Resolved context being built, mutated in place.
+     * @param c Component row joining a permission set to its group.
+     */
+    private static void recordGrantingComponent(Resolved r, PermissionSetGroupComponent c) {
+        // Count once per distinct set, not once per group membership - a set in
+        // two assigned groups is still one set.
+        if (!r.sourcesById.containsKey(c.PermissionSetId)) {
+            r.groupDerivedCount++;
+        }
+
+        r.effectiveParents.add(c.PermissionSetId);
+
+        // Which groups this component arrived through. Accumulated, not
+        // overwritten: a set in two groups survives a mute in one.
+        if (c.PermissionSetGroupId != null) {
+            if (!r.groupsByComponent.containsKey(c.PermissionSetId)) {
+                r.groupsByComponent.put(c.PermissionSetId, new Set<Id>());
+            }
+            r.groupsByComponent.get(c.PermissionSetId).add(c.PermissionSetGroupId);
+        }
+
+        PEDto.Source src = new PEDto.Source(
+            c.PermissionSetId, c.PermissionSet.Label, 'group'
+        );
+        src.groupLabel = c.PermissionSetGroup != null
+            ? c.PermissionSetGroup.DeveloperName : null;
+        src.isOutdatedGroup = c.PermissionSetGroup != null
+            && c.PermissionSetGroup.Status != 'Updated';
+
+        // The chip names the group, so the link should open the group, not the
+        // component set buried inside it.
+        src.groupId  = c.PermissionSetGroupId;
+        src.linkId   = c.PermissionSetGroupId;
+        src.linkable = c.PermissionSetGroupId != null
+            && String.isNotBlank(c.PermissionSet.Label);
+        r.sourcesById.put(c.PermissionSetId, src);
     }
 
     /**

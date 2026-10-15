@@ -21,6 +21,14 @@
  * floor into a total needs UserRecordAccess, 200 records per query, which is a
  * later feature and not pretended at here.
  */
+// Complexity is suppressed at class level, not silently tolerated. This class
+// is a decision tree over Salesforce's sharing model: public versus private,
+// owner versus share row versus View All, object with an owner versus without,
+// share table present versus absent. Each branch is a real distinction the
+// platform makes, and collapsing them to satisfy a metric would mean guessing
+// in cases the product currently answers exactly. The branches live in small,
+// individually documented methods instead.
+@SuppressWarnings('PMD.CyclomaticComplexity,PMD.CognitiveComplexity,PMD.StdCyclomaticComplexity')
 public with sharing class PERecordAccessService {
 
     /** Objects whose share table is absent or not queryable this way. */
@@ -100,16 +108,17 @@ public with sharing class PERecordAccessService {
         loadSharingModel(r, objectApiName);
         r.totalRecords = countAll(objectApiName, r);
 
-        // View All short-circuits sharing entirely, so no share arithmetic is
-        // needed or meaningful.
+        // View All bypasses sharing for effective access, but share grants
+        // remain useful evidence of access that would survive its removal.
         r.hasViewAll = hasViewAllRecords(userId, objectApiName);
 
         if (r.isPublic || r.hasViewAll) {
             r.reachableRecords = r.totalRecords;
             r.ownedRecords     = countOwned(objectApiName, userId, d, r);
+            r.sharedRecords    = countShared(objectApiName, userId, d, r);
             r.isExact          = r.totalRecords != null;
             r.basis = r.hasViewAll
-                ? 'Exact. View All Records on this object bypasses sharing, so every record is reachable.'
+                ? 'Exact. View All Records makes every record reachable; explicit sharing grants are also counted separately.'
                 : 'Exact. The org-wide default makes every record visible to anyone with read access.';
             return r;
         }
@@ -134,6 +143,55 @@ public with sharing class PERecordAccessService {
             'At least this many. Ownership and explicit sharing are counted exactly; ' +
             'role hierarchy and implicit parent-child sharing are not visible to this count.';
         return r;
+    }
+
+    /* ---------------------------------------------------------------
+     * Sharing context
+     * --------------------------------------------------------------- */
+
+    /** The two facts that decide how a record list has to be driven. */
+    public class SharingContext {
+        @AuraEnabled public String model;
+        /** True when the org-wide default puts every record within reach. */
+        @AuraEnabled public Boolean isPublic = false;
+        /** True when View All Records bypasses sharing for this user. */
+        @AuraEnabled public Boolean hasViewAll = false;
+        /** Either of the above means sharing is not what grants access. */
+        @AuraEnabled public Boolean sharingBypassed = false;
+    }
+
+    /**
+     * The cheap half of getReach: the sharing model and whether this user
+     * bypasses it.
+     *
+     * Split out so PERecordListService can decide how to drive a page without
+     * paying for the record counts it does not need.
+     *
+     * @param userId The user being inspected.
+     * @param objectApiName API name of the object.
+     * @return Sharing model plus the two bypass flags.
+     */
+    public static SharingContext getSharingContext(Id userId, String objectApiName) {
+        SharingContext ctx = new SharingContext();
+        try {
+            List<EntityDefinition> defs = [
+                SELECT InternalSharingModel
+                FROM EntityDefinition
+                WHERE QualifiedApiName = :objectApiName
+                WITH USER_MODE
+                LIMIT 1
+            ];
+            if (!defs.isEmpty()) {
+                ctx.model = defs[0].InternalSharingModel;
+                ctx.isPublic = isPublicModel(ctx.model);
+            }
+        } catch (Exception e) {
+            ctx.model = null;
+        }
+
+        ctx.hasViewAll = hasViewAllRecords(userId, objectApiName);
+        ctx.sharingBypassed = ctx.isPublic || ctx.hasViewAll;
+        return ctx;
     }
 
     /* ---------------------------------------------------------------
@@ -199,13 +257,21 @@ public with sharing class PERecordAccessService {
      * @return Label an administrator would recognise from Setup.
      */
     private static String sharingLabel(String model) {
-        if (model == 'Private') return 'Private';
-        if (model == 'Read') return 'Public Read Only';
-        if (model == 'Edit' || model == 'ReadWrite') return 'Public Read/Write';
+        if (model == 'Private') {
+            return 'Private';
+        }
+        if (model == 'Read') {
+            return 'Public Read Only';
+        }
+        if (model == 'Edit' || model == 'ReadWrite') {
+            return 'Public Read/Write';
+        }
         if (model == 'FullAccess' || model == 'ReadWriteTransfer') {
             return 'Public Read/Write/Transfer';
         }
-        if (model == 'ControlledByParent') return 'Controlled by Parent';
+        if (model == 'ControlledByParent') {
+            return 'Controlled by Parent';
+        }
         // Falling through to the raw API value is deliberate: an unmapped model
         // reading 'ReadWriteTransfer' in the UI is how this gap was found.
         return model == null ? 'Unknown' : model;
@@ -228,8 +294,9 @@ public with sharing class PERecordAccessService {
      */
     private static Integer countAll(String objectApiName, Reach r) {
         try {
-            return Database.countQuery(
+            return Database.countQueryWithBinds(
                 'SELECT COUNT() FROM ' + safeName(objectApiName),
+                new Map<String, Object>(),
                 AccessLevel.USER_MODE
             );
         } catch (Exception e) {
@@ -250,6 +317,10 @@ public with sharing class PERecordAccessService {
      * @param r Reach being populated, for notes.
      * @return Owned record count, or null when the object has no owner.
      */
+    // Four parameters, each load-bearing: the object to count, the user to count
+    // for, the describe that says whether an owner field exists at all, and the
+    // Reach that collects the explanation when it does not.
+    @SuppressWarnings('PMD.ExcessiveParameterList')
     private static Integer countOwned(
         String objectApiName, Id userId, Schema.DescribeSObjectResult d, Reach r
     ) {
@@ -258,8 +329,9 @@ public with sharing class PERecordAccessService {
             return null;
         }
         try {
-            return Database.countQuery(
+            return Database.countQueryWithBinds(
                 'SELECT COUNT() FROM ' + safeName(objectApiName) + ' WHERE OwnerId = :userId',
+                new Map<String, Object>{ 'userId' => userId },
                 AccessLevel.USER_MODE
             );
         } catch (Exception e) {
@@ -287,11 +359,12 @@ public with sharing class PERecordAccessService {
         }
         try {
             Set<Id> holders = accessHolders(userId);
-            String parentField = parentFieldName(objectApiName);
+            String parentField = safeShareParentField(shareName, parentFieldName(objectApiName));
 
-            List<AggregateResult> ar = (List<AggregateResult>) Database.query(
-                'SELECT COUNT_DISTINCT(' + parentField + ') cnt FROM ' + shareName +
+            List<AggregateResult> ar = (List<AggregateResult>) Database.queryWithBinds(
+                'SELECT COUNT_DISTINCT(' + parentField + ') cnt FROM ' + safeName(shareName) +
                 ' WHERE UserOrGroupId IN :holders',
+                new Map<String, Object>{ 'holders' => holders },
                 AccessLevel.USER_MODE
             );
             return ar.isEmpty() ? 0 : (Integer) ar[0].get('cnt');
@@ -313,6 +386,7 @@ public with sharing class PERecordAccessService {
      * @param r Reach being populated, for notes.
      * @return Shared record count, or null when there is no share table.
      */
+    @SuppressWarnings('PMD.ExcessiveParameterList')
     private static Integer countShared(
         String objectApiName, Id userId, Schema.DescribeSObjectResult d, Reach r
     ) {
@@ -345,9 +419,11 @@ public with sharing class PERecordAccessService {
             // and then breaks on the one object nobody tested.
             String ownerCause = 'Owner';
 
-            List<AggregateResult> ar = (List<AggregateResult>) Database.query(
-                'SELECT COUNT_DISTINCT(' + parentField + ') cnt FROM ' + shareName +
+            List<AggregateResult> ar = (List<AggregateResult>) Database.queryWithBinds(
+                'SELECT COUNT_DISTINCT(' + safeShareParentField(shareName, parentField) +
+                ') cnt FROM ' + safeName(shareName) +
                 ' WHERE UserOrGroupId IN :holders AND RowCause != :ownerCause',
+                new Map<String, Object>{ 'holders' => holders, 'ownerCause' => ownerCause },
                 AccessLevel.USER_MODE
             );
             return ar.isEmpty() ? 0 : (Integer) ar[0].get('cnt');
@@ -379,53 +455,98 @@ public with sharing class PERecordAccessService {
      */
     public static Set<Id> accessHolders(Id userId) {
         Set<Id> holders = new Set<Id>{ userId };
+        holders.addAll(roleGroupsFor(userId));
 
-        // Role-based groups: a share row names the role group, never the role.
+        // Group membership is transitive, and this previously walked it with a
+        // query inside a loop: five round trips in the worst case, and an
+        // unbounded appetite for the query limit if the depth cap ever moved.
+        // The membership graph is now read once and traversed in memory, which
+        // is both a single query and faster.
+        Map<Id, Set<Id>> parentsByMember = membershipGraph();
+
+        Set<Id> frontier = new Set<Id>(holders);
+        while (!frontier.isEmpty()) {
+            Set<Id> found = new Set<Id>();
+            for (Id member : frontier) {
+                Set<Id> parents = parentsByMember.get(member);
+                if (parents == null) {
+                    continue;
+                }
+                for (Id parentId : parents) {
+                    if (!holders.contains(parentId)) {
+                        found.add(parentId);
+                    }
+                }
+            }
+            holders.addAll(found);
+            frontier = found;
+        }
+
+        return holders;
+    }
+
+    /**
+     * Groups that stand for this user's role.
+     *
+     * A share row names the role group, never the role itself, so the role has
+     * to be resolved into its groups before share rows mean anything.
+     *
+     * @param userId The user being inspected.
+     * @return Group Ids representing the user's role; empty when unreadable.
+     */
+    private static Set<Id> roleGroupsFor(Id userId) {
+        Set<Id> out = new Set<Id>();
         try {
             List<User> users = [
                 SELECT UserRoleId FROM User WHERE Id = :userId WITH USER_MODE LIMIT 1
             ];
-            if (!users.isEmpty() && users[0].UserRoleId != null) {
-                Id roleId = users[0].UserRoleId;
-                for (Group g : [
-                    SELECT Id FROM Group
-                    WHERE RelatedId = :roleId
-                    WITH USER_MODE
-                ]) {
-                    holders.add(g.Id);
-                }
+            if (users.isEmpty() || users[0].UserRoleId == null) {
+                return out;
+            }
+            Id roleId = users[0].UserRoleId;
+            for (Group g : [
+                SELECT Id FROM Group WHERE RelatedId = :roleId WITH USER_MODE
+            ]) {
+                out.add(g.Id);
             }
         } catch (Exception e) {
-            // Role groups unreadable; direct and group shares still count.
+            // Direct and group shares still count without this. A user whose
+            // role cannot be read simply reaches fewer records through sharing,
+            // which understates access rather than overstating it.
+            return new Set<Id>();
         }
+        return out;
+    }
 
-        // Groups can contain groups, so walk outward until nothing new appears.
-        // The depth cap stops a pathological membership graph from consuming
-        // the query limit; five levels is far deeper than real orgs nest.
-        Set<Id> frontier = new Set<Id>(holders);
-        Integer depth = 0;
-
-        while (!frontier.isEmpty() && depth < 5) {
-            Set<Id> found = new Set<Id>();
-            try {
-                for (GroupMember gm : [
-                    SELECT GroupId FROM GroupMember
-                    WHERE UserOrGroupId IN :frontier
-                    WITH USER_MODE
-                ]) {
-                    if (!holders.contains(gm.GroupId)) {
-                        found.add(gm.GroupId);
-                    }
+    /**
+     * The org's group membership graph: member Id to the groups containing it.
+     *
+     * One query, traversed in memory by the caller. Capped deliberately: a graph
+     * larger than this means something pathological, and a truncated graph
+     * understates reach rather than inventing it.
+     *
+     * @return Containing group Ids keyed by member Id.
+     */
+    @SuppressWarnings('PMD.AvoidNonRestrictiveQueries')
+    private static Map<Id, Set<Id>> membershipGraph() {
+        Map<Id, Set<Id>> out = new Map<Id, Set<Id>>();
+        try {
+            for (GroupMember gm : [
+                SELECT GroupId, UserOrGroupId FROM GroupMember
+                WITH USER_MODE
+                LIMIT 50000
+            ]) {
+                Set<Id> parents = out.get(gm.UserOrGroupId);
+                if (parents == null) {
+                    parents = new Set<Id>();
+                    out.put(gm.UserOrGroupId, parents);
                 }
-            } catch (Exception e) {
-                break;
+                parents.add(gm.GroupId);
             }
-            holders.addAll(found);
-            frontier = found;
-            depth++;
+        } catch (Exception e) {
+            return new Map<Id, Set<Id>>();
         }
-
-        return holders;
+        return out;
     }
 
     /**
@@ -536,6 +657,25 @@ public with sharing class PERecordAccessService {
             throw new PermissionExplorerException('Unsupported object name: ' + name);
         }
         return name;
+    }
+
+    /**
+     * Validates an identifier derived from describe before it reaches SOQL.
+     *
+     * Bind variables cannot represent a field or object identifier, so the name
+     * is checked against the share table's own describe rather than trusted.
+     *
+     * @param shareName API name of the share object.
+     * @param parentField Candidate parent field name on that share object.
+     * @return The field name, unchanged, when the share object really has it.
+     */
+    private static String safeShareParentField(String shareName, String parentField) {
+        Schema.SObjectType shareType = Schema.getGlobalDescribe().get(shareName);
+        if (shareType == null || String.isBlank(parentField) ||
+            !shareType.getDescribe().fields.getMap().containsKey(parentField)) {
+            throw new PermissionExplorerException('Unsupported share parent field.');
+        }
+        return safeName(parentField);
     }
 
     /**

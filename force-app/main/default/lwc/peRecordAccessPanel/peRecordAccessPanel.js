@@ -47,9 +47,6 @@ export default class PeRecordAccessPanel extends LightningElement {
                ACCESSIBLE mode there shows an empty list beneath a headline
                saying every record is reachable, which reads as a contradiction.
                Those objects open on ALL records instead. */
-            if (!sameObject) {
-                this.mode = value.isPublic || value.hasViewAll ? 'ALL' : 'ACCESSIBLE';
-            }
             this.loadPage(false, sameObject);
         }
     }
@@ -63,14 +60,19 @@ export default class PeRecordAccessPanel extends LightningElement {
     }
 
     rows = [];
-    mode = 'ACCESSIBLE';
+    reachableOnly = true;
+    totalReachable;
+    totalRecords;
+    totalIsFloor = false;
+    sharingBypassed = false;
+    showReason = true;
+    uniformReason;
     sortField = 'Name';
     searchTerm = '';
     cursor;
     hasMore = false;
     listLoading = false;
     loadingMore = false;
-    totalReachable;
     searchSupported = true;
     listNotes = [];
 
@@ -209,7 +211,7 @@ export default class PeRecordAccessPanel extends LightningElement {
             const page = await getRecordPage({
                 userId: this._userId,
                 objectApiName: this._reach.objectApiName,
-                mode: this.mode,
+                reachableOnly: this.reachableOnly,
                 searchTerm: this.searchTerm,
                 sortField: this.sortField,
                 cursor: append ? this.cursor : null
@@ -222,6 +224,11 @@ export default class PeRecordAccessPanel extends LightningElement {
             this.cursor = page?.nextCursor;
             this.hasMore = page?.hasMore === true;
             this.totalReachable = page?.totalReachable;
+            this.totalRecords = page?.totalRecords;
+            this.totalIsFloor = page?.totalIsFloor === true;
+            this.sharingBypassed = page?.sharingBypassed === true;
+            this.showReason = page?.showReason !== false;
+            this.uniformReason = page?.uniformReason;
             this.searchSupported = page?.searchSupported !== false;
             this.listNotes = page?.notes ?? [];
         } catch (e) {
@@ -235,13 +242,14 @@ export default class PeRecordAccessPanel extends LightningElement {
         }
     }
 
-    handleModeChange(event) {
-        const next = event.currentTarget.dataset.mode;
-        if (next === this.mode) return;
-        this.mode = next;
-        /* A search typed in ALL mode means nothing in ACCESSIBLE mode, and
-           carrying it over would silently narrow a list that cannot honour it. */
-        this.searchTerm = '';
+    handleFilterToggle(event) {
+        this.reachableOnly = event.target.checked;
+        /* A search typed while unfiltered means nothing once the share table
+           drives the page, and carrying it over would silently narrow a list
+           that cannot honour it. */
+        if (this.reachableOnly) {
+            this.searchTerm = '';
+        }
         this.resetList();
         this.loadPage(false);
     }
@@ -268,26 +276,30 @@ export default class PeRecordAccessPanel extends LightningElement {
 
     /* ------------------------------ list view ------------------------------ */
 
-    get isAccessibleMode() {
-        return this.mode === 'ACCESSIBLE';
-    }
-
-    get accessibleTabClass() {
-        return this.isAccessibleMode ? 'seg seg_on' : 'seg';
-    }
-
-    get allTabClass() {
-        return this.isAccessibleMode ? 'seg' : 'seg seg_on';
-    }
-
+    /* Both figures come from their own queries, so neither is the size of the
+       page. That is what makes this line honest - the earlier design avoided a
+       filtered list precisely because I thought it could not be. */
     get showingLine() {
-        const shown = this.rows.length;
-        if (this.isAccessibleMode && this.totalReachable !== null && this.totalReachable !== undefined) {
-            return `Showing ${shown.toLocaleString()} of ${this.totalReachable.toLocaleString()}`;
+        const shown = this.rows.length.toLocaleString();
+
+        if (!this.reachableOnly) {
+            return this.totalRecords === null || this.totalRecords === undefined
+                ? `Showing ${shown}`
+                : `Showing ${shown} of ${this.totalRecords.toLocaleString()} records`;
         }
-        /* No "of N" in ALL mode: the reachable total is unknowable there, and a
-           denominator would be read as one. */
-        return `Showing ${shown.toLocaleString()}`;
+        if (this.totalReachable === null || this.totalReachable === undefined) {
+            return `Showing ${shown}`;
+        }
+        const qualifier = this.totalIsFloor ? 'at least ' : '';
+        return `Showing ${shown} of ${qualifier}${this.totalReachable.toLocaleString()} reachable`;
+    }
+
+    /* The floor caveat appears once, beside the count it qualifies, and only
+       where hierarchy access can actually hide from a share table. */
+    get floorNote() {
+        return this.reachableOnly && this.totalIsFloor
+            ? 'Records reached only through role hierarchy or implicit sharing leave no share row, so the total may be higher.'
+            : null;
     }
 
     get searchDisabled() {
