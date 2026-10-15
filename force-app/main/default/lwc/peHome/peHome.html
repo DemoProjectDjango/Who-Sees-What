@@ -1,0 +1,70 @@
+<template>
+    <div class="page">
+        <div class="shell">
+            <header class="masthead">
+                <div>
+                    <p class="eyebrow">WHO SEES WHAT · HOME</p>
+                    <h1>Access at a glance</h1>
+                    <p class="subtitle">A clearer view of your Salesforce access landscape.</p>
+                </div>
+                <div class="head-actions">
+                    <template lwc:if={lastRefreshedDisplay}><span class="updated">Updated {lastRefreshedDisplay}</span></template>
+                    <button class="outline-button" type="button" onclick={handleRefresh} disabled={refreshing} title="Refresh dashboard data">{refreshLabel}</button>
+                    <button class="primary-button" type="button" onclick={handleOpenExplorer}>Open Explorer →</button>
+                </div>
+            </header>
+
+            <section class="kpi-grid" aria-label="Overview figures">
+                <div class="kpi-card"><div class="kpi-icon blue">♙</div><div><p class="kpi-label">Active users</p><p class="kpi-value">{activeUsersValue}</p><p class="kpi-detail">Currently active in the org</p></div></div>
+                <div class="kpi-card"><div class="kpi-icon purple">▤</div><div><p class="kpi-label">Permission sets</p><p class="kpi-value">{permissionSetsValue}</p><p class="kpi-detail">Permission configurations</p></div></div>
+                <div class="kpi-card"><div class="kpi-icon green">◫</div><div><p class="kpi-label">License seats</p><p class="kpi-value">{licenseHeadline}</p><p class="kpi-detail">Used / total limited seats</p></div></div>
+                <div class="kpi-card"><div class="kpi-icon orange">⌕</div><div><p class="kpi-label">Inspections · 14 days</p><p class="kpi-value">{inspectionsValue}</p><p class="kpi-detail">{inspectionDelta} compared to prior period</p></div></div>
+            </section>
+
+            <div class="dashboard-grid">
+                <section class="panel overview-panel">
+                    <div class="panel-heading"><div><h2>Org overview</h2><p>What can be explored in this Salesforce org</p></div></div>
+                    <template lwc:if={statsLoading}><p class="empty">Loading org figures…</p></template>
+                    <template lwc:elseif={hasOverviewRows}>
+                        <div class="overview-grid"><template for:each={overviewRows} for:item="item"><div class="overview-tile" key={item.key}><p class="overview-value">{item.value}</p><p class="overview-label">{item.label}</p></div></template></div>
+                        <div class="panel-footer"><button type="button" class="text-link" onclick={handleOpenExplorer}>Explore permissions →</button></div>
+                    </template>
+                    <template lwc:else><p class="empty">Org figures are unavailable for this user.</p></template>
+                </section>
+                <section class="panel attention-panel">
+                    <div class="panel-heading"><div><h2>Needs attention</h2><p>{postureSummary}</p></div><span class="pill-soft">Org posture</span></div>
+                    <template lwc:if={postureLoading}><p class="empty">Checking org posture…</p></template>
+                    <template lwc:elseif={hasPosture}><div class="signals"><template for:each={attentionRows} for:item="signal"><div key={signal.key} class="signal" title={signal.remedy}><span class="signal-label">{signal.label}</span><strong class="signal-value">{signal.value}</strong><span class={signal.tone}>{signal.severityLabel}</span></div></template></div></template>
+                    <template lwc:else><p class="empty">Posture signals are unavailable. Your user may not have access to their source data.</p></template>
+                </section>
+                <section class="panel license-panel">
+                    <div class="panel-heading"><div><h2>License utilization</h2><p>Capacity across licenses with fixed seat limits</p></div><button type="button" class="text-link" onclick={handleOpenLicenses}>View licenses →</button></div>
+                    <template lwc:if={postureLoading}><p class="empty">Loading license seats…</p></template>
+                    <template lwc:elseif={licences}><div class="license-hero"><span class="license-number">{licences.used}</span><span class="license-of">of {licences.total} seats used</span><span class="license-percent">{licences.pct}</span></div><div class="license-track">
+                        <!-- code-analyzer-suppress(pmd:AvoidInlineStyles) Fill width is seats used against seats owned. A fixed class cannot express an arbitrary proportion. -->
+                        <div class={licences.barClass} style={licences.barStyle}></div>
+                    </div><div class="license-bottom"><span>{licences.free} seats available</span><span>Limited licenses only</span></div><template lwc:if={licences.unlimitedNote}><p class="note">{licences.unlimitedNote}</p></template></template>
+                    <template lwc:else><p class="empty">Seat utilization unavailable or no limited-seat licenses found.</p></template>
+                </section>
+                <section class="panel activity-panel">
+                    <div class="panel-heading"><div><h2>Inspection activity</h2><p>What was inspected over the last 14 days</p></div><span class="pill-soft">Last 14 days</span></div>
+                    <template lwc:if={logLoading}><p class="empty">Loading activity…</p></template>
+                    <template lwc:elseif={hasActivity}><c-pe-activity-chart days={activity}></c-pe-activity-chart><template lwc:if={showTruncationNote}><p class="note">The activity read limit was reached; chart figures may be incomplete.</p></template></template>
+                    <template lwc:else><div class="empty"><p>No inspections recorded yet.</p><button class="text-link" type="button" onclick={handleOpenExplorer}>Start an inspection →</button></div></template>
+                </section>
+                <section class="panel inspector-panel">
+                    <div class="panel-heading"><div><h2>Inspection breakdown</h2><p>Who's inspecting and what they're viewing</p></div><div class="switch" role="group" aria-label="Activity breakdown"><button type="button" class={inspectorsTabClass} data-view="inspectors" onclick={handleBreakdown}>Inspectors</button><button type="button" class={actionsTabClass} data-view="actions" onclick={handleBreakdown}>Actions</button></div></div>
+                    <template lwc:if={hasBreakdown}><ul class="ranks"><template for:each={breakdownRows} for:item="row"><li class="rank" key={row.key}><template lwc:if={row.showInitials}><span class="avatar">{row.initials}</span></template><div class="rank-content"><div class="rank-top"><span class="rank-name">{row.name}</span><span class="rank-stats">{row.total} · {row.share}</span></div><div class="rank-track">
+                        <!-- code-analyzer-suppress(pmd:AvoidInlineStyles) Fill width is each row against the busiest row in the list, computed per page. -->
+                        <div class="rank-fill" style={row.barStyle}></div>
+                    </div></div></li></template></ul></template><template lwc:else><p class="empty">No activity breakdown is available.</p></template>
+                </section>
+                <section class="panel log-panel">
+                    <div class="panel-heading"><div><h2>Recent inspections</h2><p>Latest recorded inspection events</p></div><template lwc:if={hasMoreLogRows}><button type="button" class="text-link" onclick={handleToggleLog}>{logToggleLabel} →</button></template></div>
+                    <template lwc:if={logLoading}><p class="empty">Loading inspection history…</p></template><template lwc:elseif={showLogNotice}><p class="empty">{logNotice}</p></template><template lwc:else><c-pe-inspection-log rows={displayedLogRows}></c-pe-inspection-log></template>
+                </section>
+            </div>
+            <footer class="bottom-actions"><span>Need help understanding access?</span><button type="button" class="text-link" onclick={handleOpenGuide}>Getting started →</button><button type="button" class="text-link" onclick={handleOpenLicenses}>License Inspector →</button></footer>
+        </div>
+    </div>
+</template>

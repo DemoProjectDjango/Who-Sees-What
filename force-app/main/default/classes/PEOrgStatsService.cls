@@ -10,8 +10,27 @@
  * other five. (This is the same lesson License Inspector's launch taught the
  * hard way: an uncaught failure in one card took the whole panel down with
  * it, silently, for every card, not just the one actually at fault.)
+ *
+ * Cached org-wide since the bar moved to Home. On Permission Explorer it ran
+ * on every page load and every refresh, which was six org-wide COUNTs to
+ * render decoration. On a page opened deliberately that cost is still real but
+ * the figures - how many profiles, how many permission sets - do not change
+ * minute to minute, so a short TTL is the right trade. The cache is org
+ * partition, not session: the counts are identical for every admin, and
+ * caching them per session would multiply the cost by the number of people
+ * using the tool.
  */
 public with sharing class PEOrgStatsService {
+
+    /**
+     * Version suffix, not decoration. If OrgStats ever gains a field, already
+     * cached instances are the wrong shape - bump this rather than read them.
+     */
+    private static final String CACHE_KEY = 'orgStatsV1';
+
+    /** Ten minutes. Long enough to make the page cheap, short enough that a
+     *  permission set created during a working session shows up. */
+    private static final Integer CACHE_TTL_SECONDS = 600;
 
     /**
      * Returns the org-level KPI counts used by the Permission Explorer header.
@@ -26,6 +45,39 @@ public with sharing class PEOrgStatsService {
     // KPI figures; adding WHERE/LIMIT would change the statistics the header shows.
     @SuppressWarnings('PMD.AvoidNonRestrictiveQueries')
     public static PEDto.OrgStats getStats() {
+        return getStats(false);
+    }
+
+    /**
+     * Returns the org-level KPI counts, optionally bypassing the cache.
+     *
+     * @param forceRefresh True when the admin explicitly refreshes and cached counts should be ignored.
+     * @return Org statistics for active users, permission sets, groups,
+     *         profiles, reachable apps, and objects with read access.
+     */
+    // forceRefresh mirrors the resolver's existing refresh contract rather than
+    // introducing a second shape for the same idea.
+    @SuppressWarnings('PMD.AvoidBooleanMethodParameters,PMD.AvoidNonRestrictiveQueries')
+    public static PEDto.OrgStats getStats(Boolean forceRefresh) {
+        if (forceRefresh != true) {
+            Object cached = PECacheManager.orgGet(CACHE_KEY);
+            if (cached instanceof PEDto.OrgStats) {
+                return (PEDto.OrgStats) cached;
+            }
+        }
+
+        PEDto.OrgStats s = compute();
+        PECacheManager.orgPut(CACHE_KEY, s, CACHE_TTL_SECONDS);
+        return s;
+    }
+
+    /**
+     * Runs the six counts. Each is independently optional.
+     *
+     * @return Freshly computed org statistics with a null entry for any count that failed.
+     */
+    @SuppressWarnings('PMD.AvoidNonRestrictiveQueries')
+    private static PEDto.OrgStats compute() {
         PEDto.OrgStats s = new PEDto.OrgStats();
 
         try {

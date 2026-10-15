@@ -1,0 +1,32 @@
+<template>
+    <template lwc:if={hasRows}>
+        <ul class="grid">
+            <template for:each={rows} for:item="row">
+                <li key={row.key} class={row.cardClass}>
+                    <div class="tile_top">
+                        <span class={row.dotClass} aria-hidden="true"></span>
+                        <span class="tile_status">{row.statusText}</span>
+                    </div>
+
+                    <p class="tile_label">{row.label}</p>
+
+                    <div class="tile_figures">
+                        <span class="tile_value">{row.value}</span>
+                        <template lwc:if={row.outOf}>
+                            <span class="tile_outof">{row.outOf}</span>
+                        </template>
+                    </div>
+
+                    <template lwc:if={row.barStyle}>
+                        <div class="tile_track">
+                            <!-- code-analyzer-suppress(pmd:AvoidInlineStyles) Bar width is the signal count against its denominator, so it is data, not presentation. A fixed class cannot express an arbitrary proportion. -->
+                            <div class="tile_fill" style={row.barStyle}></div>
+                        </div>
+                    </template>
+
+                    <p class="tile_remedy">{row.remedy}</p>
+                </li>
+            </template>
+        </ul>
+    </template>
+</template>

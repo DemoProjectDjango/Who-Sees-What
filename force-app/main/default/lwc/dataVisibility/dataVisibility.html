@@ -1,0 +1,206 @@
+<template>
+  <div class="explorer">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand_icon_box" aria-hidden="true">
+          <img src={projectLogo} alt="Who Sees What Logo" class="brand_logo_img" />
+        </div>
+        <div class="brand_titles">
+          <h1 class="wordmark">Who Sees What</h1>
+          <span class="producttag">Data Visibility</span>
+        </div>
+      </div>
+
+      <div class="title">
+        <nav class="crumbs" aria-label="Current selection">
+          <template lwc:if={crumbs.length}>
+            <template for:each={crumbs} for:item="c">
+              <span key={c.key} class="crumb">
+                <template lwc:if={c.separator}>
+                  <span class="sep" aria-hidden="true">&rsaquo;</span>
+                </template>
+                {c.label}
+              </span>
+            </template>
+          </template>
+          <template lwc:else>
+            <span class="crumb crumb_placeholder">Select a user to begin</span>
+          </template>
+        </nav>
+      </div>
+
+      <div class="trust" aria-label="Tool guarantees">
+        <span class="pill pill_live">
+          <span class="pill_dot" aria-hidden="true"></span>Read only
+        </span>
+        <span class="pill">
+          <span class="pill_dot pill_dot_neutral" aria-hidden="true"></span>Inspection logged
+        </span>
+      </div>
+
+      <div class="actions">
+        <button class="slds-button slds-button_neutral btn" type="button"
+                onclick={handleRefresh} disabled={cannotRefresh}>
+          {recountLabel}
+        </button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="navigator" aria-label="Access path">
+
+        <!-- Stage 1: Who -->
+        <section class={whoSectionClass}>
+          <header class={whoHeadClass} onclick={handleStageToggle} onkeydown={handleStageKeyDown}
+                  data-stage="who" role="button" aria-expanded={whoOpenStr} tabindex="0"
+                  title={whoToggleTitle}>
+            <span class={whoBadgeClass} aria-hidden="true">
+              <template lwc:if={isWhoDone}>
+                <svg viewBox="0 0 24 24" class="check_icon" fill="none" stroke="currentColor" stroke-width="3">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </template>
+              <template lwc:else>1</template>
+            </span>
+            <div class="nav_heading">
+              <span class="nav_title">Who</span>
+              <span class="nav_summary" title={whoSummary}>{whoSummary}</span>
+            </div>
+            <div class="stage_dropdown_btn" title={whoToggleTitle} aria-label={whoToggleTitle}>
+              <svg class={whoChevronClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </header>
+          <template lwc:if={whoOpen}>
+            <div class="nav_section_body">
+              <c-pe-user-column
+                selected-user-id={selectedUserId}
+                onuserselect={handleUserSelect}
+              ></c-pe-user-column>
+            </div>
+          </template>
+        </section>
+
+        <!-- Stage 2: Where -->
+        <section class={whereSectionClass}>
+          <header class={whereHeadClass} onclick={handleStageToggle} onkeydown={handleStageKeyDown}
+                  data-stage="app" role="button" aria-expanded={appOpenStr} tabindex="0"
+                  title={appToggleTitle}>
+            <span class={appBadgeClass} aria-hidden="true">
+              <template lwc:if={isAppDone}>
+                <svg viewBox="0 0 24 24" class="check_icon" fill="none" stroke="currentColor" stroke-width="3">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </template>
+              <template lwc:else>2</template>
+            </span>
+            <div class="nav_heading">
+              <span class="nav_title">Where</span>
+              <span class="nav_summary" title={appSummary}>{appSummary}</span>
+            </div>
+            <div class="stage_dropdown_btn" title={appToggleTitle} aria-label={appToggleTitle}>
+              <svg class={appChevronClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </header>
+          <template lwc:if={appOpen}>
+            <div class="nav_section_body nav_section_body_compact">
+              <c-pe-app-column
+                app-list={appList}
+                selected-app-id={selectedAppId}
+                state={appState}
+                error={appError}
+                onappselect={handleAppSelect}
+                onretry={handleAppRetry}
+              ></c-pe-app-column>
+            </div>
+          </template>
+        </section>
+
+        <!-- Stage 3: Object -->
+        <section class={objectSectionClass}>
+          <header class={objectHeadClass} onclick={handleStageToggle} onkeydown={handleStageKeyDown}
+                  data-stage="objects" role="button" aria-expanded={objectsOpenStr} tabindex="0"
+                  title={objectToggleTitle}>
+            <span class={objectBadgeClass} aria-hidden="true">
+              <template lwc:if={isObjectDone}>
+                <svg viewBox="0 0 24 24" class="check_icon" fill="none" stroke="currentColor" stroke-width="3">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </template>
+              <template lwc:else>3</template>
+            </span>
+            <div class="nav_heading">
+              <span class="nav_title">Object / Tab</span>
+              <span class="nav_summary" title={objectSummary}>{objectSummary}</span>
+            </div>
+            <div class="stage_dropdown_btn" title={objectToggleTitle} aria-label={objectToggleTitle}>
+              <svg class={objectChevronClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </header>
+          <template lwc:if={objectsOpen}>
+            <div class="nav_section_body">
+              <c-pe-object-list
+                app-label={selectedAppLabel}
+                rows={objectRows}
+                state={railState}
+                error={railError}
+                selected-api-name={selectedObjectApiName}
+                onobjectselect={handleObjectSelect}
+                onretry={handleRailRetry}
+              ></c-pe-object-list>
+            </div>
+          </template>
+        </section>
+      </aside>
+
+      <main class="workspace">
+        <section class="workspace_main">
+          <template lwc:if={selectedObjectApiName}>
+            <c-pe-record-access-panel
+              user-id={selectedUserId}
+              reach={reach}
+              loading={reachLoading}
+              error={reachError}
+              onretry={handleRefresh}
+            ></c-pe-record-access-panel>
+          </template>
+
+          <template lwc:else>
+            <div class="placeholder">
+              <div class="placeholder_icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.75">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h16M4 17h10" />
+                </svg>
+              </div>
+              <h2 class="phead">{placeholderHeading}</h2>
+              <p class="pbody">{placeholderText}</p>
+
+              <div class="checklist_card">
+                <p class="checklist_title">Record Access Steps</p>
+                <ol class="placeholder_steps" aria-label="Inspection steps">
+                  <li class={whoProgressClass}>
+                    <span class="step_badge">1</span>
+                    <span class="step_text">Select a user</span>
+                  </li>
+                  <li class={appProgressClass}>
+                    <span class="step_badge">2</span>
+                    <span class="step_text">Select an app</span>
+                  </li>
+                  <li class={objectProgressClass}>
+                    <span class="step_badge">3</span>
+                    <span class="step_text">Select an object or tab</span>
+                  </li>
+                </ol>
+              </div>
+            </div>
+          </template>
+        </section>
+      </main>
+    </div>
+  </div>
+</template>

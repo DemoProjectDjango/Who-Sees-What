@@ -1,0 +1,114 @@
+<template>
+    <template lwc:if={loading}>
+        <p class="state">Counting records…</p>
+    </template>
+
+    <template lwc:elseif={error}>
+        <div class="state state_error" role="alert">
+            <p>{error}</p>
+            <button class="retry" type="button" onclick={handleRetry}>Try again</button>
+        </div>
+    </template>
+
+    <template lwc:elseif={blocked}>
+        <div class="head">
+            <h2 class="head_title">{reach.objectLabel}</h2>
+            <p class="state">{reach.basis}</p>
+        </div>
+    </template>
+
+    <template lwc:elseif={hasReach}>
+        <header class="head">
+            <div class="head_left">
+                <span class="head_icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                        <ellipse cx="12" cy="6" rx="8" ry="3"></ellipse>
+                        <path d="M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6"></path>
+                        <path d="M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path>
+                    </svg>
+                </span>
+                <div>
+                    <h2 class="head_title">{reach.objectLabel}</h2>
+                    <p class="head_meta">
+                        API: <code class="api">{reach.objectApiName}</code>
+                    </p>
+                </div>
+            </div>
+        </header>
+
+        <div class="strip" role="group" aria-label="Record access summary">
+            <template for:each={tiles} for:item="t">
+                <div key={t.key} class={t.tileClass}>
+                    <span class="tlabel">{t.label}</span>
+                    <span class="tvalue">{t.text}</span>
+                </div>
+            </template>
+        </div>
+
+        <template lwc:if={basisLine}>
+            <p class="basis">{basisLine}</p>
+        </template>
+
+        <section class="records">
+            <div class="records_head">
+                <h3 class="section_title">Records</h3>
+                <label class="filter">
+                    <input type="checkbox" checked={reachableOnly} onchange={handleFilterToggle} />
+                    <span>Only records this user can reach</span>
+                </label>
+            </div>
+
+            <div class="controls">
+                <input class="search" type="text" value={searchTerm}
+                       placeholder={searchPlaceholder} disabled={searchDisabled}
+                       oninput={handleSearch} onkeydown={handleSearchCommit}
+                       onchange={handleSearchCommit} aria-label="Search records" />
+                <select class="sort" onchange={handleSortChange} aria-label="Sort records">
+                    <template for:each={sortOptions} for:item="o">
+                        <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                    </template>
+                </select>
+            </div>
+
+            <template lwc:if={uniformReason}>
+                <p class="uniform">{uniformReason}</p>
+            </template>
+
+            <c-pe-record-table
+                object-api-name={reach.objectApiName}
+                rows={rows}
+                loading={listLoading}
+                has-more={hasMore}
+                loading-more={loadingMore}
+                show-reason={showReason}
+                onloadmore={handleLoadMore}
+            ></c-pe-record-table>
+
+            <div class="records_foot">
+                <span class="showing">{showingLine}</span>
+            </div>
+
+            <template lwc:if={floorNote}>
+                <p class="caveat">{floorNote}</p>
+            </template>
+
+            <template lwc:if={hasListNotes}>
+                <template for:each={listNoteRows} for:item="n">
+                    <p key={n.key} class="caveat">{n.text}</p>
+                </template>
+            </template>
+        </section>
+
+        <template lwc:if={hasNotes}>
+            <section class="notes">
+                <template for:each={notes} for:item="note">
+                    <p key={note.key} class="note">{note.text}</p>
+                </template>
+            </section>
+        </template>
+    </template>
+
+    <template lwc:else>
+        <p class="state">Pick a user, an app and an object to measure record access.</p>
+    </template>
+</template>

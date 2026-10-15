@@ -1,0 +1,28 @@
+<template>
+    <template lwc:if={hasRows}>
+        <div class="scroller">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col" class="col_when">When</th>
+                        <th scope="col">Inspector</th>
+                        <th scope="col">Subject</th>
+                        <th scope="col">Action</th>
+                        <th scope="col" class="col_detail">Detail</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template for:each={displayRows} for:item="row">
+                        <tr key={row.recordId}>
+                            <td class="cell_when" title={row.exact}>{row.relative}</td>
+                            <td class="cell_person">{row.inspectorDisplay}</td>
+                            <td class={row.subjectClass}>{row.subjectDisplay}</td>
+                            <td class="cell_action">{row.actionLabel}</td>
+                            <td class="cell_detail" title={row.detailDisplay}>{row.detailDisplay}</td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </template>
+</template>

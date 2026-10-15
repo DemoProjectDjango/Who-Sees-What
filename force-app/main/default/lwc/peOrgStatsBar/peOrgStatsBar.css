@@ -5,49 +5,61 @@
     font-family: var(--pe-font);
 }
 
-.statsbar {
+.groups {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
-    gap: 0.625rem;
-    padding: 0.625rem var(--pe-pad) 0.5rem;
-    background: var(--pe-ground);
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: 1.75rem;
 }
 
-.stat {
+.group_title {
+    margin: 0 0 0.875rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--d-ink-3);
+}
+
+.figures {
+    margin: 0;
+    padding: 0;
+    list-style: none;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    background: var(--pe-surface);
-    border: 1px solid var(--pe-line-strong);
-    border-radius: var(--pe-radius);
-    box-shadow: var(--pe-shadow);
-    padding: 0.625rem 0.875rem;
-    transition: box-shadow 120ms ease;
+    gap: 0.875rem;
 }
 
-.stat:hover {
-    box-shadow: var(--pe-shadow-card);
-    border-color: var(--pe-accent-line);
+.figure_head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.375rem;
 }
 
-.stat_label {
-    margin: 0;
-    font-size: var(--pe-fs-xs);
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--pe-ink-muted);
-    white-space: nowrap;
+.figure_label {
+    font-size: 0.8125rem;
+    color: var(--d-ink-2);
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.stat_value {
-    margin: 0.1875rem 0 0;
-    font-family: var(--pe-display);
-    font-size: 1.375rem;
-    font-weight: 700;
-    color: var(--pe-accent);
+.figure_value {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--d-ink);
     font-variant-numeric: tabular-nums;
-    line-height: 1.2;
+    flex: none;
+}
+
+.track {
+    height: 0.3125rem;
+    background: var(--d-bar-quiet);
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+.track_fill {
+    height: 100%;
+    background: var(--d-bar);
+    border-radius: 9999px;
 }

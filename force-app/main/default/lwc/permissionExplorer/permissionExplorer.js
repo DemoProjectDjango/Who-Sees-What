@@ -6,7 +6,6 @@ import getObjectDetail from "@salesforce/apex/PermissionExplorerController.getOb
 import getLoginHistory from "@salesforce/apex/PermissionExplorerController.getLoginHistory";
 import getAssignedPermissionSets from "@salesforce/apex/PermissionExplorerController.getAssignedPermissionSets";
 import getAssignedPermissionSetGroups from "@salesforce/apex/PermissionExplorerController.getAssignedPermissionSetGroups";
-import getOrgStats from "@salesforce/apex/PermissionExplorerController.getOrgStats";
 import WHO_SEES_WHAT_LOGO from "@salesforce/resourceUrl/whoSeesWhatLogo";
 import {
   STATE,
@@ -68,7 +67,6 @@ export default class PermissionExplorer extends LightningElement {
   userSummary;
   appList = { apps: [] };
   objectRows = [];
-  orgStats = {};
 
   appState = STATE.EMPTY;
   appError;
@@ -122,7 +120,6 @@ export default class PermissionExplorer extends LightningElement {
 
   connectedCallback() {
     this.restoreFromUrl();
-    this.loadOrgStats();
   }
 
   /* The explorer is pinned to the viewport rather than sized by its content,
@@ -159,18 +156,6 @@ export default class PermissionExplorer extends LightningElement {
     if (this._appliedHeight === height) return;
     this._appliedHeight = height;
     el.style.setProperty("--pe-explorer-h", height + "px");
-  }
-
-  /** Org-wide, so it loads once regardless of whether a user is ever
-        selected — it is not part of the per-user resolver pass. */
-  async loadOrgStats() {
-    try {
-      this.orgStats = await getOrgStats();
-    } catch {
-      // The KPI bar is furniture, not a requirement — a failure here
-      // just means it stays hidden, not that the tool is unusable.
-      this.orgStats = {};
-    }
   }
 
   /** A link pasted into a support ticket should land on the exact panel. */
