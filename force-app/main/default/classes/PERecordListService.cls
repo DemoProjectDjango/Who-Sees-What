@@ -12,8 +12,12 @@
  * How a page is driven depends on where the access comes from:
  *
  *  - Sharing bypassed (public org-wide default, or the user holds View All):
- *    every record is reachable, so the page is driven from the object and the
- *    total is a plain COUNT(). Search and sort work.
+ *    the page is driven from the object and the total is a COUNT() less the
+ *    carve-outs a public default does not cover. Search and sort work. Under
+ *    the filter, rows the user cannot read are dropped using the per-record
+ *    access this page already fetches - the checkbox used to be a no-op here,
+ *    which is how a record with three greyed access chips sat inside a list
+ *    headed "only records this user can reach".
  *  - Private, reachable-only: driven from the share table, so every row
  *    returned is genuinely reachable and the total is an exact COUNT_DISTINCT.
  *    The record's own name cannot be searched, because the driving query is
@@ -187,10 +191,21 @@ public with sharing class PERecordListService {
         page.totalRecords = countAll(objectApiName, page);
 
         if (ctx.sharingBypassed) {
-            // Everyone with object read reaches everything, so the reachable
-            // total is the record total and is exact.
+            // Everyone with object read reaches everything the platform does
+            // not carve out, so the reachable total is the record total less
+            // the carve-out, and is still exact.
             page.totalReachable = page.totalRecords;
             page.totalIsFloor = false;
+
+            if (page.totalRecords != null && ctx.owdUnreachable != null) {
+                page.totalReachable = page.totalRecords - ctx.owdUnreachable;
+            } else if (ctx.owdCarveOutApplies == true && ctx.owdUnreachable == null) {
+                page.notes.add(
+                    'Some records here stay out of reach despite the public org-wide ' +
+                    'default, and how many could not be read, so the reachable total ' +
+                    'may be lower than shown.'
+                );
+            }
             return;
         }
 
@@ -227,7 +242,9 @@ public with sharing class PERecordListService {
             return;
         }
         page.showReason = false;
-        page.uniformReason = 'Every record is reachable through the org-wide default.';
+        page.uniformReason = String.isNotBlank(ctx.owdCarveOutNote)
+            ? ctx.owdCarveOutNote
+            : 'Every record is reachable through the org-wide default.';
     }
 
     /* ---------------------------------------------------------------
@@ -423,10 +440,18 @@ public with sharing class PERecordListService {
         if (ids.isEmpty()) {
             return;
         }
-        Map<Id, UserRecordAccess> access = accessFor(userId, ids);
+        AccessLookup access = accessFor(userId, ids);
         Boolean objectDeletable = d.isDeletable();
         Boolean hasOwner = d.fields.getMap().containsKey('OwnerId');
         Boolean hasCreated = d.fields.getMap().containsKey('CreatedDate');
+
+        // ctx is set only on the object-driven page, and that is the only page
+        // the filter has to enforce: every row on a share-driven page came from
+        // a share row, so it is reachable by construction. Without resolved
+        // access there is nothing to filter on, and dropping every row because
+        // a permission is missing would be worse than listing them.
+        Boolean filtering = ctx != null && page.reachableOnly == true && access.resolved;
+        Integer outOfReach = 0;
 
         for (Id rid : ids) {
             SObject s = byId.get(rid);
@@ -449,11 +474,18 @@ public with sharing class PERecordListService {
                 row.createdDate = (Datetime) s.get('CreatedDate');
             }
 
-            UserRecordAccess ura = access.get(rid);
+            UserRecordAccess ura = access.byId.get(rid);
             if (ura != null) {
                 row.canRead   = ura.HasReadAccess;
                 row.canEdit   = ura.HasEditAccess;
                 row.canDelete = ura.HasDeleteAccess;
+            }
+
+            if (access.resolved && !row.canRead) {
+                outOfReach++;
+            }
+            if (filtering && !row.canRead) {
+                continue;
             }
 
             assignReason(row, shares == null ? null : shares.get(rid), ctx);
@@ -465,6 +497,48 @@ public with sharing class PERecordListService {
             row.deleteBlockedByRecord = objectDeletable && row.canRead && !row.canDelete;
 
             page.rows.add(row);
+        }
+
+        noteUnreachable(page, ctx, access.resolved, outOfReach);
+    }
+
+    /**
+     * Explains, once per page, whatever the counters could not.
+     *
+     * Two cases, both worth saying out loud rather than papering over. The
+     * per-record access could not be read, so the filter could not be applied
+     * and the list is wider than it claims. Or the default is public, records
+     * are still out of reach, and no carve-out on record explains them - a
+     * restriction rule is the usual answer and it cannot be read from Apex, so
+     * the total is a ceiling and the panel should not pretend otherwise.
+     *
+     * @param page Page under construction, mutated in place.
+     * @param ctx Sharing context, or null on a share-driven page.
+     * @param accessResolved True when per-record access was actually read.
+     * @param outOfReach Rows on this page the user cannot read.
+     */
+    @SuppressWarnings('PMD.ExcessiveParameterList')
+    private static void noteUnreachable(
+        RecordPage page, PERecordAccessService.SharingContext ctx,
+        Boolean accessResolved, Integer outOfReach
+    ) {
+        if (ctx == null) {
+            return;
+        }
+        if (page.reachableOnly == true && !accessResolved) {
+            page.notes.add(
+                'The access this user has to individual records could not be read, so ' +
+                'every record in scope is listed rather than only the ones they reach.'
+            );
+            return;
+        }
+        if (outOfReach > 0 && ctx.sharingBypassed == true
+            && ctx.owdCarveOutApplies != true && ctx.hasViewAll != true) {
+            page.notes.add(
+                'Some records on this page are out of reach for this user even though ' +
+                'the org-wide default is public. A restriction rule is the usual cause ' +
+                'and it cannot be read from here, so the reachable total may be lower.'
+            );
         }
     }
 
@@ -653,18 +727,31 @@ public with sharing class PERecordListService {
         return fields;
     }
 
+    /** A page of per-record access, and whether it was actually read. */
+    private class AccessLookup {
+        /** True only when the access query ran and returned something. */
+        private Boolean resolved = false;
+        /** Access rows keyed by record Id; empty when unresolved. */
+        private Map<Id, UserRecordAccess> byId = new Map<Id, UserRecordAccess>();
+    }
+
     /**
      * The selected user's access to a page of records.
      *
      * UserRecordAccess is the only object that answers for another user, and it
      * is the only thing here that sees role hierarchy and implicit sharing.
      *
+     * The resolved flag exists because an empty result cannot be told apart
+     * from a query that returned nothing for want of permission, and the
+     * difference decides whether the filter may drop a row. Unknown access
+     * widens the list and says so; it never silently empties it.
+     *
      * @param userId The user being inspected.
      * @param ids Record Ids, at most 200.
-     * @return Access rows keyed by record Id; empty when the query fails.
+     * @return Access rows plus the flag saying whether they mean anything.
      */
-    private static Map<Id, UserRecordAccess> accessFor(Id userId, List<Id> ids) {
-        Map<Id, UserRecordAccess> out = new Map<Id, UserRecordAccess>();
+    private static AccessLookup accessFor(Id userId, List<Id> ids) {
+        AccessLookup out = new AccessLookup();
         if (ids.isEmpty()) {
             return out;
         }
@@ -679,13 +766,14 @@ public with sharing class PERecordListService {
                 FROM UserRecordAccess
                 WHERE UserId = :userId AND RecordId IN :ids
             ]) {
-                out.put(a.RecordId, a);
+                out.byId.put(a.RecordId, a);
             }
+            out.resolved = !out.byId.isEmpty();
         } catch (Exception e) {
             // Querying another user's access needs elevated permission. Without
             // it the rows still list, with the access chips blank rather than
             // wrong - absent is recoverable, false is a lie.
-            return new Map<Id, UserRecordAccess>();
+            return new AccessLookup();
         }
         return out;
     }

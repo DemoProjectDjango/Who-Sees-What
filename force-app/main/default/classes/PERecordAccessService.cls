@@ -9,9 +9,15 @@
  * What is exact anyway:
  *
  *  - Org-wide default, from EntityDefinition. Authoritative.
- *  - When the OWD is public, every user with object read reaches every record,
- *    so the total IS the answer. One query, exact, no further work.
- *  - When the user holds View All on the object, likewise.
+ *  - When the OWD is public, every user with object read reaches every record
+ *    EXCEPT the records the platform carves out regardless of the default.
+ *    The carve-outs are enumerated and subtracted, so the figure stays exact.
+ *    A contact with no account is the one that matters today: Salesforce keeps
+ *    it private to its owner even when Contact is Public Read/Write, which is
+ *    how a panel reading "2 of 2 reachable (exact)" sat above a record the user
+ *    could not open.
+ *  - When the user holds View All on the object, every record is reachable and
+ *    the carve-outs do not apply.
  *  - Ownership and explicit share rows are ordinary field filters, so counting
  *    them is exact regardless of who runs the query.
  *
@@ -35,6 +41,9 @@ public with sharing class PERecordAccessService {
     private static final Set<String> NO_SHARE_TABLE = new Set<String>{
         'User', 'Profile', 'PermissionSet', 'Group', 'UserRole'
     };
+
+    /** The one object today whose public default is not the whole answer. */
+    private static final String CONTACT = 'Contact';
 
     /* ---------------------------------------------------------------
      * Result shape
@@ -112,19 +121,16 @@ public with sharing class PERecordAccessService {
         // remain useful evidence of access that would survive its removal.
         r.hasViewAll = hasViewAllRecords(userId, objectApiName);
 
-        if (r.isPublic || r.hasViewAll) {
-            r.reachableRecords = r.totalRecords;
-            r.ownedRecords     = countOwned(objectApiName, userId, d, r);
-            r.sharedRecords    = countShared(objectApiName, userId, d, r);
-            r.isExact          = r.totalRecords != null;
-            r.basis = r.hasViewAll
-                ? 'Exact. View All Records makes every record reachable; explicit sharing grants are also counted separately.'
-                : 'Exact. The org-wide default makes every record visible to anyone with read access.';
-            return r;
-        }
-
+        // Counted either way. Under a public default or View All they are not
+        // what grants access, but they are still evidence of access that would
+        // survive the grant being removed.
         r.ownedRecords  = countOwned(objectApiName, userId, d, r);
         r.sharedRecords = countShared(objectApiName, userId, d, r);
+
+        if (r.isPublic || r.hasViewAll) {
+            applyBypassedReach(r, objectApiName, userId);
+            return r;
+        }
 
         // Distinct across every share row rather than owned + shared. A record
         // can carry both an Owner row and a Manual row, and adding the two
@@ -145,11 +151,59 @@ public with sharing class PERecordAccessService {
         return r;
     }
 
+    /**
+     * Fills the reach figures for a user whose access does not come from sharing.
+     *
+     * View All Records reaches everything, carve-outs included. A public
+     * org-wide default usually reaches everything too, but "usually" is not a
+     * figure, so the known carve-outs are subtracted rather than assumed away.
+     * Where a carve-out exists and its size cannot be read, the figure is
+     * reported as a ceiling instead of being quietly overstated.
+     *
+     * @param r Reach being populated, mutated in place.
+     * @param objectApiName API name of the object.
+     * @param userId The user being inspected.
+     */
+    private static void applyBypassedReach(Reach r, String objectApiName, Id userId) {
+        if (r.hasViewAll) {
+            r.reachableRecords = r.totalRecords;
+            r.isExact = r.totalRecords != null;
+            r.basis = 'Exact. View All Records makes every record reachable; explicit ' +
+                      'sharing grants are also counted separately.';
+            return;
+        }
+
+        OwdCarveOut carveOut = owdCarveOutFor(objectApiName, userId);
+
+        if (!carveOut.applies || carveOut.unreachable == 0) {
+            r.reachableRecords = r.totalRecords;
+            r.isExact = r.totalRecords != null;
+            r.basis = 'Exact. The org-wide default makes every record visible to anyone ' +
+                      'with read access.';
+            return;
+        }
+
+        if (carveOut.unreachable == null || r.totalRecords == null) {
+            // The carve-out is real and its size is not readable from here, so
+            // the honest answer is a ceiling rather than a number.
+            r.reachableRecords = r.totalRecords;
+            r.isExact = false;
+            r.basis = 'At most this many. ' + carveOut.basisClause;
+            r.notes.add(carveOut.note);
+            return;
+        }
+
+        r.reachableRecords = r.totalRecords - carveOut.unreachable;
+        r.isExact = true;
+        r.basis = 'Exact. ' + carveOut.basisClause;
+        r.notes.add(carveOut.note);
+    }
+
     /* ---------------------------------------------------------------
      * Sharing context
      * --------------------------------------------------------------- */
 
-    /** The two facts that decide how a record list has to be driven. */
+    /** The facts that decide how a record list has to be driven. */
     public class SharingContext {
         @AuraEnabled public String model;
         /** True when the org-wide default puts every record within reach. */
@@ -158,6 +212,13 @@ public with sharing class PERecordAccessService {
         @AuraEnabled public Boolean hasViewAll = false;
         /** Either of the above means sharing is not what grants access. */
         @AuraEnabled public Boolean sharingBypassed = false;
+
+        /** True when a public default still leaves records out of reach. */
+        @AuraEnabled public Boolean owdCarveOutApplies = false;
+        /** How many records the carve-out removes; null when none or unknown. */
+        @AuraEnabled public Integer owdUnreachable;
+        /** The carve-out in one sentence; null when none applies. */
+        @AuraEnabled public String owdCarveOutNote;
     }
 
     /**
@@ -191,7 +252,108 @@ public with sharing class PERecordAccessService {
 
         ctx.hasViewAll = hasViewAllRecords(userId, objectApiName);
         ctx.sharingBypassed = ctx.isPublic || ctx.hasViewAll;
+
+        // Only a public default needs the carve-out. View All Records reaches
+        // the records a public default does not, so asking there would cost a
+        // query to subtract nothing.
+        if (ctx.isPublic && !ctx.hasViewAll) {
+            OwdCarveOut carveOut = owdCarveOutFor(objectApiName, userId);
+            Boolean bites = carveOut.applies
+                && (carveOut.unreachable == null || carveOut.unreachable > 0);
+            ctx.owdCarveOutApplies = bites;
+            if (bites) {
+                ctx.owdUnreachable = carveOut.unreachable;
+                ctx.owdCarveOutNote = carveOut.reasonLine;
+            }
+        }
         return ctx;
+    }
+
+    /* ---------------------------------------------------------------
+     * Carve-outs from a public org-wide default
+     * --------------------------------------------------------------- */
+
+    /** An object-specific carve-out from a public org-wide default. */
+    public class OwdCarveOut {
+        /** True when this object has a carve-out at all. */
+        public Boolean applies = false;
+        /** Records out of reach despite the default; null when unreadable. */
+        public Integer unreachable;
+        /** Sentence for the line above the record table. */
+        public String reasonLine;
+        /** Clause appended to the basis beneath the counters. */
+        public String basisClause;
+        /** Sentence for the panel notes. */
+        public String note;
+    }
+
+    /**
+     * The carve-out from a public org-wide default for one object, if any.
+     *
+     * Enumerated rather than inferred. Each entry costs one count query and
+     * replaces a confident wrong number with an exact one, so the bar for
+     * adding an entry is a documented platform rule, not a suspicion.
+     *
+     * @param objectApiName API name of the object.
+     * @param userId The user being inspected.
+     * @return The carve-out, with applies = false when the default is the whole answer.
+     */
+    public static OwdCarveOut owdCarveOutFor(String objectApiName, Id userId) {
+        OwdCarveOut carveOut = new OwdCarveOut();
+        if (objectApiName != CONTACT) {
+            return carveOut;
+        }
+
+        carveOut.applies = true;
+        carveOut.unreachable = countPrivateContacts(userId);
+
+        String howMany = 'some';
+        String verb = 'have';
+        if (carveOut.unreachable == 1) {
+            howMany = 'one';
+            verb = 'has';
+        } else if (carveOut.unreachable != null) {
+            howMany = String.valueOf(carveOut.unreachable);
+        }
+        carveOut.basisClause =
+            'The org-wide default makes contacts visible, but ' + howMany + ' of them ' +
+            verb + ' no account, and Salesforce keeps a contact with no account private ' +
+            'to its owner whatever the default says.';
+        carveOut.reasonLine =
+            'Every contact linked to an account is reachable through the org-wide default. ' +
+            'A contact with no account stays private to its owner.';
+        carveOut.note =
+            'Contacts with no account are private to their owner regardless of the ' +
+            'org-wide default, so they are left out of the reachable figure.';
+        return carveOut;
+    }
+
+    /**
+     * Contacts with no account that this user does not own.
+     *
+     * Counted as the running user, like every other figure on the panel, so a
+     * delegated user gets the carve-out within their own slice rather than the
+     * org's.
+     *
+     * @param userId The user being inspected.
+     * @return Count of private contacts out of reach, or null when unreadable.
+     */
+    private static Integer countPrivateContacts(Id userId) {
+        if (!Schema.sObjectType.Contact.isAccessible()) {
+            return null;
+        }
+        try {
+            return [
+                SELECT COUNT()
+                FROM Contact
+                WHERE AccountId = null AND OwnerId != :userId
+                WITH USER_MODE
+            ];
+        } catch (Exception e) {
+            // Unknown, not zero. Zero would restore the overstatement this
+            // method exists to remove.
+            return null;
+        }
     }
 
     /* ---------------------------------------------------------------
