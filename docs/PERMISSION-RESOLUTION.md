@@ -46,7 +46,7 @@ only one `ParentId IN :ids` clause.
 
 ```mermaid
 flowchart TD
-    A[resolve userId] --> B{cache hit<br/>resolvedV3:token:userId?}
+    A[resolve userId] --> B{cache hit<br/>resolvedV4:token:userId?}
     B -- yes --> Z[return Resolved]
     B -- no --> C[loadProfileAsPermissionSet]
     C --> D[loadAssignments:<br/>PermissionSetAssignment for user]
@@ -88,7 +88,7 @@ flowchart TD
    than a flagged uncertain one.
 
 6. **Cache.** The `Resolved` graph is written to the org partition under
-   `resolvedV3:<versionToken>:<userId>`.
+   `resolvedV4:<versionToken>:<userId>`.
 
 ---
 
@@ -138,7 +138,7 @@ actionable rather than merely true.
 
 | Property | Value |
 | --- | --- |
-| Key | `resolvedV3:<versionToken>:<userId>` |
+| Key | `resolvedV4:<versionToken>:<userId>` |
 | Partition | Org (shared across administrators) |
 | Invalidation | `PECacheManager.bumpVersionToken()` — invalidates the whole product at once |
 | Bypass | `resolve(userId, forceRefresh = true)` |
@@ -158,14 +158,27 @@ muting sets".
 | Per-user page layout assignment | Profile × RecordType only; no permission set participates |
 | Per-permission-set app visibility | No queryable sObject |
 | Standard object tab visibility | `PermissionSetTabSetting` holds custom tabs only |
-| Record-level (sharing) access | Would require `UserRecordAccess`, which needs View All Data |
+| Record-level (sharing) access, exactly | Would require `UserRecordAccess` for another user, which needs View All Data |
+
+Record-level access is now **approximated** rather than ignored. `PERecordAccessService` and
+`PERecordListService` compute how many records a user reaches from org-wide defaults, ownership and
+share rows, and label every figure as exact or as a floor. That subsystem is documented separately in
+[RECORD-VISIBILITY.md](RECORD-VISIBILITY.md). It does not run through `PEPermissionResolver` and
+changes nothing in this document.
 
 ---
 
 ## 8. Correctness Obligations
 
-Before any release claims audit defensibility, the matrix in [TESTING.md](TESTING.md) must pass —
-in particular:
+**Status as of 0.6: the matrix passes.** `PEMutingMatrixTest` executes all ten scenarios from
+[TESTING.md](TESTING.md) §3 against synthetic Ids — no DML, no SOQL, no org fixtures — so it runs in
+any org, including a reviewer's.
+
+Before that class existed, scenarios 5, 6 and 8 all reported *no access* for users who genuinely held
+the permission, because muting was stored as one flat set with no record of which group each muting
+set belonged to. Muting is now scoped to its own group, which is what the platform actually does.
+
+The obligations the matrix enforces:
 
 - A permission granted by a group component and muted by the group's muting set reports
   `granted = true, muted = true`.

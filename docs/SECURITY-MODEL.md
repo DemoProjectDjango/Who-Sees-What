@@ -89,6 +89,8 @@ Every `@AuraEnabled` method calls one of:
 | Cache poisoning across users | Cache keys include the version token and the subject user ID; keys sanitised |
 | CRUD/FLS bypass | `with sharing` on every class; `WITH USER_MODE` on user-facing queries |
 | Data exfiltration | No callouts, no Named Credentials, no external endpoints |
+| Reading another user's *records* through the tool | Record lists are read `WITH USER_MODE` as the running administrator. The product reports what the subject *would* reach; it never renders a record the running user cannot already see. |
+| Rewriting history through the log viewer | `PEInspectionLogService` has no update or delete path, and the packaged permission set withholds Edit and Delete |
 
 ---
 
@@ -102,6 +104,10 @@ Every `@AuraEnabled` method calls one of:
 | `encodedCursor` | Previous response | Decoded and validated; malformed input throws |
 | `objectApiName` | UI | Resolved through `Schema.getGlobalDescribe()`, never concatenated into SOQL |
 | `appDeveloperName` | UI | Bound |
+| `objectApiName` (Data Visibility) | UI | Resolved through the describe map before use; field and relationship names come from `Schema.SObjectType`, never from the request |
+| `searchTerm` (record list) | User typed | Bound; only accepted in ALL mode, against the name field |
+| `sortField` (record list) | UI | Validated against the object's describe before it reaches the query |
+| `inspectorId`, `subjectId` (log viewer) | UI | Typed as `Id` and bound |
 
 `PEUserSearchService` composes dynamic SOQL from **constant string fragments only** — clause
 constants concatenated in a fixed order, with all values bound. No user input reaches the query text.
@@ -117,6 +123,27 @@ constants concatenated in a fixed order, with all values bound. No user input re
   bypass this, and surfaces a typed error if the reading user lacks it.
 - The product never queries `UserRecordAccess` for another user, because doing so requires
   **View All Data** — which would defeat the product's entire premise.
+
+### Record reach, and why it is not an escalation
+
+Data Visibility reports how many records of an object a *subject* user reaches. It derives that from
+the org-wide default, ownership and share rows — all of which the running administrator reads under
+their own sharing, `WITH USER_MODE`. Three consequences a reviewer should note:
+
+1. No record is rendered that the running user could not already query. The subject's access is
+   *described*, never *exercised*.
+2. Apex runs as the running user, so the org-wide total is the administrator's view, not the
+   subject's. It is labelled a denominator and never presented as the subject's reach.
+3. Where the answer cannot be completed without View All Data — principally role-hierarchy access,
+   which produces no countable share rows — the figure is labelled a **floor**, not rounded up into
+   a claim. See [RECORD-VISIBILITY.md](RECORD-VISIBILITY.md).
+
+### Reading the audit log
+
+`getRecentInspections` is gated like every other method but is deliberately **not** logged. Logging a
+read of the log makes the trail grow every time someone looks at it; an audit trail that records its
+own observation is noise, not evidence. The query runs `WITH USER_MODE`, so a running user without
+Read on `PE_Inspection_Log__c` receives an empty, flagged result rather than an error or a leak.
 
 ---
 
@@ -151,8 +178,10 @@ The clean Developer Edition review org exists for this purpose. See
 
 | Scan | Configuration | Result |
 | --- | --- | --- |
-| Salesforce Code Analyzer | `AppExchange` + `Recommended:Security` rulesets, `code-analyzer.yml` | 0 violations |
-| Checkmarx | Scan `a0OKX000001JPnJ2AW` | 0 security, 0 quality issues |
+| Salesforce Code Analyzer | `AppExchange` ruleset, `code-analyzer.yml` | 0 violations |
+| Salesforce Code Analyzer | `Recommended:Security` ruleset | 0 violations |
+| Salesforce Code Analyzer | Full PMD ruleset | **1 violation** — `AvoidHardcodingId`, severity 3, in `PEInspectionLogServiceTest`. Test-only; outside both review rulesets. Fix before the next build. |
+| Checkmarx | Scan `a0OKX000001JPnJ2AW`, taken at `0.3.0-1` | 0 security, 0 quality issues — **re-run before resubmission** |
 | ESLint | `eslint.config.js` (Salesforce LWC config) | Clean |
 
 PMD's JavaScript engine is disabled in `code-analyzer.yml`: its ECMAScript rules produce false
@@ -180,6 +209,9 @@ Any pull request touching `PEAccessGate`, `PermissionExplorerController`, `PEKey
 - [ ] No authorisation result is cached in a static
 - [ ] No user input is concatenated into SOQL
 - [ ] Any new sort field is added to the whitelist, not accepted dynamically
-- [ ] Any new inspection path writes an audit row
+- [ ] Any new inspection path writes an audit row — unless it is a *read of the log itself*, which
+      must not
+- [ ] Any new dynamic SOQL resolves object, field and relationship names through `Schema.SObjectType`
+      so it stays correct under the `twinforce` namespace
 - [ ] `npm run scan` reports zero violations
 - [ ] Apex tests cover both the authorised and unauthorised path

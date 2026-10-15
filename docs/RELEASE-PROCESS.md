@@ -14,7 +14,9 @@ Creating, testing and promoting a 2GP managed package version of Who Sees What.
 | Dev Hub | `WSWDevHub` (`nilufa.tforce-abyj@force.com`) |
 | Ancestry | `ancestorVersion: HIGHEST` |
 | API version | `67.0` |
-| Coverage gate | 75% (Salesforce-enforced); current 88% |
+| Coverage gate | 75%, Salesforce-enforced. Last recorded 88% at `0.3.0-1` — **re-measure at every version create** |
+| Latest build | `0.6.0-2` (`04tOW00000KhHJtYAN`), Beta |
+| Latest promoted | `0.3.0-1` (`04tOW00000Gs9l8YAB`) |
 
 2GP allows one namespace to host many packages — unlike 1GP. Reusing `twinforce` for other Twinforce
 products is valid and expected.
@@ -31,7 +33,11 @@ products is valid and expected.
 - [ ] `npm run test:unit` passes
 - [ ] Apex tests pass in `wsw-dev` with coverage recorded
 - [ ] **Muting correctness matrix passes** ([TESTING.md](TESTING.md) §3)
-- [ ] `CACHE_PREFIX` bumped if any cached object's shape changed
+- [ ] `CACHE_PREFIX` bumped if any cached object's shape changed (currently `resolvedV4`)
+- [ ] No stray files under `force-app/` — a `(1)` filename suffix, or a `.cls` without its
+      `-meta.xml` sidecar, fails the build
+- [ ] Every LWC bundle is complete — a CSS-only or JS-only module is rejected
+- [ ] `CHANGELOG.md` and [ROADMAP.md](ROADMAP.md) reflect the change
 - [ ] Documentation updated
 - [ ] No real user data in static resources or screenshots
 - [ ] `git status --porcelain` is empty
@@ -88,7 +94,7 @@ beta, and confirm no data loss and no broken tabs.
 Promotion makes a version installable in production and is **irreversible**.
 
 ```powershell
-sf package version promote --package "Who Sees What@0.5.0-1" --target-dev-hub WSWDevHub
+sf package version promote --package "Who Sees What@0.6.0-2" --target-dev-hub WSWDevHub
 ```
 
 Once promoted, that version becomes the ancestor for everything that follows. Do not promote a
@@ -99,8 +105,8 @@ version that has not completed §4.
 ## 6. Tag and Record
 
 ```powershell
-git tag -a v0.5.0-1 -m "Who Sees What 0.5.0-1 (04tXXXXXXXXXXXXXXX)"
-git push origin v0.5.0-1
+git tag -a v0.6.0-2 -m "Who Sees What 0.6.0-2 (04tOW00000KhHJtYAN)"
+git push origin v0.6.0-2
 ```
 
 Record in `CHANGELOG.md`: version number, `04t` ID, promotion date, coverage, and anything a
@@ -138,7 +144,7 @@ Required for a listed release:
 | Defect fix, copy change, styling | patch |
 | `NEXT` build increment | automatic |
 
-`versionName` is the human label (`Beta 5`). `versionNumber` ends in `NEXT` so each create
+`versionName` is the human label (`Beta 6`). `versionNumber` ends in `NEXT` so each create
 auto-increments the build.
 
 ---

@@ -44,7 +44,7 @@ sequenceDiagram
         else ok
             G-->>C: User
             C->>R: resolve(userId, false)
-            R->>K: orgGet('resolvedV3:<token>:<userId>')
+            R->>K: orgGet('resolvedV4:<token>:<userId>')
             alt cache hit
                 K-->>R: Resolved
             else cache miss

@@ -9,8 +9,8 @@ _Let the people who ask access questions answer them — without handing them Se
 [![Salesforce API](https://img.shields.io/badge/Salesforce%20API-67.0-00A1E0)](https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta/api_meta/)
 [![Package](https://img.shields.io/badge/package-2GP%20managed-blue)](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_dev2gp.htm)
 [![Namespace](https://img.shields.io/badge/namespace-twinforce-5A3FC0)](#)
-[![Apex Coverage](https://img.shields.io/badge/apex%20coverage-88%25-brightgreen)](#testing)
-[![Code Analyzer](https://img.shields.io/badge/code%20analyzer-0%20violations-brightgreen)](#static-analysis)
+[![Version](https://img.shields.io/badge/latest%20build-0.6.0--2%20beta-blue)](#packaging--release)
+[![Code Analyzer](https://img.shields.io/badge/AppExchange%20%2B%20Security-0%20violations-brightgreen)](#static-analysis)
 
 [![AppExchange](https://img.shields.io/badge/AppExchange-View%20Listing-00A1E0?logo=salesforce&logoColor=white)](https://appexchange.salesforce.com/appxListingDetail?listingId=dc0aa216-dbed-49e5-86e0-542869f8dc26)
 [![Demo](https://img.shields.io/badge/Demo-Watch%20on%20YouTube-FF0000?logo=youtube&logoColor=white)](https://youtu.be/-_Jabm_uPrs)
@@ -57,6 +57,9 @@ and **muting permission sets**, then presents the result as an app-scoped walkth
 **WHO** (pick a user) → **WHERE** (pick an app, then an object) → **WHAT** (object CRUD and
 field-level security, with the grant source attributed).
 
+Since 0.6 it also answers the volume question — *how many records of an object does this user
+actually reach, and why* — and shows the audit trail of every inspection in-product.
+
 The product is distributed as a **second-generation managed package (2GP)** under the `twinforce`
 namespace.
 
@@ -68,6 +71,8 @@ namespace.
 | **Package ID** | `0HoOW00000000ZV0AY` |
 | **Namespace** | `twinforce` |
 | **API Version** | 67.0 |
+| **Latest build** | `0.6.0-2` · `04tOW00000KhHJtYAN` · Beta |
+| **Latest promoted** | `0.3.0-1` · `04tOW00000Gs9l8YAB` |
 | **Runtime** | Apex + Lightning Web Components, Platform Cache |
 | **External calls** | None. No HTTP callouts, no Named Credentials, no Metadata API callouts. |
 
@@ -119,14 +124,36 @@ and an auditable one.
 - User licenses, permission set licenses, package licenses and usage entitlements in one table.
 - Drill from any license into the users consuming it.
 
-### Org Stats
+### Data Visibility
 
-- At-a-glance counts of users, profiles, permission sets and permission set groups.
+- **Record reach** — how many records of a chosen object a user can get to: records they own, plus
+  records shared to them or to a group they belong to.
+- **Honest arithmetic** — every figure is labelled **exact** or a **floor**. It is exact when the
+  org-wide default is public or the user holds View All; otherwise role-hierarchy access produces no
+  countable share rows, so the number is a lower bound and says so.
+- **Reason breakdown** — reach grouped by why: ownership, manual share, sharing rule, team.
+- **Record list** — one page of actual records with the user's access to each, filterable to
+  reachable-only, with a true total that does not depend on which page is on screen.
+
+> The org-wide total is the *running* administrator's view, not the subject's — Apex runs as the
+> running user. It is presented as a denominator, never as the subject's answer. See
+> [`docs/RECORD-VISIBILITY.md`](docs/RECORD-VISIBILITY.md).
+
+### Home — Org Stats and Posture
+
+- **Org stats** — at-a-glance counts of active users, profiles, permission sets, permission set
+  groups, reachable apps and objects with at least one grant.
+- **Posture signals** — counts that come with a remedy: groups awaiting recalculation, users holding
+  View All Data or Modify All Data, active users who have never signed in, permission sets assigned
+  to nobody. A signal that cannot be computed renders as *unavailable*, never as zero.
 
 ### Audit
 
 - Every inspection writes an append-only `PE_Inspection_Log__c` row: who inspected whom, when, via
   which action. The packaged permission set grants create and read — never edit or delete.
+- **Inspection Log viewer** (0.6) — the trail is now readable in-product, with activity over time,
+  busiest inspectors, and filters by inspector or subject. Reading the log is gated but deliberately
+  not itself logged.
 
 ---
 
@@ -155,7 +182,9 @@ Getting Started walkthrough images ship as static resources (`hiwStep1`–`hiwSt
 ```mermaid
 flowchart LR
     subgraph UI["Lightning Web Components"]
+        HM[peHome]
         PE[permissionExplorer]
+        DV[dataVisibility]
         LI[licenseInspector]
         GS[gettingStarted]
     end
@@ -173,6 +202,10 @@ flowchart LR
         UDS[PEUserDetailService]
         LIS[PELicenseInspectorService]
         OSS[PEOrgStatsService]
+        RAS[PERecordAccessService]
+        RLS[PERecordListService]
+        PST[PEPostureService]
+        ILS[PEInspectionLogService]
     end
 
     subgraph INF["Infrastructure"]
@@ -181,9 +214,10 @@ flowchart LR
         LOG[PEInspectionAuditLogger]
     end
 
-    PE & LI & GS --> CTRL
+    HM & PE & DV & LI & GS --> CTRL
     CTRL --> GATE --> LOG
-    CTRL --> RES & AQS & AVS & USS & UDS & LIS & OSS
+    CTRL --> RES & AQS & AVS & USS & UDS & LIS & OSS & RAS & RLS & PST & ILS
+    ILS --> LOGOBJ
     RES --> CACHE
     AQS --> CAT
     SVC --> DB[(Salesforce Platform<br/>SOQL, WITH USER_MODE)]
@@ -358,14 +392,18 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`docs/DEVELOPER-GUIDE.md`](docs/DE
 | Apex | Salesforce test framework | `sf apex run test --target-org wsw-dev --code-coverage --result-format human` |
 | LWC | Jest (`sfdx-lwc-jest`) | `npm run test:unit` |
 
-Current packaged state: **88% Apex coverage, 74 packaged tests passing.**
+**11 Apex test classes, 135 test methods** in source. Coverage was last recorded at **88%**
+against `0.3.0-1`; re-measure with `--code-coverage` at every version create rather than quoting
+that figure.
 
 Apex test classes: `PermissionExplorerTest`, `PermissionExplorerControllerTest`,
-`PermissionExplorerFlowTest`, `PEPermissionResolverTest`, `PEUserSearchServiceTest`,
-`PEUserDetailServiceTest`.
+`PermissionExplorerFlowTest`, `PEPermissionResolverTest`, `PEMutingMatrixTest`,
+`PEUserSearchServiceTest`, `PEUserDetailServiceTest`, `PERecordAccessServiceTest`,
+`PERecordListServiceTest`, `PEPostureServiceTest`, `PEInspectionLogServiceTest`.
 
-See [`docs/TESTING.md`](docs/TESTING.md) — including the muting-permission-set correctness matrix
-that must pass before any release claims audit defensibility.
+The **muting correctness matrix** — ten scenarios, the product's most likely silent failure — now
+runs as `PEMutingMatrixTest` against synthetic Ids, so it executes in any org with no fixtures.
+See [`docs/TESTING.md`](docs/TESTING.md) §3.
 
 ---
 
@@ -381,8 +419,14 @@ project's own ESLint configuration instead), SFGE thread timeout raised to 300 s
 Do **not** run `--rule-selector all`; it inflates findings with rules that do not apply to a managed
 package and obscures real issues.
 
-Latest recorded results: Checkmarx scan `a0OKX000001JPnJ2AW` — 0 security, 0 quality issues.
-Code Analyzer — 0 violations on the AppExchange and Security rulesets.
+Latest recorded results:
+
+| Scan | Result |
+| --- | --- |
+| Code Analyzer — AppExchange ruleset | 0 violations |
+| Code Analyzer — `Recommended:Security` | 0 violations |
+| Code Analyzer — full PMD ruleset | 1 violation: `AvoidHardcodingId` (severity 3) in `PEInspectionLogServiceTest`. Test-only, outside both review rulesets. |
+| Checkmarx `a0OKX000001JPnJ2AW` (taken at `0.3.0-1`) | 0 security, 0 quality. Re-run before resubmission. |
 
 ---
 
@@ -391,7 +435,7 @@ Code Analyzer — 0 violations on the AppExchange and Security rulesets.
 ```powershell
 sf package version create --package "Who Sees What" --installation-key-bypass --wait 60 --code-coverage --target-dev-hub WSWDevHub
 sf package version list --packages "Who Sees What" --target-dev-hub WSWDevHub
-sf package version promote --package "Who Sees What@0.5.0-1" --target-dev-hub WSWDevHub
+sf package version promote --package "Who Sees What@0.6.0-2" --target-dev-hub WSWDevHub
 ```
 
 `sfdx-project.json` pins `ancestorVersion: HIGHEST`, which enforces an upgradable lineage — a
@@ -430,8 +474,10 @@ These are platform constraints, not defects. Each was verified independently bef
 | --- | --- |
 | Per-user **record type** visibility is not shown | `Profile.recordTypeVisibilities` and `PermissionSet.recordTypeVisibilities` are Metadata API only; not exposed to SOQL or Apex Schema. |
 | Per-user **page layout** assignment is not shown | Layout assignment is Profile × RecordType only; no permission set participates, and `Schema.Layout` does not exist in Apex. |
-| Per-permission-set **app visibility** is not shown | No queryable sObject exists for it. |
+| Per-permission-set **app visibility** is not shown | No queryable sObject exists for it. The app column resolves from `AppMenuItem` and is labelled an estimate. |
 | **Standard object tab** visibility is not shown | `PermissionSetTabSetting` stores custom tabs only. |
+
+| Per-user **record reach** is a floor, not a total, under a private org-wide default | Role-hierarchy access produces no share rows to count, and `UserRecordAccess` for another user needs View All Data. Labelled as a floor wherever it is shown. |
 
 The record type catalogue currently rendered from the queryable `RecordType` object is org-wide, not
 per-user, and is labelled as such.
@@ -440,15 +486,20 @@ per-user, and is labelled as such.
 
 ## Roadmap
 
-| Version | Scope |
-| --- | --- |
-| **0.5** (current) | UI redesign, staged WHO/WHERE/WHAT navigation, access trace, license inspector. |
-| **0.6** | Record type and page layout visibility via Apex Metadata API (`Metadata.Operations.retrieve`). Inspection Log viewer and export. |
-| **Later** | Compare Two Users · What-If Simulator · Record Access Diagnosis |
+| Version | Scope | State |
+| --- | --- | --- |
+| **0.4** | UI redesign, staged WHO/WHERE/WHAT navigation | Shipped |
+| **0.5** | Access trace, License Inspector, org stats bar | Shipped |
+| **0.6** (current) | Data Visibility (record reach, reason breakdown, record list) · Inspection Log viewer · Home with posture signals · muting correctness matrix executed | Beta `0.6.0-2` |
+| **0.7** | Record type and page layout visibility via the Apex Metadata API · Inspection Log export | Planned |
+| **0.8+** | Compare Two Users · What-If Simulator · Record Access Diagnosis | Planned |
 
 Feature ordering is driven by fit with the delegation USP. `Record Access Diagnosis` is deliberately
 late: querying `UserRecordAccess` for another user requires **View All Data**, which conflicts with
 the product's core promise.
+
+Full detail, sequencing rationale and the explicitly declined features are in
+[`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
 
@@ -459,6 +510,8 @@ the product's core promise.
 | [`docs/README.md`](docs/README.md) | Documentation index |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Layers, boundaries, quality attributes |
 | [`docs/PERMISSION-RESOLUTION.md`](docs/PERMISSION-RESOLUTION.md) | The resolution algorithm, including muting |
+| [`docs/RECORD-VISIBILITY.md`](docs/RECORD-VISIBILITY.md) | How record reach is computed, and when it is exact |
+| [`docs/AUDIT-TRAIL.md`](docs/AUDIT-TRAIL.md) | What is logged, what is not, and why |
 | [`docs/DATA-MODEL.md`](docs/DATA-MODEL.md) | Custom object, DTOs, platform objects consumed |
 | [`docs/SECURITY-MODEL.md`](docs/SECURITY-MODEL.md) | Threat model and review posture |
 | [`docs/API-REFERENCE.md`](docs/API-REFERENCE.md) | `@AuraEnabled` surface |
@@ -467,6 +520,10 @@ the product's core promise.
 | [`docs/RELEASE-PROCESS.md`](docs/RELEASE-PROCESS.md) | 2GP packaging and promotion |
 | [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) | Platform gotchas already paid for once |
 | [`docs/GLOSSARY.md`](docs/GLOSSARY.md) | Domain vocabulary |
+| [`docs/ROADMAP.md`](docs/ROADMAP.md) | Sequencing and declined features |
+| [`docs/UPGRADE-NOTES.md`](docs/UPGRADE-NOTES.md) | What a subscriber must do on upgrade |
+| [`docs/DEMO-ORG-SEED.md`](docs/DEMO-ORG-SEED.md) | Seeding the reviewer and demo org with fictional data |
+| [`docs/LISTING-COPY.md`](docs/LISTING-COPY.md) | AppExchange listing copy of record and claim control |
 | [`docs/SALESFORCE-ENVIRONMENTS.md`](docs/SALESFORCE-ENVIRONMENTS.md) | Org and repository inventory |
 | [`docs/adr/`](docs/adr/) | Architecture Decision Records |
 | [`docs/diagrams/`](docs/diagrams/) | All diagrams (Mermaid source) |

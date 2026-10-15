@@ -12,26 +12,92 @@ Package ID: `0HoOW00000000ZV0AY` · Namespace: `twinforce`
 ## [Unreleased]
 
 ### Added
-- Full documentation set under `docs/`: architecture, permission resolution, data model, security
-  model, API reference, developer guide, testing strategy, release process, troubleshooting and
-  glossary.
-- Eight Architecture Decision Records under `docs/adr/`.
-- Thirteen diagrams under `docs/diagrams/` (C4 context/container/component, LWC tree, sequences, ERD,
-  state machine, caching, deployment topology, release pipeline, trust boundaries).
-- `CONTRIBUTING.md`, `SECURITY.md`, `CHANGELOG.md`.
+- Documentation set extended for 0.6: `docs/RECORD-VISIBILITY.md`, `docs/AUDIT-TRAIL.md`,
+  `docs/ROADMAP.md`, `docs/UPGRADE-NOTES.md`, `docs/DEMO-ORG-SEED.md`, `docs/LISTING-COPY.md`.
+- Four Architecture Decision Records: ADR-0009 (record reach approximation), ADR-0010 (inspection
+  log read path), ADR-0011 (posture signals must be actionable), ADR-0012 (namespace-safe dynamic
+  SOQL).
+- Two diagrams: `14-sequence-record-reach.md`, `15-inspection-log-read.md`.
 
 ### Changed
-- `README.md` replaced — was the stock Salesforce DX template.
-- `docs/SALESFORCE-ENVIRONMENTS.md` extended with the GitHub repository and account, Dev Hub details,
-  the full org inventory and the wrong-org deploy hazard.
-- `.gitignore` de-duplicated.
+- `CACHE_PREFIX` references corrected throughout the documentation — the resolver cache namespace is
+  `resolvedV4`, not `resolvedV3`.
+- `docs/TESTING.md` §3 reworded: the muting matrix is executed, not pending.
+- `docs/SECURITY-MODEL.md` extended with the record-reach and log-read paths, and with an honest
+  static-analysis table.
+- `README.md` roadmap, feature list, limitations and test figures brought to 0.6.
 
 ### Outstanding
-- Muting permission set correctness matrix not yet fully verified. Until it passes, the product must
-  not claim audit defensibility in listing copy. See `docs/TESTING.md` §3.
-- `PE_Inspection_Log__c` has no in-product viewer.
-- Record type catalogue is org-wide, not per-user.
-- Security review org not yet provisioned with fictional seeded data.
+- **`force-app/main/default/classes/PEInspectionLogService (1).cls`** — a committed browser-download
+  duplicate with no `-meta.xml` sidecar. Must be deleted before the next version create.
+- **`force-app/main/default/lwc/peBase/`** — CSS and `.js-meta.xml` only, no `.js` or `.html`.
+  Salesforce rejects a bundle in this shape.
+- One PMD finding: `AvoidHardcodingId`, severity 3, `PEInspectionLogServiceTest` line 390. Outside
+  the AppExchange and Security rulesets, so not review-blocking, but `npm run scan` should come back
+  empty.
+- `code-analyzer-reports/` is committed evidence from 28 September (0.5-era). The current scans are
+  untracked at the repository root. Re-run and commit one authoritative set.
+- `peGettingStarted` remains unreferenced; `destructive-p3/destructiveChanges.xml` still deprecates
+  only `peObjectTable` and `peObjectRow`.
+- Checkmarx scan `a0OKX000001JPnJ2AW` predates 0.4. Re-run before resubmission.
+- Security review org not yet provisioned with fictional seeded data — see
+  [`docs/DEMO-ORG-SEED.md`](docs/DEMO-ORG-SEED.md).
+- Record type catalogue is org-wide, not per-user. Deferred to 0.7.
+
+---
+
+## [0.6.0-2] — Beta 6
+**Version ID:** `04tOW00000KhHJtYAN` · **Status:** Beta
+
+### Fixed
+- `PEInspectionLogService` now builds its query text from `Schema.SObjectType` rather than literal
+  identifiers. Dynamic SOQL does not reliably namespace-qualify unqualified custom object and field
+  names, so the four static query variants that worked unmanaged would have failed for a subscriber,
+  where the names carry the `twinforce__` prefix. See ADR-0012.
+
+---
+
+## [0.6.0-1] — Beta 6
+**Version ID:** `04tOW00000Kh4mRYAR` · **Status:** Beta
+
+### Added
+- **Data Visibility.** A new tab answering how many records of an object a user reaches, and why.
+  - `PERecordAccessService` — reach figures with an explicit basis for each: org-wide default from
+    `EntityDefinition`, records owned, records shared, and whether the total is **exact** or a
+    **floor**. Exact when the OWD is public or the user holds View All; a floor otherwise, because
+    role-hierarchy access produces no share rows to count.
+  - `PERecordListService` — one page of records with the subject's access to each, a reason
+    breakdown grouped by share cause, and a true total sourced from its own query rather than from
+    whichever page is on screen.
+  - `peRecordAccessPanel`, `peRecordTable`, `dataVisibility` components.
+- **Inspection Log viewer.** `PEInspectionLogService` and `peInspectionLog`. The audit trail has been
+  append-only and invisible since it was introduced; a trail nobody can read defends nothing.
+  Surfaces recent inspections, activity over the window, busiest inspectors, and filters by inspector
+  or subject. Reading the log is gated but deliberately **not** logged.
+- **Home.** New `WSW_Home` tab and `peHome` component, now the app's landing page.
+  - `PEPostureService` — org-level signals that each come with a remedy: groups awaiting
+    recalculation, users holding View All Data or Modify All Data, active users who have never signed
+    in, permission sets assigned to nobody. Each query is independently caught; a failed signal
+    renders as *unavailable*, never as zero.
+  - `PEOrgStatsService` moved here from Permission Explorer and cached org-wide.
+- **`PEMutingMatrixTest`.** The ten-scenario correctness matrix from `docs/TESTING.md` §3, executed
+  against synthetic Ids with no DML, no SOQL and no org fixtures, so it runs in any org including a
+  reviewer's.
+- `PEAppVisibilityService` extracted as the app column's data source, with its `AppMenuItem`
+  resolution mode disclosed as an estimate rather than presented as fact.
+- New test classes: `PERecordAccessServiceTest`, `PERecordListServiceTest`, `PEPostureServiceTest`,
+  `PEInspectionLogServiceTest`.
+
+### Fixed
+- **Muting scope.** Muting was stored as one flat set with no record of which group each muting set
+  belonged to, so scenarios 5, 6 and 8 of the correctness matrix all reported *no access* for users
+  who genuinely held the permission. Muting is now scoped to its own group, matching platform
+  behaviour. This is the product's core differentiator and was silently wrong.
+
+### Changed
+- `CACHE_PREFIX` bumped `resolvedV3` → `resolvedV4` for the new `Resolved` shape.
+- `versionName` to Beta 6, `versionNumber` to `0.6.0.NEXT`.
+- Community files moved to `.github/`; generated artefacts removed from the tree.
 
 ---
 
@@ -101,5 +167,7 @@ Package ID: `0HoOW00000000ZV0AY` · Namespace: `twinforce`
 ## Maintaining this file
 
 - Add an entry in the **same pull request** as the change.
-- On release, move `Unreleased` items into a new dated version section and record the `04t` ID.
-- Note anything a subscriber must do on upgrade.
+- On release, move `Unreleased` items into a new version section and record the `04t` ID.
+- Note anything a subscriber must do on upgrade, and mirror it in
+  [`docs/UPGRADE-NOTES.md`](docs/UPGRADE-NOTES.md).
+- An entry that only names a class is not an entry. Say what changed and why it mattered.

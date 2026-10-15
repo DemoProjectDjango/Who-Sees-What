@@ -18,6 +18,8 @@ text in review, and they cannot drift out of date the way an exported PNG does.
 | 11 | [Deployment Topology](11-deployment-topology.md) | Deployment | Which orgs, and what flows between them? |
 | 12 | [Release Pipeline](12-release-pipeline.md) | Process | How does a change become an installed package? |
 | 13 | [Security Trust Boundaries](13-security-trust-boundaries.md) | Threat model | Where is trust established? |
+| 14 | [Sequence — Record Reach](14-sequence-record-reach.md) | Sequence | How is record reach decided, and when is it exact? |
+| 15 | [Sequence — Inspection Log Read](15-inspection-log-read.md) | Sequence | How is the audit trail read back, and why does the read write nothing? |
 
 ## Editing
 

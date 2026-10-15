@@ -1,6 +1,6 @@
 # Architecture
 
-**Status:** current as of version 0.5
+**Status:** current as of version 0.6 (`0.6.0-2`)
 **Audience:** engineers joining the codebase, AppExchange security reviewers, technical evaluators
 
 ---
@@ -19,7 +19,7 @@ The product is read-only. The only write in the entire codebase is an append-onl
 
 | # | Attribute | How it is achieved | How it is verified |
 | --- | --- | --- | --- |
-| 1 | **Correctness** | Muting permission sets are subtracted, not ignored. Outdated permission set groups are flagged rather than silently trusted. | `PEPermissionResolverTest` + the correctness matrix in [TESTING.md](TESTING.md) |
+| 1 | **Correctness** | Muting permission sets are subtracted **and scoped to their own group**, not ignored and not applied org-wide. Outdated groups are flagged rather than silently trusted. Record-reach figures carry an explicit exact-or-floor basis. | `PEPermissionResolverTest` and `PEMutingMatrixTest` — the ten-scenario matrix in [TESTING.md](TESTING.md) §3, which **passes** as of 0.6 |
 | 2 | **Security review defensibility** | Custom-permission gate in Apex, `with sharing` everywhere, `WITH USER_MODE` on user-facing queries, zero callouts, append-only audit | Checkmarx + Code Analyzer AppExchange/Security rulesets |
 | 3 | **Governor-limit safety** | `PESoqlChunker` batches `IN :ids`; query budget asserted before fan-out; Platform Cache for resolved permission graphs | `PermissionExplorerFlowTest` |
 | 4 | **Responsiveness** | Keyset pagination (no `OFFSET`), org- and session-scoped caching, request-scoped describe memoisation | Manual profiling in `wsw-dev` |
@@ -32,8 +32,9 @@ The product is read-only. The only write in the entire codebase is an append-onl
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │  Presentation — Lightning Web Components                     │
-│  permissionExplorer · licenseInspector · gettingStarted      │
-│  + ~20 presentational child components, peUtils helpers      │
+│  peHome · permissionExplorer · dataVisibility                 │
+│  licenseInspector · gettingStarted                            │
+│  + ~30 presentational child components, peUtils helpers      │
 ├──────────────────────────────────────────────────────────────┤
 │  API — PermissionExplorerController                          │
 │  The only @AuraEnabled surface. Gate → delegate → map → DTO. │
@@ -46,6 +47,8 @@ The product is read-only. The only write in the entire codebase is an append-onl
 │  PEAppVisibilityService · PEUserSearchService                │
 │  PEUserDetailService · PELicenseInspectorService             │
 │  PEOrgStatsService · PEFlsClassifier                         │
+│  PERecordAccessService · PERecordListService                 │
+│  PEPostureService · PEInspectionLogService                   │
 ├──────────────────────────────────────────────────────────────┤
 │  Infrastructure                                              │
 │  PECacheManager · PEMetadataCatalog · PESoqlChunker          │
@@ -64,7 +67,8 @@ The product is read-only. The only write in the entire codebase is an append-onl
   `PEPermissionResolver.Resolved`.
 - Only `PEAccessGate` decides authorisation. No service re-implements the check, and no UI state
   substitutes for it.
-- Only `PEInspectionAuditLogger` performs DML.
+- Only `PEInspectionAuditLogger` performs DML. `PEInspectionLogService` **reads** the same object
+  and has no write path at all.
 
 ---
 
@@ -105,7 +109,7 @@ The heart of the product. Produces a `Resolved` graph:
 | `outdatedGroups` | Permission set groups whose `Status != Updated` |
 | `directPermSets`, `assignedGroups` | For the "granted by" panel |
 
-Results are cached under `CACHE_PREFIX` (`resolvedV3`). **Bump that prefix whenever the shape of
+Results are cached under `CACHE_PREFIX` (`resolvedV4`). **Bump that prefix whenever the shape of
 `Resolved` changes** — a stale cached object of the old shape deserialises into confident nonsense.
 
 See [PERMISSION-RESOLUTION.md](PERMISSION-RESOLUTION.md) for the algorithm.
@@ -123,6 +127,38 @@ Turns a `Resolved` graph plus an app into rows:
 
 `getObjectDetail` then builds CRUD grants, field permissions (via `FieldPermissions` seeded against
 the describe field map) and the record type catalogue.
+
+### `PERecordAccessService` and `PERecordListService`
+
+The Data Visibility subsystem. They answer *how many records of this object does this user reach*,
+which the resolver cannot: Apex runs as the running user, so `with sharing` enforces the
+administrator's sharing, not the subject's.
+
+Both label every figure with its basis — **exact** when the org-wide default is public or the user
+holds View All, a **floor** otherwise, because role-hierarchy access leaves no share rows to count.
+Neither queries `UserRecordAccess` for another user, which would require View All Data.
+
+Full treatment in [RECORD-VISIBILITY.md](RECORD-VISIBILITY.md).
+
+### `PEPostureService`
+
+Org-level signals for Home. `PEOrgStatsService` answers *how big is this org*; this answers *is
+anything here wrong, and what would I do about it*. Every signal is a count with a defined remedy;
+a signal nobody can act on does not belong in the class.
+
+Each query is independently caught and leaves its field null on failure. A null renders as
+*unavailable*, never as zero — on a risk panel a fabricated zero reads as an all-clear.
+
+### `PEInspectionLogService`
+
+Reads back the trail `PEInspectionAuditLogger` writes. Read-only by construction: no update or
+delete path exists, and the packaged permission set withholds Edit and Delete.
+
+Its query text is built from `Schema.SObjectType` rather than literal identifiers, because dynamic
+SOQL does not reliably namespace-qualify unqualified custom names — the earlier static variants
+compiled in the dev org and would have failed for every subscriber. See
+[adr/0012-namespace-safe-dynamic-soql.md](adr/0012-namespace-safe-dynamic-soql.md) and
+[AUDIT-TRAIL.md](AUDIT-TRAIL.md).
 
 ### `PEFlsClassifier`
 
@@ -177,7 +213,7 @@ sequenceDiagram
     C->>G: assertInspectable(userId)
     G->>DB: SELECT User ... WITH USER_MODE
     C->>R: resolve(userId, forceRefresh)
-    R->>K: orgGet(resolvedV3:token:userId)
+    R->>K: orgGet(resolvedV4:token:userId)
     alt cache hit
         K-->>R: Resolved
     else miss
@@ -197,9 +233,9 @@ sequenceDiagram
 | Excluded | Reason |
 | --- | --- |
 | HTTP callouts, Named Credentials | Every external endpoint is a security-review question. Zero is the cheapest answer. |
-| Metadata API callouts | Same. Deferred to 0.6, where the benefit (record types, layouts) justifies the cost. |
+| Metadata API callouts | Same. Deferred to 0.7, where the benefit (record types, layouts, true app visibility) justifies the cost. |
 | Writes of any kind except the audit log | A read-only tool cannot break a subscriber's org. |
-| `UserRecordAccess` queries for other users | Requires **View All Data**, which contradicts the product's delegation promise. |
+| `UserRecordAccess` queries for other users | Requires **View All Data**, which contradicts the product's delegation promise. Record reach is approximated from ownership and share rows instead, and labelled a floor where it cannot be completed. |
 | Custom REST/SOAP endpoints | No external surface area. |
 
 ---
@@ -221,9 +257,11 @@ Verified independently; not defects.
 
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
-| Muting subtraction not yet fully verified | Undermines the core differentiator and any audit claim | Complete the correctness matrix in [TESTING.md](TESTING.md) before the next release |
-| `PE_Inspection_Log__c` is write-only in the UI | A differentiator the user cannot see | Inspection Log viewer scheduled for 0.6 |
-| Record type catalogue is org-wide, not per-user | Reads as an answer to a question it does not answer | Labelled as org-wide; replaced in 0.6 via Metadata API |
+| ~~Muting subtraction not fully verified~~ | — | **Closed in 0.6.** `PEMutingMatrixTest` executes the full matrix. Muting is now scoped to its own group; it previously applied flat, which silently broke scenarios 5, 6 and 8. |
+| ~~`PE_Inspection_Log__c` is write-only in the UI~~ | — | **Closed in 0.6.** `PEInspectionLogService` and `peInspectionLog`. |
+| Record type catalogue is org-wide, not per-user | Reads as an answer to a question it does not answer | Labelled as org-wide; replaced in 0.7 via the Apex Metadata API |
+| App column resolves from `AppMenuItem` | Per-permission-set app visibility has no queryable source, so the column is an estimate | Disclosed in the UI as an estimate; resolved by the same 0.7 Metadata API investment |
+| Record reach is a floor under a private OWD | A floor read as a total would understate someone's access | `isExact` and `totalIsFloor` travel with every figure; the UI must render them |
 | Platform Cache unallocated in subscriber orgs | Slower first load per user | Graceful fallback already implemented; documented in install steps |
 
 ---
@@ -232,3 +270,6 @@ Verified independently; not defects.
 
 - [diagrams/](diagrams/) — C4 context, container and component views, ERD, state machine, pipeline
 - [adr/](adr/) — the decisions behind the structure above
+- [RECORD-VISIBILITY.md](RECORD-VISIBILITY.md) — how record reach is computed
+- [AUDIT-TRAIL.md](AUDIT-TRAIL.md) — what is logged and what deliberately is not
+- [ROADMAP.md](ROADMAP.md) — sequencing and declined features

@@ -33,7 +33,7 @@ Partition availability is resolved lazily and memoised using explicit `*Resolved
 than static property getters — a property getter that reads its own property recurses infinitely,
 which this codebase encountered once already.
 
-Cached object shapes are versioned by `CACHE_PREFIX` (currently `resolvedV3`), which **must** be
+Cached object shapes are versioned by `CACHE_PREFIX` (currently `resolvedV4`), which **must** be
 bumped whenever the shape of a cached object changes.
 
 ## Consequences

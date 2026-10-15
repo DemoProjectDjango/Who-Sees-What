@@ -124,12 +124,102 @@ Each `FieldPerm` is `readable`, `editable`, or `notApplicable` with a `reason` s
 
 ---
 
+## Data Visibility
+
+These three back the `dataVisibility` tab. Methodology, and the meaning of every flag they return,
+is in [RECORD-VISIBILITY.md](RECORD-VISIBILITY.md).
+
+### `getRecordReach(userId, objectApiName)`
+
+| | |
+| --- | --- |
+| Returns | `PERecordAccessService.Reach` |
+| Cacheable | No |
+| Audit | `VIEW_RECORD_REACH` |
+| Key flags | `isExact` — `true` when `reachableRecords` is the complete answer, `false` when it is a floor |
+
+`totalRecords` is the org count **as the running user sees it**. It is a denominator, never the
+subject's answer. A client that renders it as the subject's access is wrong.
+
+---
+
+### `getReasonBreakdown(userId, objectApiName)`
+
+| | |
+| --- | --- |
+| Returns | `List<PERecordListService.ReasonBucket>` — largest first |
+| Cacheable | No |
+| Audit | **Not logged** — always follows a logged `VIEW_RECORD_REACH` on the same user and object; logging it again double-counts one act |
+
+Buckets decompose the **countable** part only. They do not sum to the subject's true access under a
+private org-wide default.
+
+---
+
+### `getRecordPage(userId, objectApiName, reachableOnly, searchTerm, sortField, cursor)`
+
+| | |
+| --- | --- |
+| Returns | `PERecordListService.RecordPage` |
+| Cacheable | No |
+| Pagination | Cursor. Pass `nextCursor` from the previous response; `null` for the first page. |
+| `searchTerm` | ALL mode only, against the name field. Ignored when `searchSupported = false`. |
+| Audit | `VIEW_RECORD_LIST` — **once per page**, because paging through someone's data is the same act as inspecting it |
+| Key flags | `totalIsFloor`, `sharingBypassed`, `hasNameField`, `searchSupported` |
+
+`totalReachable` comes from its own query and does not depend on which page is on screen, so the
+footer can always say something true. Carry `totalIsFloor` into that footer — a floor rendered as a
+total turns a careful answer into a false one.
+
+Six parameters, one of them a Boolean: both PMD findings are suppressed with a comment. This is the
+wire contract the record list calls with, and every argument is a control the administrator can see
+on screen. Wrapping them would mean the LWC builds an object whose shape is defined nowhere.
+
+---
+
+## Posture and Audit
+
+### `getPosture()` · `refreshPosture()`
+
+| | |
+| --- | --- |
+| Returns | `PEPostureService.Posture` — signals, licence utilisation, active user count |
+| Cached | Org partition, key `postureV1`. `refreshPosture()` bypasses it. |
+| Audit | **Not logged** — org-level configuration counts, no subject to attribute |
+
+Each signal is a count with a `remedy`. A signal whose query failed comes back with a null count and
+**must** render as *unavailable*, never as zero.
+
+---
+
+### `getRecentInspections(inspectorId, subjectId, rowLimit)`
+
+| | |
+| --- | --- |
+| Returns | `PEInspectionLogService.LogPage` |
+| Cacheable | **No** — an audit panel exists to reflect what just happened; a client-cached page would show an admin a trail predating their own last inspection |
+| Filters | Both optional; omit for the whole readable trail |
+| `rowLimit` | Clamped by the service |
+| Audit | **Not logged.** Gated, but reading the log is not itself an inspection — a trail that records its own observation is noise, not evidence. |
+
+Returns `readable = false` with a `notice` rather than throwing when the running user cannot read
+`PE_Inspection_Log__c`. `totalCount` and `last7Days` are null when the count failed; null means
+unavailable, not zero.
+
+See [AUDIT-TRAIL.md](AUDIT-TRAIL.md).
+
+---
+
 ### `getOrgStats()`
 
 | | |
 | --- | --- |
-| Returns | `PEDto.OrgStats` — user, profile, permission set and group counts |
-| Cached | Org partition |
+| Returns | `PEDto.OrgStats` — active users, profiles, permission sets, groups, reachable apps, objects with at least one grant |
+| Cached | Org partition, key `orgStatsV1`. `refreshOrgStats()` bypasses it. |
+| Audit | Not logged — org-level counts, no subject |
+
+Each of the six counts runs in its own try/catch. These are unrelated queries against objects of
+varying obscurity, and one being unavailable in a given org is not a reason to blank the other five.
 
 ---
 
@@ -167,10 +257,17 @@ administrator. `peUtils/errors.js` holds the shared mapping.
 ## Adding a Method
 
 1. Add it to `PermissionExplorerController` — nowhere else.
-2. First statement: `PEAccessGate.assertAuthorisedAndLog(...)`.
+2. First statement: `PEAccessGate.assertAuthorisedAndLog(...)` if the method inspects a **person**.
+   If it does not — org-level counts, reference data, or a read of the log itself — use
+   `assertAuthorised()` and say in a comment why no row is written. Silence there reads as an
+   oversight.
 3. Guard the target with `assertInspectable(userId)` if it takes a user.
 4. Delegate to a service; keep query logic out of the controller.
 5. Return a typed `PEDto` class — never `List<Object>`, never a raw sObject.
 6. Wrap in `try/catch` and convert through `toAura`.
 7. Add tests for the authorised and unauthorised path.
-8. Update this document in the same pull request.
+8. If it returns a figure that may be incomplete, return the basis alongside it. A number without
+   its qualifier is not a smaller answer, it is a wrong one.
+9. If it builds dynamic SOQL, resolve object, field and relationship names through
+   `Schema.SObjectType` so it survives the namespace (ADR-0012).
+10. Update this document in the same pull request.
