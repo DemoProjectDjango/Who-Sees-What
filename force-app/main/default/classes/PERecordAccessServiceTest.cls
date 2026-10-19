@@ -6,6 +6,12 @@
  * private one reports a floor and says so, and nothing claims precision it does
  * not have. A reach figure labelled exact when it is a floor is the single most
  * damaging thing this feature could do.
+ *
+ * The carve-out tests are here for the second way that can happen: a public
+ * org-wide default that the platform does not honour for every record. A
+ * contact with no account is private to its owner whatever Contact's default
+ * says, so "public, therefore exact, therefore everything" was wrong, and the
+ * panel printed a record the user could not open inside an exact total.
  */
 @IsTest
 private class PERecordAccessServiceTest {
@@ -195,6 +201,95 @@ private class PERecordAccessServiceTest {
                 'records shared to a user cannot outnumber the records they reach - ' +
                 'counting owner rows as shares is what broke this'
             );
+        }
+    }
+
+    @IsTest
+    static void onlyContactCarriesACarveOutFromItsPublicDefault() {
+        System.runAs(asSelf()) {
+            Id me = UserInfo.getUserId();
+
+            Test.startTest();
+            PERecordAccessService.OwdCarveOut onAccount =
+                PERecordAccessService.owdCarveOutFor('Account', me);
+            PERecordAccessService.OwdCarveOut onContact =
+                PERecordAccessService.owdCarveOutFor('Contact', me);
+            Test.stopTest();
+
+            Assert.isFalse(
+                onAccount.applies,
+                'Account has no documented carve-out, so nothing should be subtracted'
+            );
+            Assert.isTrue(
+                onContact.applies,
+                'a contact with no account is private to its owner whatever the default says'
+            );
+            Assert.isTrue(
+                String.isNotBlank(onContact.reasonLine),
+                'a carve-out that cannot be explained cannot be defended in an audit'
+            );
+        }
+    }
+
+    @IsTest
+    static void aPrivateContactIsNotInsideAnExactReachableTotal() {
+        Id subject = otherActiveUserId();
+        Boolean seeded = seedAccountlessContact();
+
+        Test.startTest();
+        PERecordAccessService.Reach r =
+            PERecordAccessService.getReach(
+                subject == null ? UserInfo.getUserId() : subject, 'Contact'
+            );
+        Test.stopTest();
+
+        Assert.isNotNull(r, 'reach is always answered, even when the answer is nothing');
+
+        // Only orgs where Contact is public and the subject is somebody else
+        // can demonstrate the carve-out. Elsewhere the branch under test is not
+        // the one that runs, and asserting on it would be asserting on the org.
+        if (!seeded || subject == null || r.hasObjectRead != true
+            || r.isPublic != true || r.hasViewAll == true
+            || r.totalRecords == null || r.reachableRecords == null) {
+            return;
+        }
+        Assert.isTrue(
+            r.reachableRecords < r.totalRecords,
+            'a contact with no account cannot sit inside the reachable total of a user ' +
+            'who does not own it, however public the org-wide default is'
+        );
+    }
+
+    /**
+     * Another active user, or null when the org has none to inspect.
+     *
+     * @return A user Id other than the running user, or null.
+     */
+    private static Id otherActiveUserId() {
+        List<User> others = [
+            SELECT Id FROM User
+            WHERE Id != :UserInfo.getUserId() AND IsActive = true
+            WITH USER_MODE
+            LIMIT 1
+        ];
+        return others.isEmpty() ? null : others[0].Id;
+    }
+
+    /**
+     * Creates one contact with no account, the record the carve-out is about.
+     *
+     * Validation rules and required fields are the subscriber's, not ours, so a
+     * refusal here means the org cannot demonstrate the case rather than that
+     * the code is wrong.
+     *
+     * @return True when the contact was created.
+     */
+    private static Boolean seedAccountlessContact() {
+        try {
+            insert new Contact(LastName = 'WSW Carve Out Probe');
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 

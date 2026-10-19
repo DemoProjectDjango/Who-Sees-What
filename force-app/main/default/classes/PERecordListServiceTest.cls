@@ -9,6 +9,12 @@
  * total - that "12 of 200" could only ever mean "12 on this page". It was
  * wrong: the totals come from their own queries. If a later change ever derives
  * a total from `rows.size()`, that test fails.
+ *
+ * The other one that matters is `theFilterNeverListsARecordTheUserCannotRead`.
+ * On an object where sharing is bypassed the filter used to be a no-op, so a
+ * record with three greyed access chips appeared in a list headed "only records
+ * this user can reach". The per-record access was already on the page; it was
+ * simply not used.
  */
 @IsTest
 private class PERecordListServiceTest {
@@ -100,6 +106,66 @@ private class PERecordListServiceTest {
             Assert.isTrue(
                 page.searchSupported,
                 'a public object is always object-driven, so the search box stays usable'
+            );
+        }
+    }
+
+    @IsTest
+    static void theFilterNeverListsARecordTheUserCannotRead() {
+        System.runAs(asSelf()) {
+            Id me = UserInfo.getUserId();
+
+            Test.startTest();
+            // User is public, so the object drives the page and the filter has
+            // to be applied by this class rather than by the share table.
+            PERecordListService.RecordPage page =
+                PERecordListService.getPage(me, 'User', true, null, 'Name', null);
+            Test.stopTest();
+
+            Boolean accessUnknown = false;
+            for (String note : page.notes) {
+                if (note.containsIgnoreCase('could not be read')) {
+                    accessUnknown = true;
+                }
+            }
+
+            Integer unreadable = 0;
+            for (PERecordListService.RecordRow row : page.rows) {
+                if (row.canRead != true) {
+                    unreadable++;
+                }
+            }
+
+            Assert.isTrue(
+                unreadable == 0 || accessUnknown,
+                'a list headed "only records this user can reach" must not contain a ' +
+                'record they cannot read, unless it says their access could not be read'
+            );
+        }
+    }
+
+    @IsTest
+    static void reachableTotalNeverExceedsTheRecordsInScope() {
+        System.runAs(asSelf()) {
+            Id me = UserInfo.getUserId();
+
+            Test.startTest();
+            // Contact carries the carve-out, so this is where a subtraction
+            // could overshoot or a public default could overstate.
+            PERecordListService.RecordPage page =
+                PERecordListService.getPage(me, 'Contact', true, null, 'Name', null);
+            Test.stopTest();
+
+            Integer reachable = page.totalReachable == null ? 0 : page.totalReachable;
+            Integer total = page.totalRecords == null ? 0 : page.totalRecords;
+
+            Assert.isTrue(
+                reachable <= total,
+                'the reachable total is a subset of the records in scope, never larger'
+            );
+            Assert.isTrue(
+                reachable >= 0,
+                'subtracting a carve-out must not drive the reachable total below zero'
             );
         }
     }
